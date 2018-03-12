@@ -26,12 +26,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
-public class FilesystemKOStore implements KnowledgeObjectStore {
+public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Value("${activator.shelf.path}")
   private String localStoragePath;
 
-  private final Logger log = LoggerFactory.getLogger(FilesystemKOStore.class);
+  private final Logger log = LoggerFactory.getLogger(FilesystemCDOStore.class);
 
   @Override
   public List<String> getChildren(Path filePath) {

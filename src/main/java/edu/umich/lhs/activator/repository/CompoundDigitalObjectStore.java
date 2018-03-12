@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-public interface KnowledgeObjectStore {
+public interface CompoundDigitalObjectStore {
 
   List<String> getChildren(Path filePath);
 
