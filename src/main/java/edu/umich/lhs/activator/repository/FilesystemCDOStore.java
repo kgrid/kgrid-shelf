@@ -55,6 +55,9 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   @Override
   public Path getAbsolutePath(Path relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
+    if(relativeFilePath == null) {
+      return shelf;
+    }
     return shelf.resolve(relativeFilePath);
   }
 
