@@ -28,10 +28,14 @@ import org.springframework.web.multipart.MultipartFile;
 @Component
 public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
-  @Value("${activator.shelf.path}")
+
   private String localStoragePath;
 
   private final Logger log = LoggerFactory.getLogger(FilesystemCDOStore.class);
+
+  public FilesystemCDOStore( @Value("${activator.shelf.path:.}") String localStoragePath) {
+    this.localStoragePath = localStoragePath;
+  }
 
   @Override
   public List<String> getChildren(Path filePath) {
