@@ -2,6 +2,7 @@ package edu.umich.lhs.activator.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -23,5 +24,7 @@ public interface CompoundDigitalObjectStore {
   void saveBinary(Path destination, byte[] data);
 
   ObjectNode addCompoundObjectToShelf(MultipartFile zip);
+
+  void removeFile(Path filePath) throws IOException;
 
 }

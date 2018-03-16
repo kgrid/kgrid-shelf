@@ -153,9 +153,9 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   // rm -rf repository/arkId ** dangerous! **
-  public void removeKO(String arkFilename) throws IOException {
+  public void removeFile(Path filePath) throws IOException {
     Path shelf = Paths.get(localStoragePath);
-    Path ko = shelf.resolve(arkFilename);
+    Path ko = shelf.resolve(filePath);
 
     Files.walk(ko)
         .sorted(Comparator.reverseOrder()) // Need to reverse the order to delete files before the directory they're in
