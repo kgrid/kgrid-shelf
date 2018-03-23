@@ -3,6 +3,7 @@ package edu.umich.lhs.activator.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Path;
 import java.util.List;
 import org.springframework.stereotype.Service;
@@ -11,20 +12,20 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public interface CompoundDigitalObjectStore {
 
-  List<String> getChildren(Path filePath);
+  List<String> getChildren(URI relativeLocation);
 
-  Path getAbsolutePath(Path filePath);
+  URI getAbsoluteLocation(URI relativeLocation);
 
-  ObjectNode getMetadata(Path filePath);
+  ObjectNode getMetadata(URI relativeLocation);
 
-  byte[] getBinary(Path filePath);
+  byte[] getBinary(URI relativeLocation);
 
-  void saveMetadata(Path destination, JsonNode metadata);
+  void saveMetadata(URI relativeDestination, JsonNode metadata);
 
-  void saveBinary(Path destination, byte[] data);
+  void saveBinary(URI relativeDestination, byte[] data);
 
   ObjectNode addCompoundObjectToShelf(MultipartFile zip);
 
-  void removeFile(Path filePath) throws IOException;
+  void removeFile(URI relativeLocation) throws IOException;
 
 }

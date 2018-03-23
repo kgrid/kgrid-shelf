@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -57,12 +59,17 @@ public class SimpleKnowledgeObject implements KnowledgeObject {
 	}
 
 	@Override
-	public Path getResourceLocation() {
-		return Paths.get(payload.getContent());
+	public URI getResourceLocation() {
+		try {
+			return new URI(payload.getContent());
+		} catch (URISyntaxException e) {
+			e.printStackTrace();
+			return null;
+		}
 	}
 
 	@Override
-	public Path getServiceLocation() {
+	public URI getServiceLocation() {
 		return null;
 	}
 
@@ -70,11 +77,11 @@ public class SimpleKnowledgeObject implements KnowledgeObject {
 		this.inputMessage = inputMessage;
 	}
 
-	public Path getBaseMetadataLocation() {
+	public URI getBaseMetadataLocation() {
 		return null;
 	}
 
-	public Path getModelMetadataLocation() {
+	public URI getModelMetadataLocation() {
 		return null;
 	}
 

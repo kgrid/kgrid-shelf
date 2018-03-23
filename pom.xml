@@ -48,6 +48,16 @@
       <artifactId>jena-core</artifactId>
       <version>3.2.0</version>
     </dependency>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-arq</artifactId>
+      <version>3.2.0</version>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.jena</groupId>
+      <artifactId>jena-querybuilder</artifactId>
+      <version>3.2.0</version>
+    </dependency>
   </dependencies>
 
 </project>

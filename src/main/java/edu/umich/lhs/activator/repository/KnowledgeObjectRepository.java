@@ -10,6 +10,8 @@ import edu.umich.lhs.activator.domain.KnowledgeObject;
 import edu.umich.lhs.activator.domain.Payload;
 import edu.umich.lhs.activator.domain.SimpleKnowledgeObject;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -64,14 +66,14 @@ public class KnowledgeObjectRepository {
     return sko;
   }
 
-  public SimpleKnowledgeObject loadSimpleKnowledgeObject(ArkId arkId) {
+  public SimpleKnowledgeObject loadSimpleKnowledgeObject(ArkId arkId) throws URISyntaxException {
     CompoundDigitalObjectStore dataStore = factory.create();
-    Path koPath = Paths.get(arkId.getFedoraPath());
+    URI koPath = new URI(arkId.getFedoraPath());
     ObjectNode koJson;
-    if(Files.exists(koPath)) {
+    if(Files.exists(Paths.get(koPath))) {
       koJson = dataStore.getMetadata(koPath);
     } else {
-      koPath = Paths.get(arkId.getFedoraPath() + ".json");
+      koPath = new URI(arkId.getFedoraPath() + ".json");
       koJson = dataStore.getMetadata(koPath);
     }
     ObjectMapper mapper = new ObjectMapper();
@@ -85,9 +87,13 @@ public class KnowledgeObjectRepository {
   public Map<String, ObjectNode> knowledgeObjectVersions(ArkId arkId) {
     CompoundDigitalObjectStore dataStore = factory.create(arkId.getFedoraPath());
     Map<String, ObjectNode> versionMap = new HashMap<>();
-    List<String> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
-    for (String version : versions) {
-      versionMap.put(version, loadCompoundKnowledgeObject(arkId, version).getMetadata());
+    try {
+      List<String> versions = dataStore.getChildren(new URI(arkId.getFedoraPath()));
+      for (String version : versions) {
+        versionMap.put(version, loadCompoundKnowledgeObject(arkId, version).getMetadata());
+      }
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
     }
     return versionMap;
   }
@@ -109,9 +115,9 @@ public class KnowledgeObjectRepository {
     return new ArkId(jsonData.get("metadata").get("arkId").get("arkId").asText());
   }
 
-  void removeKO(ArkId arkId) throws IOException {
+  void removeKO(ArkId arkId) throws IOException, URISyntaxException {
     CompoundDigitalObjectStore dataStore = factory.create();
-    dataStore.removeFile(Paths.get(arkId.getFedoraPath()));
+    dataStore.removeFile(new URI(arkId.getFedoraPath()));
 
   }
 

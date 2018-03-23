@@ -8,6 +8,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -38,10 +40,10 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public List<String> getChildren(Path filePath) {
+  public List<String> getChildren(URI filePath) {
     Path path = Paths.get(localStoragePath);
     if(filePath != null) {
-      path = path.resolve(filePath);
+      path = path.resolve(filePath.toString());
     }
     List<String> children = new ArrayList<>();
     try {
@@ -57,18 +59,18 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public Path getAbsolutePath(Path relativeFilePath) {
+  public URI getAbsoluteLocation(URI relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
     if(relativeFilePath == null) {
-      return shelf;
+      return shelf.toUri();
     }
-    return shelf.resolve(relativeFilePath);
+    return shelf.resolve(relativeFilePath.toString()).toUri();
   }
 
   @Override
-  public ObjectNode getMetadata(Path relativePath) {
+  public ObjectNode getMetadata(URI relativePath) {
     Path shelf = Paths.get(localStoragePath);
-    File metadataFile = shelf.resolve(relativePath).toFile();
+    File metadataFile = shelf.resolve(relativePath.toString()).toFile();
     if(!metadataFile.exists()) {
       log.error("Cannot find metadata file for knowledge object at " + metadataFile);
     }
@@ -84,11 +86,11 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public byte[] getBinary(Path relativeFilePath) {
+  public byte[] getBinary(URI relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
     byte[] bytes = null;
     try {
-      bytes = Files.readAllBytes(shelf.resolve(relativeFilePath));
+      bytes = Files.readAllBytes(shelf.resolve(relativeFilePath.toString()));
     } catch (IOException ioEx) {
       log.error("Cannot read file at " + relativeFilePath + " " + ioEx);
     }
@@ -96,7 +98,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveMetadata(Path relativePath, JsonNode metadata) {
+  public void saveMetadata(URI relativePath, JsonNode metadata) {
     File metadataFile = new File(localStoragePath, relativePath.toString());
     try {
       ObjectWriter writer = new ObjectMapper().writer();
@@ -107,7 +109,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveBinary(Path relativePath, byte[] output) {
+  public void saveBinary(URI relativePath, byte[] output) {
     File dataFile = new File(localStoragePath, relativePath.toString());
     try (FileOutputStream fos = new FileOutputStream(dataFile)){
       fos.write(output);
@@ -144,18 +146,26 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     } catch (IOException ioEx) {
       log.error("Cannot find file " + shelf + " " + ioEx);
     }
-    Path objectRoot = Paths.get(parts[0] + "-" + parts[1]);
-    if(version == null) {
-      version = getChildren(objectRoot).get(0);
+    String objectRoot = parts[0] + "-" + parts[1];
+
+    try {
+      if(version == null) {
+        // TODO: Get default version?
+        version = getChildren(new URI(objectRoot)).get(0);
+      }
+      URI metadataLocation = new URI(objectRoot + "/" + version + "/metadata.json");
+      return getMetadata(metadataLocation);
+    } catch (URISyntaxException e) {
+      e.printStackTrace();
+      return null;
     }
-    Path metadataPath = objectRoot.resolve(version).resolve("metadata.json");
-    return getMetadata(metadataPath);
   }
 
   // rm -rf repository/arkId ** dangerous! **
-  public void removeFile(Path filePath) throws IOException {
+  @Override
+  public void removeFile(URI filePath) throws IOException {
     Path shelf = Paths.get(localStoragePath);
-    Path ko = shelf.resolve(filePath);
+    Path ko = shelf.resolve(filePath.toString());
 
     Files.walk(ko)
         .sorted(Comparator.reverseOrder()) // Need to reverse the order to delete files before the directory they're in

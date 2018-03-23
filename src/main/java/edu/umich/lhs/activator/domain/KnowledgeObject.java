@@ -2,14 +2,15 @@ package edu.umich.lhs.activator.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.net.URI;
 import java.nio.file.Path;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface KnowledgeObject {
 
-  Path getBaseMetadataLocation();
+  URI getBaseMetadataLocation();
 
-  Path getModelMetadataLocation();
+  URI getModelMetadataLocation();
 
   ArkId getArkId();
 
@@ -17,9 +18,9 @@ public interface KnowledgeObject {
 
   String getAdapterType();
 
-  Path getResourceLocation();
+  URI getResourceLocation();
 
-  Path getServiceLocation();
+  URI getServiceLocation();
 
   ObjectNode getMetadata();
 
