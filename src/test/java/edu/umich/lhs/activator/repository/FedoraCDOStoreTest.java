@@ -26,12 +26,6 @@ public class FedoraCDOStoreTest {
   }
 
   @Test
-  public void getChildren() throws Exception {
-    List<String> children = store.getChildren(new URI(""));
-
-  }
-
-  @Test
   public void getAbsolutePathOfLocalServer() throws Exception {
     URI location = store.getAbsoluteLocation(null);
     assertEquals(new URI("http://localhost:8080/fcrepo/rest"), location);
