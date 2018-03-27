@@ -48,8 +48,19 @@ public class ShelfController {
      return shelf.getAllObjects();
   }
 
-  @PutMapping(path = {"/ark:/{naan}/{name}/{version}", "ark:/{naan}/{name}"})
+  @PutMapping(path = {"/ark:/{naan}/{name}/{version}"})
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
+    ArkId pathArk = new ArkId(naan, name);
+    ArkId arkId = shelf.saveKnowledgeObject(zippedKo);
+    String response = arkId + " added to the shelf";
+
+    ResponseEntity<String> result = new ResponseEntity<>(response, HttpStatus.CREATED);
+
+    return result;
+  }
+
+  @PutMapping(path = {"ark:/{naan}/{name}"})
+  public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
     ArkId arkId = shelf.saveKnowledgeObject(zippedKo);
     String response = arkId + " added to the shelf";
