@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class CompoundDigitalObjectStoreFactory {
 
-  @Value("${activator.shelf.path}")
+  @Value("${shelf.path}")
   private String localStoragePath;
 
   private FilesystemCDOStore filesystemCDOStore;

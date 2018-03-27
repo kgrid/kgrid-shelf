@@ -35,7 +35,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   private final Logger log = LoggerFactory.getLogger(FilesystemCDOStore.class);
 
-  public FilesystemCDOStore( @Value("${activator.shelf.path:.}") String localStoragePath) {
+  public FilesystemCDOStore( @Value("${shelf.path:.}") String localStoragePath) {
     this.localStoragePath = localStoragePath;
   }
 

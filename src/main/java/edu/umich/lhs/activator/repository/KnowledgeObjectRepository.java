@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -65,7 +66,7 @@ public class KnowledgeObjectRepository {
     return sko;
   }
 
-  public SimpleKnowledgeObject loadSimpleKnowledgeObject(ArkId arkId) throws URISyntaxException {
+  public SimpleKnowledgeObject getSimpleKnowledgeObject(ArkId arkId) throws URISyntaxException {
     CompoundDigitalObjectStore dataStore = factory.create();
     URI koPath = new URI(arkId.getFedoraPath());
     ObjectNode koJson;
@@ -101,7 +102,10 @@ public class KnowledgeObjectRepository {
     CompoundDigitalObjectStore dataStore = factory.create();
     List<ObjectNode> knowledgeObjects = new ArrayList<>();
 
-    List<ArkId> arkIds = dataStore.getChildren(null).stream().map(ArkId::new).collect(Collectors.toList());
+    List<ArkId> arkIds = dataStore.getChildren(null).stream()
+        .map(name -> {try {return new ArkId(name);} catch (IllegalArgumentException e) {return null;}})
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
     for (ArkId arkId : arkIds) {
       knowledgeObjects.addAll(knowledgeObjectVersions(arkId).values());
     }
