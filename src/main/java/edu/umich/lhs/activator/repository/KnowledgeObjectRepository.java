@@ -14,7 +14,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -35,12 +34,12 @@ public class KnowledgeObjectRepository {
     this.factory = factory;
   }
 
-  public KnowledgeObject loadCompoundKnowledgeObject(ArkId arkId, String version) {
+  public KnowledgeObject getCompoundKnowledgeObject(ArkId arkId, String version) {
     CompoundDigitalObjectStore dataStore = factory.create(arkId.getFedoraPath());
 
     KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
-    ObjectNode metadataNode = dataStore.getMetadata(ko.getBaseMetadataLocation());
-    JsonNode modelMetadataNode = dataStore.getMetadata(ko.getModelMetadataLocation());
+    ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation());
+    JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
     metadataNode.set("models", modelMetadataNode);
     ko.setMetadata(metadataNode);
     return ko;
@@ -49,17 +48,17 @@ public class KnowledgeObjectRepository {
   public SimpleKnowledgeObject convertCompoundToSimpleKObject(ArkId arkId, String version) {
     CompoundDigitalObjectStore dataStore = factory.create(arkId.getFedoraPath());
     SimpleKnowledgeObject sko = new SimpleKnowledgeObject();
-    KnowledgeObject ko = loadCompoundKnowledgeObject(arkId, version);
+    KnowledgeObject ko = getCompoundKnowledgeObject(arkId, version);
 
-    byte[] inputMessage = dataStore.getBinary(ko.getServiceLocation().resolve("input.xml"));
+    byte[] inputMessage = dataStore.getBinary(ko.serviceLocation().resolve("input.xml"));
     sko.setInputMessage(new String(inputMessage, Charset.defaultCharset()));
-    byte[] outputMessage = dataStore.getBinary(ko.getServiceLocation().resolve("output.xml"));
+    byte[] outputMessage = dataStore.getBinary(ko.serviceLocation().resolve("output.xml"));
     sko.setOutputMessage(new String (outputMessage, Charset.defaultCharset()));
     sko.setMetadata(ko.getMetadata());
 
     Payload payload = new Payload();
-    payload.setContent(new String(dataStore.getBinary(ko.getResourceLocation()), Charset.defaultCharset()));
-    payload.setEngineType(ko.getAdapterType());
+    payload.setContent(new String(dataStore.getBinary(ko.resourceLocation()), Charset.defaultCharset()));
+    payload.setEngineType(ko.adapterType());
     payload.setFunctionName(ko.getMetadata().get("models").get("functionName").asText());
 
     sko.setPayload(payload);
@@ -90,7 +89,7 @@ public class KnowledgeObjectRepository {
     try {
       List<String> versions = dataStore.getChildren(new URI(arkId.getFedoraPath()));
       for (String version : versions) {
-        versionMap.put(version, loadCompoundKnowledgeObject(arkId, version).getMetadata());
+        versionMap.put(version, getCompoundKnowledgeObject(arkId, version).getMetadata());
       }
     } catch (URISyntaxException e) {
       e.printStackTrace();

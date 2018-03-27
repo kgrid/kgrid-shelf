@@ -8,19 +8,19 @@ import java.nio.file.Path;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface KnowledgeObject {
 
-  URI getBaseMetadataLocation();
+  URI baseMetadataLocation();
 
-  URI getModelMetadataLocation();
+  URI modelMetadataLocation();
 
   ArkId getArkId();
 
-  String getVersion();
+  String version();
 
-  String getAdapterType();
+  String adapterType();
 
-  URI getResourceLocation();
+  URI resourceLocation();
 
-  URI getServiceLocation();
+  URI serviceLocation();
 
   ObjectNode getMetadata();
 

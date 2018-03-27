@@ -16,6 +16,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -122,9 +123,6 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     HttpHeaders headers = new HttpHeaders();
     headers.setContentType(new MediaType("application", "n-triples"));
     headers.putAll(authenticationHeader().getHeaders());
-    HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
-
-//
 
     try {
       ZipInputStream zis = new ZipInputStream(zip.getInputStream());
@@ -143,15 +141,13 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
               while (sc.hasNextLine()) {
                 jsonString.append(sc.nextLine());
               }
-              JsonNode node = (new ObjectMapper().readTree(jsonString.toString()));
+              JsonNode node = new ObjectMapper().readTree(jsonString.toString());
               Model metadataModel = ModelFactory.createDefaultModel();
               Resource resource = metadataModel.createResource(dir.toString());
+              addJsonToRdfResource(node, resource, metadataModel);
 
-              node.fields().forEachRemaining(element -> resource.addLiteral(
-                  metadataModel.createProperty(element.getKey()), element.getValue()));
               StringWriter writer = new StringWriter();
               metadataModel.write(writer, "N-TRIPLE");
-              System.out.println(writer.toString());
               RequestEntity request = RequestEntity.put(new URI(dir.toString() + "/fcr:metadata"))
                   .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
                   .header("Prefer", "handling=lenient; received=\"minimal\"")
@@ -167,6 +163,20 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       ex.printStackTrace();
     }
     return null;
+  }
+
+  private void addJsonToRdfResource(JsonNode json, Resource resource, Model metadataModel) {
+    json.fields().forEachRemaining(element -> {
+      if(element.getValue().isObject()) {
+        addJsonToRdfResource(element.getValue(), resource, metadataModel);
+      } else if (element.getValue().isArray()) {
+        element.getValue().elements().forEachRemaining(arrayElement -> addJsonToRdfResource(arrayElement, resource, metadataModel));
+      } else {
+        resource.addLiteral(
+            metadataModel.createProperty("http://kgrid.org/ko#" + element.getKey()),
+            element.getValue().asText());
+      }
+    });
   }
 
   @Override

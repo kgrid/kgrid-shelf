@@ -1,16 +1,17 @@
 package edu.umich.lhs.activator.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonInclude(Include.NON_NULL)
 public class CompoundKnowledgeObject implements KnowledgeObject {
 
-  private ObjectNode koMetadata;
+  private ObjectNode metadata;
   private ArkId arkId;
 
   private final URI basePath;
@@ -65,22 +66,22 @@ public class CompoundKnowledgeObject implements KnowledgeObject {
   }
 
   @Override
-  public URI getBaseMetadataLocation() {
+  public URI baseMetadataLocation() {
     return versionPath.resolve(METADATA_FILENAME);
   }
 
   @Override
-  public URI getModelMetadataLocation() {
+  public URI modelMetadataLocation() {
     return modelPath.resolve(METADATA_FILENAME);
   }
 
   @Override
-  public URI getResourceLocation() {
+  public URI resourceLocation() {
     return modelPath.resolve(getModelMetadata().get(RESOURCE_LABEL).asText());
   }
 
   @Override
-  public URI getServiceLocation() {
+  public URI serviceLocation() {
     return modelPath.resolve(SERVICE_DIR_NAME);
   }
 
@@ -90,33 +91,33 @@ public class CompoundKnowledgeObject implements KnowledgeObject {
   }
 
   @Override
-  public String getVersion() {
-    return koMetadata.get(VERSION_LABEL).asText();
+  public String version() {
+    return metadata.get(VERSION_LABEL).asText();
   }
 
   @Override
-  public String getAdapterType() {
+  public String adapterType() {
     return getModelMetadata().get(ADAPTER_LABEL).asText();
   }
 
   @Override
   public void setMetadata(ObjectNode metadata) {
-    this.koMetadata = metadata;
+    this.metadata = metadata;
   }
 
   @Override
   public ObjectNode getMetadata() {
-    return koMetadata;
+    return metadata;
   }
 
   @Override
   public ObjectNode getModelMetadata() {
-    return (ObjectNode)koMetadata.get(MODELS_DIR_NAME);
+    return (ObjectNode) metadata.get(MODELS_DIR_NAME);
   }
 
   @Override
   public void setModelMetadata(ObjectNode metadataNode) {
-    this.koMetadata.set(MODELS_DIR_NAME, metadataNode);
+    this.metadata.set(MODELS_DIR_NAME, metadataNode);
   }
 
 }

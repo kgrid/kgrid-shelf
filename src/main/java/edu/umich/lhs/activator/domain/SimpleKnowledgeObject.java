@@ -49,17 +49,17 @@ public class SimpleKnowledgeObject implements KnowledgeObject {
 		return new ArkId(metadata.get("arkId").asText());
 	}
 
-	public String getVersion() {
+	public String version() {
 		return metadata.get("version").asText();
 	}
 
 	@Override
-	public String getAdapterType() {
+	public String adapterType() {
 		return payload.getEngineType();
 	}
 
 	@Override
-	public URI getResourceLocation() {
+	public URI resourceLocation() {
 		try {
 			return new URI(payload.getContent());
 		} catch (URISyntaxException e) {
@@ -69,7 +69,7 @@ public class SimpleKnowledgeObject implements KnowledgeObject {
 	}
 
 	@Override
-	public URI getServiceLocation() {
+	public URI serviceLocation() {
 		return null;
 	}
 
@@ -77,11 +77,11 @@ public class SimpleKnowledgeObject implements KnowledgeObject {
 		this.inputMessage = inputMessage;
 	}
 
-	public URI getBaseMetadataLocation() {
+	public URI baseMetadataLocation() {
 		return null;
 	}
 
-	public URI getModelMetadataLocation() {
+	public URI modelMetadataLocation() {
 		return null;
 	}
 

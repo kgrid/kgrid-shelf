@@ -98,11 +98,11 @@ public class FilesystemCDOStoreTest {
         Objects::nonNull).collect(Collectors.toList()).get(0);
     String version = koStore.getChildren(new URI(arkId.getFedoraPath())).stream().map(Object::toString).collect(Collectors.toList()).get(0);
     KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
-    ObjectNode metadata = (ObjectNode)koStore.getMetadata(ko.getBaseMetadataLocation()).get("metadata");
+    ObjectNode metadata = (ObjectNode)koStore.getMetadata(ko.baseMetadataLocation()).get("metadata");
     assertEquals("Stent Thrombosis Risk Calculator", metadata.get("title").asText());
     metadata.replace("title", new TextNode("TEST"));
-    koStore.saveMetadata(ko.getBaseMetadataLocation(), metadata);
-    metadata = koStore.getMetadata(ko.getBaseMetadataLocation());
+    koStore.saveMetadata(ko.baseMetadataLocation(), metadata);
+    metadata = koStore.getMetadata(ko.baseMetadataLocation());
     assertEquals("TEST", metadata.get("title").asText());
   }
 
@@ -110,11 +110,11 @@ public class FilesystemCDOStoreTest {
   public void getResource() throws Exception {
     String version = koStore.getChildren(new URI(arkId.getFedoraPath())).stream().map(Object::toString).collect(Collectors.toList()).get(0);
     KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
-    JsonNode metadata = koStore.getMetadata(ko.getBaseMetadataLocation());
-    JsonNode modelMetadata = koStore.getMetadata(ko.getModelMetadataLocation());
+    JsonNode metadata = koStore.getMetadata(ko.baseMetadataLocation());
+    JsonNode modelMetadata = koStore.getMetadata(ko.modelMetadataLocation());
     ko.setMetadata((ObjectNode)metadata);
     ko.setModelMetadata((ObjectNode)modelMetadata);
-    URI resourceLocation = ko.getResourceLocation();
+    URI resourceLocation = ko.resourceLocation();
     byte[] resource = koStore.getBinary(resourceLocation);
     assertEquals("function content(riskValues) {", new String(resource, Charset.defaultCharset()).substring(0, 30));
     String data =  "test data for broken payload";

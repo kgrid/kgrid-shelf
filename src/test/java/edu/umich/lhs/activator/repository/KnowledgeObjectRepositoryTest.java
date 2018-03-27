@@ -40,7 +40,7 @@ public class KnowledgeObjectRepositoryTest {
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", "99999-fk45m6gq9t.zip", "application/zip", zippedKO);
     repository.saveKnowledgeObject(koZip);
-    assertNotNull(repository.loadCompoundKnowledgeObject(new ArkId("ark:/99999/fk45m6gq9t"), "v0.0.1"));
+    assertNotNull(repository.getCompoundKnowledgeObject(new ArkId("ark:/99999/fk45m6gq9t"), "v0.0.1"));
   }
 
   @Test
