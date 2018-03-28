@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -29,6 +30,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class KnowledgeObjectRepository {
 
   private CompoundDigitalObjectStoreFactory factory;
+  private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
 
   @Autowired
   KnowledgeObjectRepository(CompoundDigitalObjectStoreFactory factory) {
@@ -103,7 +105,12 @@ public class KnowledgeObjectRepository {
     List<ObjectNode> knowledgeObjects = new ArrayList<>();
 
     List<ArkId> arkIds = dataStore.getChildren(null).stream()
-        .map(name -> {try {return new ArkId(name);} catch (IllegalArgumentException e) {return null;}})
+        .map(name -> {
+            try {return new ArkId(name);
+          } catch (IllegalArgumentException | NullPointerException e) {
+            log.error(e.getMessage());return null;
+          }
+        })
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
     for (ArkId arkId : arkIds) {
@@ -118,7 +125,7 @@ public class KnowledgeObjectRepository {
     return new ArkId(jsonData.get("metadata").get("arkId").get("arkId").asText());
   }
 
-  void removeKO(ArkId arkId) throws IOException, URISyntaxException {
+  public void removeKO(ArkId arkId) throws IOException, URISyntaxException {
     CompoundDigitalObjectStore dataStore = factory.create();
     dataStore.removeFile(new URI(arkId.getFedoraPath()));
 

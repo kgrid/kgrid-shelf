@@ -2,8 +2,10 @@ package edu.umich.lhs.activator.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -29,6 +31,8 @@ import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -48,11 +52,12 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private URI storagePath;
 
+  private final Logger log = LoggerFactory.getLogger(FedoraCDOStore.class);
+
   public FedoraCDOStore(String userName, String password, URI storagePath) {
     this.userName = userName;
     this.password = password;
     this.storagePath = storagePath;
-
   }
 
   @Override
@@ -76,53 +81,97 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public URI getAbsoluteLocation(URI filePath) {
+  public URI getAbsoluteLocation(URI relativePath) {
     try {
-      if(filePath != null) {
-        return new URI(storagePath.toString() + "/" + filePath.toString());
+      if(relativePath != null) {
+        return new URI(storagePath.toString() + "/" + relativePath.toString());
       } else {
         return storagePath;
       }
     } catch (URISyntaxException e) {
-      e.printStackTrace();
+      log.warn("Cannot make uri for path " + relativePath + " " + e);
       return null;
     }
   }
 
   @Override
-  public ObjectNode getMetadata(URI filePath) {
+  public ObjectNode getMetadata(URI relativePath) {
+
     try {
-      Model metadataRDF = getRdfJson(new URI(storagePath + "/" + filePath));
-    } catch (URISyntaxException e) {
-      e.printStackTrace();
+      Model metadataRDF = getRdfJson(new URI(storagePath + "/" + relativePath));
+      StringWriter stringWriter = new StringWriter();
+      metadataRDF.write(stringWriter, "JSON-LD");
+      ObjectMapper mapper = new ObjectMapper();
+      ObjectNode node = (ObjectNode)mapper.readTree(stringWriter.toString());
+      return node;
+    } catch (URISyntaxException | IOException e) {
+      log.error("Cannot get metadata from location " + relativePath + " " + e);
       return null;
     }
-    return null;
+
   }
 
   @Override
-  public byte[] getBinary(URI filePath) {
-    return new byte[0];
+  public byte[] getBinary(URI relativePath) {
+    URI path = null;
+    try {
+      path = new URI(storagePath + "/" + relativePath);
+    } catch (URISyntaxException e) {
+      log.warn(e.getMessage());
+    }
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+
+    RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
+    ResponseEntity<byte[]> response = restTemplate.exchange(path, HttpMethod.GET, authenticationHeader(), byte[].class);
+    return response.getBody();
   }
 
   @Override
-  public void saveMetadata(URI destination, JsonNode metadata) {
+  public void saveMetadata(URI destination, JsonNode node) {
+    try {
+      HttpClient instance = HttpClientBuilder.create()
+          .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+      RestTemplate restTemplate = new RestTemplate(
+          new HttpComponentsClientHttpRequestFactory(instance));
+      HttpHeaders headers = new HttpHeaders();
+      headers.setContentType(new MediaType("application", "n-triples"));
+      headers.putAll(authenticationHeader().getHeaders());
 
+      Model metadataModel = ModelFactory.createDefaultModel();
+      Resource resource = metadataModel.createResource(destination.toString());
+      addJsonToRdfResource(node, resource, metadataModel);
+
+      StringWriter writer = new StringWriter();
+      metadataModel.write(writer, "N-TRIPLE");
+      RequestEntity request = RequestEntity.put(new URI(destination.toString() + "/fcr:metadata"))
+          .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+          .header("Prefer", "handling=lenient; received=\"minimal\"")
+          .contentType(new MediaType("application", "n-triples", StandardCharsets.UTF_8))
+          .body(writer.toString());
+      ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+    } catch (URISyntaxException e) {
+      log.warn("Cannot put metadata at location " + destination + " " + e);
+    }
   }
 
   @Override
   public void saveBinary(URI destination, byte[] data) {
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
+    RestTemplate restTemplate = new RestTemplate(
+        new HttpComponentsClientHttpRequestFactory(instance));
+
+    RequestEntity request = RequestEntity.put(destination)
+        .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+        .body(data);
+
+    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
   }
 
   @Override
   public ObjectNode addCompoundObjectToShelf(MultipartFile zip) {
-    HttpClient instance = HttpClientBuilder.create()
-        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
-    RestTemplate restTemplate = new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(new MediaType("application", "n-triples"));
-    headers.putAll(authenticationHeader().getHeaders());
 
     try {
       ZipInputStream zis = new ZipInputStream(zip.getInputStream());
@@ -134,27 +183,21 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
           if (!entry.isDirectory()) {
             System.out.println(
                 "Zip entry filename: " + entry.getName() + " filesize: " + entry.getSize() + " dir: " + dir);
+            StringBuilder dataString = new StringBuilder();
+            Scanner sc = new Scanner(zis);
             if(entry.getName().endsWith("metadata.json")) {
-              dir = new URI(dir.toString().substring(0, dir.toString().length() - ("metadata.json".length() + 1)));
-              StringBuilder jsonString = new StringBuilder();
-              Scanner sc = new Scanner(zis);
               while (sc.hasNextLine()) {
-                jsonString.append(sc.nextLine());
+                dataString.append(sc.nextLine());
               }
-              JsonNode node = new ObjectMapper().readTree(jsonString.toString());
-              Model metadataModel = ModelFactory.createDefaultModel();
-              Resource resource = metadataModel.createResource(dir.toString());
-              addJsonToRdfResource(node, resource, metadataModel);
+              dir = new URI(dir.toString().substring(0, dir.toString().length() - ("metadata.json".length() + 1)));
+              JsonNode node = new ObjectMapper().readTree(dataString.toString());
+              saveMetadata(dir, node);
+            } else {
+              while (sc.hasNext()) {
+                dataString.append(sc.next());
+              }
+              saveBinary(dir, dataString.toString().getBytes());
 
-              StringWriter writer = new StringWriter();
-              metadataModel.write(writer, "N-TRIPLE");
-              RequestEntity request = RequestEntity.put(new URI(dir.toString() + "/fcr:metadata"))
-                  .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
-                  .header("Prefer", "handling=lenient; received=\"minimal\"")
-                  .contentType(new MediaType("application", "n-triples", StandardCharsets.UTF_8))
-                  .body(writer.toString());
-              ResponseEntity<String> response = restTemplate.exchange(request, String.class);
-              System.out.println("Got response for " + dir + " " + response);
             }
           }
         }

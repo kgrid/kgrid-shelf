@@ -30,11 +30,9 @@ public class ShelfController {
   @Autowired
   KnowledgeObjectRepository shelf;
 
-  @GetMapping("/ark:/{naan}/{name}/{version}")
-  public KnowledgeObject getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version) {
-    ArkId arkId = new ArkId(naan, name);
-
-    return shelf.getCompoundKnowledgeObject(arkId, version);
+  @GetMapping("/")
+  public List<ObjectNode> getAllObjects() {
+    return shelf.getAllObjects();
   }
 
   @GetMapping("/ark:/{naan}/{name}")
@@ -43,15 +41,20 @@ public class ShelfController {
     return shelf.knowledgeObjectVersions(arkId);
   }
 
-  @GetMapping("/")
-  public List<ObjectNode> getAllObjects() {
-     return shelf.getAllObjects();
+  @GetMapping("/ark:/{naan}/{name}/{version}")
+  public KnowledgeObject getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version) {
+    ArkId arkId = new ArkId(naan, name);
+
+    return shelf.getCompoundKnowledgeObject(arkId, version);
   }
 
-  @PutMapping(path = {"/ark:/{naan}/{name}/{version}"})
-  public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
+  @PutMapping(path = {"ark:/{naan}/{name}"})
+  public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
+
     ArkId arkId = shelf.saveKnowledgeObject(zippedKo);
+    if(!pathArk.equals(arkId)) {
+    }
     String response = arkId + " added to the shelf";
 
     ResponseEntity<String> result = new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -59,8 +62,8 @@ public class ShelfController {
     return result;
   }
 
-  @PutMapping(path = {"ark:/{naan}/{name}"})
-  public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @RequestParam("ko") MultipartFile zippedKo) {
+  @PutMapping(path = {"/ark:/{naan}/{name}/{version}"})
+  public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
     ArkId arkId = shelf.saveKnowledgeObject(zippedKo);
     String response = arkId + " added to the shelf";

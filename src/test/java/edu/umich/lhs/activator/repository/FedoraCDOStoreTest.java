@@ -41,4 +41,17 @@ public class FedoraCDOStoreTest {
     ObjectNode json = store.addCompoundObjectToShelf(koZip);
 
   }
+
+//  @Test
+//  public void getMetadataFromStore() throws Exception {
+//    URI filename = new URI("99999-fk45m6gq9t");
+//    assertEquals("{\"@id\":\"ht", store.getMetadata(filename).toString().substring(0, 10));
+//  }
+//
+//  @Test
+//  public void getBinaryDataFromStore() throws Exception {
+//    URI filename = new URI("99999-fk45m6gq9t/Resources");
+//    byte[] data = store.getBinary(filename);
+//    assertEquals("from math ", new String(data).substring(0, 10));
+//  }
 }
