@@ -2,21 +2,18 @@ package edu.umich.lhs.activator.repository;
 
 import static org.junit.Assert.*;
 
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.experimental.categories.Category;
 import org.springframework.mock.web.MockMultipartFile;
 
+@Category(IntegrationTest.class)
 public class FedoraCDOStoreTest {
 
   FedoraCDOStore store;
@@ -57,11 +54,11 @@ public class FedoraCDOStoreTest {
     URI filename = new URI("99999-fk45m6gq9t");
     assertEquals("{\"@id\":\"ht", store.getMetadata(filename).toString().substring(0, 10));
   }
-//
-//  @Test
-//  public void getBinaryDataFromStore() throws Exception {
-//    URI filename = new URI("99999-fk45m6gq9t/v0.0.1/models/resource/content.js");
-//    byte[] data = store.getBinary(filename);
-//    assertEquals("from math ", new String(data).substring(0, 10));
-//  }
+
+  @Test
+  public void getBinaryDataFromStore() throws Exception {
+    URI filename = new URI("99999-fk45m6gq9t/v0.0.1/models/resource/content.js");
+    byte[] data = store.getBinary(filename);
+    assertEquals("from math ", new String(data).substring(0, 10));
+  }
 }
