@@ -5,68 +5,17 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>shelf</artifactId>
-  <groupId>edu.umich.lhs</groupId>
+  <groupId>org.kgrid</groupId>
   <version>0.5.8-SNAPSHOT</version>
 
   <name>shelf</name>
   <description>KGrid: Shelf</description>
+  <packaging>pom</packaging>
 
-  <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>1.5.10.RELEASE</version>
-    <relativePath />
-  </parent>
+  <modules>
+    <module>shelf-api</module>
+    <module>shelf-gateway</module>
 
-  <properties>
-    <java.version>1.8</java.version> <!-- override spring boot parent; sets java source & target -->
-    <packaging>war</packaging>
-  </properties>
-
-  <dependencies>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-context</artifactId>
-      <version>4.3.13.RELEASE</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>4.5.3</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.jena</groupId>
-      <artifactId>jena-core</artifactId>
-      <version>3.2.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.jena</groupId>
-      <artifactId>jena-arq</artifactId>
-      <version>3.2.0</version>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.jena</groupId>
-      <artifactId>jena-querybuilder</artifactId>
-      <version>3.2.0</version>
-    </dependency>
-  </dependencies>
-
-  <build>
-    <plugins>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-      </plugin>
-    </plugins>
-  </build>
+  </modules>
 
 </project>

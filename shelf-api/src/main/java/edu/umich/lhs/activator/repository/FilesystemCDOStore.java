@@ -122,6 +122,9 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   public ObjectNode addCompoundObjectToShelf(MultipartFile zip) {
     Path shelf = Paths.get(localStoragePath);
     String filename = zip.getOriginalFilename();
+    int entries = 0;
+    long totalSize = 0;
+
     if(filename.endsWith(".zip")) {
       filename = filename.substring(0, filename.length()-4);
     }
@@ -130,8 +133,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     if(parts.length > 2) {
       version = parts[2];
     }
-    try {
-      ZipInputStream zis = new ZipInputStream(zip.getInputStream());
+    try (ZipInputStream zis = new ZipInputStream(zip.getInputStream())) {
       ZipEntry entry;
       while((entry = zis.getNextEntry()) != null) {
         if(!entry.getName().contains("/.") && !entry.getName().contains("__MACOSX")) {
@@ -140,6 +142,17 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
             dir.toFile().mkdirs();
           } else {
             Files.copy(zis, dir, StandardCopyOption.REPLACE_EXISTING);
+
+            // Prevent zip bombs from using all available resources
+            totalSize += Files.size(dir);
+            entries++;
+            if(entries > 1024) {
+              throw new IllegalStateException("Zip file " + zip.getName() + " has too many files in it to unzip.");
+            }
+            if (totalSize > 0x6400000) { // Over 100 MB
+              log.error("Zip file " + zip.getName() + " has too many files in it to unzip.");
+              throw new IllegalStateException("Zip file " + zip.getName() + " is too large to unzip.");
+            }
           }
         }
       }
