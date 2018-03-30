@@ -46,7 +46,7 @@ public class FilesystemCDOStoreTest {
 
   @After
   public void deleteKO() throws Exception {
-    (koStore).removeFile(new URI(this.arkId.getFedoraPath()));
+    (koStore).removeFile(Paths.get(this.arkId.getFedoraPath()));
     Path shelf = Paths.get(koStore.getAbsoluteLocation(null));
     if(Files.isDirectory(shelf)) {
       nukeTestShelf(shelf);
@@ -87,7 +87,7 @@ public class FilesystemCDOStoreTest {
     List<String> expectedVersions = new ArrayList<>();
     expectedVersions.add("default");
     expectedVersions.add("v0.0.1");
-    List<String> versions = koStore.getChildren(new URI(arkId.getFedoraPath()));
+    List<String> versions = koStore.getChildren(Paths.get(arkId.getFedoraPath()));
     versions.sort(Comparator.naturalOrder());
     assertEquals(expectedVersions, versions);
   }
@@ -96,7 +96,7 @@ public class FilesystemCDOStoreTest {
   public void getBaseMetadata() throws Exception {
     ArkId arkId = koStore.getChildren(null).stream().map(name -> {try {return new ArkId(name);} catch (IllegalArgumentException e) {e.printStackTrace(); return null;}}).filter(
         Objects::nonNull).collect(Collectors.toList()).get(0);
-    String version = koStore.getChildren(new URI(arkId.getFedoraPath())).stream().map(Object::toString).collect(Collectors.toList()).get(0);
+    String version = koStore.getChildren(Paths.get(arkId.getFedoraPath())).stream().map(Object::toString).collect(Collectors.toList()).get(0);
     KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
     ObjectNode metadata = (ObjectNode)koStore.getMetadata(ko.baseMetadataLocation()).get("metadata");
     assertEquals("Stent Thrombosis Risk Calculator", metadata.get("title").asText());
@@ -108,13 +108,13 @@ public class FilesystemCDOStoreTest {
 
   @Test
   public void getResource() throws Exception {
-    String version = koStore.getChildren(new URI(arkId.getFedoraPath())).stream().map(Object::toString).collect(Collectors.toList()).get(0);
+    String version = koStore.getChildren(Paths.get(arkId.getFedoraPath())).stream().map(Object::toString).collect(Collectors.toList()).get(0);
     KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
     JsonNode metadata = koStore.getMetadata(ko.baseMetadataLocation());
     JsonNode modelMetadata = koStore.getMetadata(ko.modelMetadataLocation());
     ko.setMetadata((ObjectNode)metadata);
     ko.setModelMetadata((ObjectNode)modelMetadata);
-    URI resourceLocation = ko.resourceLocation();
+    Path resourceLocation = ko.resourceLocation();
     byte[] resource = koStore.getBinary(resourceLocation);
     assertEquals("function content(riskValues) {", new String(resource, Charset.defaultCharset()).substring(0, 30));
     String data =  "test data for broken payload";

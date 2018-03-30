@@ -63,7 +63,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public List<String> getChildren(URI filePath) {
+  public List<String> getChildren(Path filePath) {
     Model rdf = null;
     try {
        rdf = getRdfJson(new URI(storagePath.toString() + filePath.toString()));
@@ -83,21 +83,16 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public URI getAbsoluteLocation(URI relativePath) {
-    try {
-      if(relativePath != null) {
-        return new URI(storagePath.toString() + "/" + relativePath.toString());
-      } else {
-        return storagePath;
-      }
-    } catch (URISyntaxException e) {
-      log.warn("Cannot make uri for path " + relativePath + " " + e);
-      return null;
+  public String getAbsoluteLocation(Path relativePath) {
+    if(relativePath != null) {
+      return storagePath.toString() + "/" + relativePath.toString();
+    } else {
+      return storagePath.toString();
     }
   }
 
   @Override
-  public ObjectNode getMetadata(URI relativePath) {
+  public ObjectNode getMetadata(Path relativePath) {
 
     try {
       Model metadataRDF = getRdfJson(new URI(storagePath + "/" + relativePath));
@@ -114,7 +109,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public byte[] getBinary(URI relativePath) {
+  public byte[] getBinary(Path relativePath) {
     URI path = null;
     try {
       path = new URI(storagePath + "/" + relativePath);
@@ -130,9 +125,9 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveMetadata(URI relativePath, JsonNode node) {
+  public void saveMetadata(Path relativePath, JsonNode node) {
     try {
-      URI destination = new URI(storagePath + "/" + relativePath);
+      URI destination = new URI(storagePath + "/" + relativePath.toString());
       HttpClient instance = HttpClientBuilder.create()
           .setRedirectStrategy(new DefaultRedirectStrategy()).build();
       RestTemplate restTemplate = new RestTemplate(
@@ -159,9 +154,9 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveBinary(URI relativePath, byte[] data) {
+  public void saveBinary(Path relativePath, byte[] data) {
     try {
-      URI destination = new URI(storagePath + "/" + relativePath);
+      URI destination = new URI(storagePath + "/" + relativePath.toString());
       HttpClient instance = HttpClientBuilder.create()
           .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
@@ -182,13 +177,12 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   @Override
   public ObjectNode addCompoundObjectToShelf(MultipartFile zip) {
 
-    try {
-      ZipInputStream zis = new ZipInputStream(zip.getInputStream());
+    try (ZipInputStream zis = new ZipInputStream(zip.getInputStream())) {
       ZipEntry entry;
       while ((entry = zis.getNextEntry()) != null) {
 
         if (!entry.getName().contains("/.")) {
-          URI dir = new URI(entry.getName());
+          String dir = entry.getName();
           if (!entry.isDirectory()) {
             StringBuilder dataString = new StringBuilder();
             Scanner sc = new Scanner(zis);
@@ -196,20 +190,20 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
               while (sc.hasNextLine()) {
                 dataString.append(sc.nextLine());
               }
-              dir = new URI(dir.toString().substring(0, dir.toString().length() - ("metadata.json".length() + 1)));
+              dir = dir.substring(0, dir.length() - ("metadata.json".length() + 1));
               JsonNode node = new ObjectMapper().readTree(dataString.toString());
-              saveMetadata(dir, node);
+              saveMetadata(Paths.get(dir), node);
             } else {
               while (sc.hasNextLine()) {
                 dataString.append(sc.nextLine());
               }
-              saveBinary(dir, dataString.toString().getBytes());
+              saveBinary(Paths.get(dir), dataString.toString().getBytes());
 
             }
           }
         }
       }
-    } catch (Exception ex) {
+    } catch (IOException ex) {
       ex.printStackTrace();
     }
     return null;
@@ -230,7 +224,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void removeFile(URI relativePath) {
+  public void removeFile(Path relativePath) {
     try {
       URI destination = new URI(storagePath + "/" + relativePath);
       HttpClient instance = HttpClientBuilder.create()

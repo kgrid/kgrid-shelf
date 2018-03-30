@@ -12,20 +12,20 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public interface CompoundDigitalObjectStore {
 
-  List<String> getChildren(URI relativeLocation);
+  List<String> getChildren(Path relativeLocation);
 
-  URI getAbsoluteLocation(URI relativeLocation);
+  String getAbsoluteLocation(Path relativeLocation);
 
-  ObjectNode getMetadata(URI relativeLocation);
+  ObjectNode getMetadata(Path relativeLocation);
 
-  byte[] getBinary(URI relativeLocation);
+  byte[] getBinary(Path relativeLocation);
 
-  void saveMetadata(URI relativeDestination, JsonNode metadata);
+  void saveMetadata(Path relativeDestination, JsonNode metadata);
 
-  void saveBinary(URI relativeDestination, byte[] data);
+  void saveBinary(Path relativeDestination, byte[] data);
 
   ObjectNode addCompoundObjectToShelf(MultipartFile zip);
 
-  void removeFile(URI relativeLocation) throws IOException;
+  void removeFile(Path relativeLocation) throws IOException;
 
 }

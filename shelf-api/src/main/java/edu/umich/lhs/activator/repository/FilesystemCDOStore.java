@@ -40,10 +40,10 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public List<String> getChildren(URI filePath) {
+  public List<String> getChildren(Path filePath) {
     Path path = Paths.get(localStoragePath);
     if(filePath != null) {
-      path = path.resolve(filePath.toString());
+      path = path.resolve(filePath);
     }
     List<String> children = new ArrayList<>();
     try {
@@ -59,18 +59,18 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public URI getAbsoluteLocation(URI relativeFilePath) {
+  public String getAbsoluteLocation(Path relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
     if(relativeFilePath == null) {
-      return shelf.toUri();
+      return shelf.toString();
     }
-    return shelf.resolve(relativeFilePath.toString()).toUri();
+    return shelf.resolve(relativeFilePath).toString();
   }
 
   @Override
-  public ObjectNode getMetadata(URI relativePath) {
+  public ObjectNode getMetadata(Path relativePath) {
     Path shelf = Paths.get(localStoragePath);
-    File metadataFile = shelf.resolve(relativePath.toString()).toFile();
+    File metadataFile = shelf.resolve(relativePath).toFile();
     if(!metadataFile.exists()) {
       log.error("Cannot find metadata file for knowledge object at " + metadataFile);
     }
@@ -86,11 +86,11 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public byte[] getBinary(URI relativeFilePath) {
+  public byte[] getBinary(Path relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
     byte[] bytes = null;
     try {
-      bytes = Files.readAllBytes(shelf.resolve(relativeFilePath.toString()));
+      bytes = Files.readAllBytes(shelf.resolve(relativeFilePath));
     } catch (IOException ioEx) {
       log.error("Cannot read file at " + relativeFilePath + " " + ioEx);
     }
@@ -98,7 +98,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveMetadata(URI relativePath, JsonNode metadata) {
+  public void saveMetadata(Path relativePath, JsonNode metadata) {
     File metadataFile = new File(localStoragePath, relativePath.toString());
     try {
       ObjectWriter writer = new ObjectMapper().writer();
@@ -109,7 +109,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveBinary(URI relativePath, byte[] output) {
+  public void saveBinary(Path relativePath, byte[] output) {
     File dataFile = new File(localStoragePath, relativePath.toString());
     try (FileOutputStream fos = new FileOutputStream(dataFile)){
       fos.write(output);
@@ -161,22 +161,17 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
     String objectRoot = parts[0] + "-" + parts[1];
 
-    try {
-      if(version == null) {
-        // TODO: Get default version?
-        version = getChildren(new URI(objectRoot)).get(0);
-      }
-      URI metadataLocation = new URI(objectRoot + "/" + version + "/metadata.json");
-      return getMetadata(metadataLocation);
-    } catch (URISyntaxException e) {
-      e.printStackTrace();
-      return null;
+    if(version == null) {
+      // TODO: Get default version?
+      version = getChildren(Paths.get(objectRoot)).get(0);
     }
+    Path metadataLocation = Paths.get(objectRoot, version, "metadata.json");
+    return getMetadata(metadataLocation);
   }
 
   // rm -rf repository/arkId ** dangerous! **
   @Override
-  public void removeFile(URI filePath) throws IOException {
+  public void removeFile(Path filePath) throws IOException {
     Path shelf = Paths.get(localStoragePath);
     Path ko = shelf.resolve(filePath.toString());
 

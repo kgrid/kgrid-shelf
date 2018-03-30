@@ -5,7 +5,7 @@
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>shelf-gateway</artifactId>
-  <groupId>kgrid-org</groupId>
+  <groupId>org.kgrid</groupId>
   <version>0.5.8-SNAPSHOT</version>
 
   <name>shelf-gateway</name>
@@ -44,7 +44,7 @@
       <version>4.5.3</version>
     </dependency>
     <dependency>
-      <groupId>kgrid-org</groupId>
+      <groupId>org.kgrid</groupId>
       <artifactId>shelf-api</artifactId>
       <version>0.5.8-SNAPSHOT</version>
     </dependency>

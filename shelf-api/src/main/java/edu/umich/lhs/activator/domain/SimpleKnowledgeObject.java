@@ -59,17 +59,12 @@ public class SimpleKnowledgeObject implements KnowledgeObject {
 	}
 
 	@Override
-	public URI resourceLocation() {
-		try {
-			return new URI(payload.getContent());
-		} catch (URISyntaxException e) {
-			e.printStackTrace();
-			return null;
-		}
+	public Path resourceLocation() {
+			return Paths.get(payload.getContent());
 	}
 
 	@Override
-	public URI serviceLocation() {
+	public Path serviceLocation() {
 		return null;
 	}
 
@@ -77,11 +72,11 @@ public class SimpleKnowledgeObject implements KnowledgeObject {
 		this.inputMessage = inputMessage;
 	}
 
-	public URI baseMetadataLocation() {
+	public Path baseMetadataLocation() {
 		return null;
 	}
 
-	public URI modelMetadataLocation() {
+	public Path modelMetadataLocation() {
 		return null;
 	}
 
