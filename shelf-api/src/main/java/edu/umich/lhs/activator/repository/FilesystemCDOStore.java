@@ -146,7 +146,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
             // Prevent zip bombs from using all available resources
             totalSize += Files.size(dir);
             entries++;
-            if(entries > 1024) {
+            if (entries > 1024) {
               throw new IllegalStateException("Zip file " + zip.getName() + " has too many files in it to unzip.");
             }
             if (totalSize > 0x6400000) { // Over 100 MB

@@ -10,8 +10,6 @@ import edu.umich.lhs.activator.domain.KnowledgeObject;
 import edu.umich.lhs.activator.domain.Payload;
 import edu.umich.lhs.activator.domain.SimpleKnowledgeObject;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -99,9 +97,9 @@ public class KnowledgeObjectRepository {
     return versionMap;
   }
 
-  public List<ObjectNode> getAllObjects(){
+  public Map<String, Map<String, ObjectNode>> getAllObjects(){
     CompoundDigitalObjectStore dataStore = factory.create();
-    List<ObjectNode> knowledgeObjects = new ArrayList<>();
+    Map<String, Map<String, ObjectNode>> knowledgeObjects = new HashMap<>();
 
     List<ArkId> arkIds = dataStore.getChildren(null).stream()
         .map(name -> {
@@ -113,7 +111,7 @@ public class KnowledgeObjectRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
     for (ArkId arkId : arkIds) {
-      knowledgeObjects.addAll(knowledgeObjectVersions(arkId).values());
+      knowledgeObjects.put(arkId.getArkId(), knowledgeObjectVersions(arkId));
     }
     return knowledgeObjects;
   }
@@ -122,6 +120,29 @@ public class KnowledgeObjectRepository {
     CompoundDigitalObjectStore dataStore = factory.create();
     ObjectNode jsonData = dataStore.addCompoundObjectToShelf(zippedKO);
     return new ArkId(jsonData.get("metadata").get("arkId").get("arkId").asText());
+  }
+
+  public ObjectNode editMetadata(ArkId arkId, String version, String path, String metadata) {
+    CompoundDigitalObjectStore dataStore = factory.create();
+    Path metadataPath;
+    if (path != null && !"".equals(path)) {
+      metadataPath = Paths.get(arkId.getFedoraPath(), version, path, "metadata.json");
+    } else {
+      metadataPath = Paths.get(arkId.getFedoraPath(), version, "metadata.json");
+    }
+
+    List<String> immutableFields = new ArrayList<>();
+    immutableFields.add("arkId");
+    immutableFields.add("version");
+    try {
+      JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
+
+      dataStore.saveMetadata(metadataPath, jsonMetadata);
+
+    } catch (IOException e) {
+      log.error("Cannot edit metadata at " + metadataPath + " " + e);
+    }
+    return dataStore.getMetadata(metadataPath);
   }
 
   public void removeKO(ArkId arkId) throws IOException {

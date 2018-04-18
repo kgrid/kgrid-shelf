@@ -5,25 +5,26 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.umich.lhs.activator.domain.ArkId;
 import edu.umich.lhs.activator.domain.KnowledgeObject;
 import edu.umich.lhs.activator.repository.KnowledgeObjectRepository;
-import java.net.URISyntaxException;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
-import javax.validation.constraints.Null;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
 
+@CrossOrigin(origins = "localhost:8083", maxAge = 3600)
 @RestController
 public class ShelfController {
 
@@ -31,7 +32,7 @@ public class ShelfController {
   KnowledgeObjectRepository shelf;
 
   @GetMapping("/")
-  public List<ObjectNode> getAllObjects() {
+  public Map<String, Map<String, ObjectNode>> getAllObjects() {
     return shelf.getAllObjects();
   }
 
@@ -73,9 +74,21 @@ public class ShelfController {
     return result;
   }
 
+  @PutMapping(path = {"ark:/{naan}/{name}/{version}"}, consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
+    ArkId arkId = new ArkId(naan, name);
+    shelf.editMetadata(arkId, version, null, data);
+    return new ResponseEntity<>(shelf.getCompoundKnowledgeObject(arkId, version), HttpStatus.OK);
+  }
+
+  @PutMapping(path = {"ark:/{naan}/{name}/{version}/{path}"}, consumes = MediaType.APPLICATION_JSON_VALUE )
+  public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @PathVariable String path, @RequestBody String data) {
+    ArkId arkId = new ArkId(naan, name);
+    shelf.editMetadata(arkId, version, path, data);
+    return new ResponseEntity<>(shelf.getCompoundKnowledgeObject(arkId, version), HttpStatus.OK);
+  }
 
   //Exception handling:
-
   @ExceptionHandler(NullPointerException.class)
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NullPointerException e, WebRequest request) {
 

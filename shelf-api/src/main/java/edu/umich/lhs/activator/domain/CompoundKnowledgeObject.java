@@ -1,5 +1,6 @@
 package edu.umich.lhs.activator.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
@@ -22,6 +23,7 @@ public class CompoundKnowledgeObject implements KnowledgeObject {
   private final Path resourcePath;
   private final Path servicePath;
 
+
   private static final String MODELS_DIR_NAME = "models/";
   private static final String RESOURCE_DIR_NAME = "resource/";
   private static final String SERVICE_DIR_NAME = "service/";
@@ -43,22 +45,27 @@ public class CompoundKnowledgeObject implements KnowledgeObject {
     servicePath = modelPath.resolve(SERVICE_DIR_NAME);
   }
 
+  @JsonIgnore
   public Path getBaseDir() {
     return basePath;
   }
 
+  @JsonIgnore
   public Path getVersionDir() {
     return versionPath;
   }
 
+  @JsonIgnore
   public Path getModelDir() {
     return modelPath;
   }
 
+  @JsonIgnore
   public Path getResourceDir() {
     return resourcePath;
   }
 
+  @JsonIgnore
   public Path getServiceDir() {
     return servicePath;
   }
@@ -84,6 +91,7 @@ public class CompoundKnowledgeObject implements KnowledgeObject {
   }
 
   @Override
+  @JsonIgnore
   public ArkId getArkId() {
     return arkId;
   }
