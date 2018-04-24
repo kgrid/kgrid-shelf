@@ -63,12 +63,11 @@ public class ShelfController {
   public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletResponse response) {
     ArkId arkId = new ArkId(naan, name);
     response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
-    try (OutputStream outputStream = response.getOutputStream()){
-      shelf.getZippedKnowledgeObject(arkId, version, outputStream);
+    try {
+      shelf.getZippedKnowledgeObject(arkId, version, response.getOutputStream());
     } catch (IOException ex) {
-      response.setStatus(404);
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     }
-
   }
 
   @PutMapping(path = {"/ark:/{naan}/{name}"})

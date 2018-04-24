@@ -123,7 +123,7 @@ public class KnowledgeObjectRepository {
     return new ArkId(jsonData.get("metadata").get("arkId").get("arkId").asText());
   }
 
-  public void getZippedKnowledgeObject(ArkId arkId, String version, OutputStream outputStream) {
+  public void getZippedKnowledgeObject(ArkId arkId, String version, OutputStream outputStream) throws IOException {
     CompoundDigitalObjectStore dataStore = factory.create();
     dataStore.getCompoundObjectFromShelf(arkId, version, outputStream);
   }

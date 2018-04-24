@@ -221,7 +221,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void getCompoundObjectFromShelf(ArkId arkId, String version, OutputStream outputStream) {
+  public void getCompoundObjectFromShelf(ArkId arkId, String version, OutputStream outputStream) throws IOException {
 
   }
 

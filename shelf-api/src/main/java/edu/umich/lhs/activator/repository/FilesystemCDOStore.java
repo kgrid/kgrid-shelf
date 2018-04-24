@@ -198,28 +198,25 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
-  public void getCompoundObjectFromShelf(ArkId arkId, String version, OutputStream outputStream) {
+  public void getCompoundObjectFromShelf(ArkId arkId, String version, OutputStream outputStream) throws IOException {
     Path shelf = Paths.get(localStoragePath);
     String arkFilename = arkId.getFedoraPath();
     Path versionDir = Paths.get(arkFilename, version);
 //    try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(shelf.resolve(arkFilename + "-" + version + ".zip")))) {
-    try(ZipOutputStream zs = new ZipOutputStream(outputStream)) {
-      Path parentPath = shelf.resolve(versionDir);
-      Files.walk(parentPath)
-          .filter(path -> !Files.isDirectory(path))
-          .forEach(file -> {
-            ZipEntry zipEntry = new ZipEntry(parentPath.relativize(file).toString());
-            try {
-              zs.putNextEntry(zipEntry);
-              Files.copy(file, zs);
-              zs.closeEntry();
-            } catch (IOException ioEx) {
-              log.error("Cannot create zip of ko due to error " + ioEx);
-            }
-          });
-
-    } catch (IOException ioEx) {
-      throw new IllegalArgumentException("Cannot create zip of ko due to error " + ioEx);
-    }
+    ZipOutputStream zs = new ZipOutputStream(outputStream);
+    Path parentPath = shelf.resolve(versionDir);
+    Files.walk(parentPath)
+        .filter(path -> !Files.isDirectory(path))
+        .forEach(file -> {
+          ZipEntry zipEntry = new ZipEntry(parentPath.relativize(file).toString());
+          try {
+            zs.putNextEntry(zipEntry);
+            Files.copy(file, zs);
+            zs.closeEntry();
+          } catch (IOException ioEx) {
+            log.error("Cannot create zip of ko due to error " + ioEx);
+          }
+        });
+    zs.close();
   }
 }
