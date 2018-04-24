@@ -10,6 +10,7 @@ import edu.umich.lhs.activator.domain.KnowledgeObject;
 import edu.umich.lhs.activator.domain.Payload;
 import edu.umich.lhs.activator.domain.SimpleKnowledgeObject;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -120,6 +121,11 @@ public class KnowledgeObjectRepository {
     CompoundDigitalObjectStore dataStore = factory.create();
     ObjectNode jsonData = dataStore.addCompoundObjectToShelf(zippedKO);
     return new ArkId(jsonData.get("metadata").get("arkId").get("arkId").asText());
+  }
+
+  public void getZippedKnowledgeObject(ArkId arkId, String version, OutputStream outputStream) {
+    CompoundDigitalObjectStore dataStore = factory.create();
+    dataStore.getCompoundObjectFromShelf(arkId, version, outputStream);
   }
 
   public ObjectNode editMetadata(ArkId arkId, String version, String path, String metadata) {

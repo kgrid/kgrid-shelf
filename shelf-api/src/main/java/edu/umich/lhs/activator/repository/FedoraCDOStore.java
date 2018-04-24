@@ -2,24 +2,22 @@ package edu.umich.lhs.activator.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import edu.umich.lhs.activator.domain.ArkId;
 import java.io.ByteArrayInputStream;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -34,6 +32,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
@@ -42,10 +41,11 @@ import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-
+@Component
 public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private String userName;
@@ -56,10 +56,21 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private final Logger log = LoggerFactory.getLogger(FedoraCDOStore.class);
 
-  public FedoraCDOStore(String userName, String password, URI storagePath) {
+  public FedoraCDOStore() { }
+
+  private FedoraCDOStore (@Value("${shelf.path:.}") String storagePath) {
+    try {
+      this.storagePath = new URI(storagePath);
+    } catch (URISyntaxException e) {
+      log.error("Cannot create storage path URI from " + storagePath + " " + e);
+    }
+  }
+
+  public FedoraCDOStore initialize(String userName, String password, URI storagePath) {
     this.userName = userName;
     this.password = password;
     this.storagePath = storagePath;
+    return this;
   }
 
   @Override
@@ -207,6 +218,11 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       ex.printStackTrace();
     }
     return null;
+  }
+
+  @Override
+  public void getCompoundObjectFromShelf(ArkId arkId, String version, OutputStream outputStream) {
+
   }
 
   private void addJsonToRdfResource(JsonNode json, Resource resource, Model metadataModel) {

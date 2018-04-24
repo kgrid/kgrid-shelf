@@ -5,13 +5,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.umich.lhs.activator.domain.ArkId;
 import edu.umich.lhs.activator.domain.KnowledgeObject;
 import edu.umich.lhs.activator.repository.KnowledgeObjectRepository;
+import java.io.File;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import javax.print.attribute.standard.Media;
+import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -24,12 +30,16 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 
-@CrossOrigin(origins = "http://localhost:3000", maxAge = 3600)
+@CrossOrigin(origins = "${cors.url}")
 @RestController
 public class ShelfController {
 
+  private KnowledgeObjectRepository shelf;
+
   @Autowired
-  KnowledgeObjectRepository shelf;
+  public ShelfController(KnowledgeObjectRepository shelf) {
+    this.shelf = shelf;
+  }
 
   @GetMapping("/")
   public Map<String, Map<String, ObjectNode>> getAllObjects() {
@@ -49,7 +59,19 @@ public class ShelfController {
     return shelf.getCompoundKnowledgeObject(arkId, version);
   }
 
-  @PutMapping(path = {"ark:/{naan}/{name}"})
+  @GetMapping(path = "/ark:/{naan}/{name}/{version}", produces = "application/zip")
+  public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletResponse response) {
+    ArkId arkId = new ArkId(naan, name);
+    response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
+    try (OutputStream outputStream = response.getOutputStream()){
+      shelf.getZippedKnowledgeObject(arkId, version, outputStream);
+    } catch (IOException ex) {
+      response.setStatus(404);
+    }
+
+  }
+
+  @PutMapping(path = {"/ark:/{naan}/{name}"})
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
 
@@ -74,14 +96,14 @@ public class ShelfController {
     return result;
   }
 
-  @PutMapping(path = {"ark:/{naan}/{name}/{version}"}, consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(path = {"/ark:/{naan}/{name}/{version}"}, consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, null, data);
     return new ResponseEntity<>(shelf.getCompoundKnowledgeObject(arkId, version), HttpStatus.OK);
   }
 
-  @PutMapping(path = {"ark:/{naan}/{name}/{version}/{path}"}, consumes = MediaType.APPLICATION_JSON_VALUE )
+  @PutMapping(path = {"/ark:/{naan}/{name}/{version}/{path}"}, consumes = MediaType.APPLICATION_JSON_VALUE )
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @PathVariable String path, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, path, data);
@@ -97,6 +119,12 @@ public class ShelfController {
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(IllegalArgumentException e, WebRequest request) {
+
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage()), HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(IOException.class)
+  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(IOException e, WebRequest request) {
 
     return new ResponseEntity<>(getErrorMap(request, e.getMessage()), HttpStatus.NOT_FOUND);
   }

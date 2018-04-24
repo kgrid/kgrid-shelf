@@ -7,27 +7,27 @@ import org.springframework.stereotype.Component;
 @Component
 public class CompoundDigitalObjectStoreFactory {
 
-  @Value("${shelf.path}")
-  private String localStoragePath;
+//  @Value("${shelf.path}")
+//  private String localStoragePath;
 
-  private FilesystemCDOStore filesystemCDOStore;
+  private CompoundDigitalObjectStore cdoStore;
 
   @Autowired
   private CompoundDigitalObjectStoreFactory(FilesystemCDOStore filesystemCDOStore){
-    this.filesystemCDOStore = filesystemCDOStore;
-  }
+    if(filesystemCDOStore != null) {
+      this.cdoStore = filesystemCDOStore;
 
-  public CompoundDigitalObjectStore create(String arkFilename) {
-
-    if(filesystemCDOStore.getChildren(null).contains(arkFilename)) {
-      return filesystemCDOStore;
     } else {
-      throw new IllegalArgumentException("Cannot locate object with id " + arkFilename);
+//      this.cdoStore = fedoraCDOStore;
     }
   }
 
+  public CompoundDigitalObjectStore create(String arkFilename) {
+    return cdoStore;
+  }
+
   public CompoundDigitalObjectStore create() {
-    return filesystemCDOStore;
+    return cdoStore;
   }
 
 }

@@ -5,11 +5,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import edu.umich.lhs.activator.domain.ArkId;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -29,7 +29,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @Component
 public class FilesystemCDOStore implements CompoundDigitalObjectStore {
-
 
   private String localStoragePath;
 
@@ -199,10 +198,12 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
-  private void zipKO(String arkFilename, String version) {
+  public void getCompoundObjectFromShelf(ArkId arkId, String version, OutputStream outputStream) {
     Path shelf = Paths.get(localStoragePath);
+    String arkFilename = arkId.getFedoraPath();
     Path versionDir = Paths.get(arkFilename, version);
-    try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(shelf.resolve(arkFilename + "-" + version + ".zip")))) {
+//    try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(shelf.resolve(arkFilename + "-" + version + ".zip")))) {
+    try(ZipOutputStream zs = new ZipOutputStream(outputStream)) {
       Path parentPath = shelf.resolve(versionDir);
       Files.walk(parentPath)
           .filter(path -> !Files.isDirectory(path))
@@ -216,9 +217,9 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
               log.error("Cannot create zip of ko due to error " + ioEx);
             }
           });
+
     } catch (IOException ioEx) {
-      log.error("Cannot create zip of ko due to error " + ioEx);
+      throw new IllegalArgumentException("Cannot create zip of ko due to error " + ioEx);
     }
   }
-
 }
