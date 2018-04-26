@@ -5,23 +5,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.umich.lhs.activator.domain.ArkId;
 import edu.umich.lhs.activator.domain.KnowledgeObject;
 import edu.umich.lhs.activator.repository.KnowledgeObjectRepository;
-import java.io.File;
+
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import javax.print.attribute.standard.Media;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.ResponseEntity.BodyBuilder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -43,7 +39,7 @@ public class ShelfController {
 
   @GetMapping("/")
   public Map<String, Map<String, ObjectNode>> getAllObjects() {
-    return shelf.getAllObjects();
+    return shelf.findAll();
   }
 
   @GetMapping("/ark:/{naan}/{name}")
