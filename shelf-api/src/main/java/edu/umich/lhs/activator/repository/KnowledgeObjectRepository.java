@@ -1,18 +1,14 @@
 package edu.umich.lhs.activator.repository;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import edu.umich.lhs.activator.domain.ArkId;
 import edu.umich.lhs.activator.domain.CompoundKnowledgeObject;
 import edu.umich.lhs.activator.domain.KnowledgeObject;
-import edu.umich.lhs.activator.domain.Payload;
-import edu.umich.lhs.activator.domain.SimpleKnowledgeObject;
+
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -46,44 +42,6 @@ public class KnowledgeObjectRepository {
     metadataNode.set("models", modelMetadataNode);
     ko.setMetadata(metadataNode);
     return ko;
-  }
-
-  public SimpleKnowledgeObject convertCompoundToSimpleKObject(ArkId arkId, String version) {
-    CompoundDigitalObjectStore dataStore = factory.create(arkId.getFedoraPath());
-    SimpleKnowledgeObject sko = new SimpleKnowledgeObject();
-    KnowledgeObject ko = getCompoundKnowledgeObject(arkId, version);
-
-    byte[] inputMessage = dataStore.getBinary(ko.serviceLocation().resolve("input.xml"));
-    sko.setInputMessage(new String(inputMessage, Charset.defaultCharset()));
-    byte[] outputMessage = dataStore.getBinary(ko.serviceLocation().resolve("output.xml"));
-    sko.setOutputMessage(new String (outputMessage, Charset.defaultCharset()));
-    sko.setMetadata(ko.getMetadata());
-
-    Payload payload = new Payload();
-    payload.setContent(new String(dataStore.getBinary(ko.resourceLocation()), Charset.defaultCharset()));
-    payload.setEngineType(ko.adapterType());
-    payload.setFunctionName(ko.getMetadata().get("models").get("functionName").asText());
-
-    sko.setPayload(payload);
-    return sko;
-  }
-
-  public SimpleKnowledgeObject getSimpleKnowledgeObject(ArkId arkId) {
-    CompoundDigitalObjectStore dataStore = factory.create();
-    Path koPath = Paths.get(arkId.getFedoraPath());
-    ObjectNode koJson;
-    if(Files.exists(koPath)) {
-      koJson = dataStore.getMetadata(koPath);
-    } else {
-      koPath = Paths.get(arkId.getFedoraPath() + ".json");
-      koJson = dataStore.getMetadata(koPath);
-    }
-    ObjectMapper mapper = new ObjectMapper();
-    try {
-      return mapper.treeToValue(koJson, SimpleKnowledgeObject.class);
-    } catch (JsonProcessingException jpEx) {
-      throw new IllegalArgumentException("Cannot convert file " + arkId + " to simple ko");
-    }
   }
 
   public Map<String, ObjectNode> knowledgeObjectVersions(ArkId arkId) {
