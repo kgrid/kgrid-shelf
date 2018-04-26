@@ -33,7 +33,7 @@ public class KnowledgeObjectRepository {
     this.factory = factory;
   }
 
-  public KnowledgeObject getCompoundKnowledgeObject(ArkId arkId, String version) {
+  public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
     CompoundDigitalObjectStore dataStore = factory.create(arkId.getFedoraPath());
 
     KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
@@ -44,13 +44,13 @@ public class KnowledgeObjectRepository {
     return ko;
   }
 
-  public Map<String, ObjectNode> knowledgeObjectVersions(ArkId arkId) {
+  public Map<String, ObjectNode> findByArkId(ArkId arkId) {
     CompoundDigitalObjectStore dataStore = factory.create(arkId.getFedoraPath());
     Map<String, ObjectNode> versionMap = new HashMap<>();
 
     List<String> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
     for (String version : versions) {
-      versionMap.put(version, getCompoundKnowledgeObject(arkId, version).getMetadata());
+      versionMap.put(version, findByArkIdAndVersion(arkId, version).getMetadata());
     }
 
     return versionMap;
@@ -70,18 +70,18 @@ public class KnowledgeObjectRepository {
         .filter(Objects::nonNull)
         .collect(Collectors.toList());
     for (ArkId arkId : arkIds) {
-      knowledgeObjects.put(arkId.getArkId(), knowledgeObjectVersions(arkId));
+      knowledgeObjects.put(arkId.getArkId(), findByArkId(arkId));
     }
     return knowledgeObjects;
   }
 
-  public ArkId saveKnowledgeObject(MultipartFile zippedKO) {
+  public ArkId save(MultipartFile zippedKO) {
     CompoundDigitalObjectStore dataStore = factory.create();
     ObjectNode jsonData = dataStore.addCompoundObjectToShelf(zippedKO);
     return new ArkId(jsonData.get("metadata").get("arkId").get("arkId").asText());
   }
 
-  public void getZippedKnowledgeObject(ArkId arkId, String version, OutputStream outputStream) throws IOException {
+  public void findByArkIdAndVersion(ArkId arkId, String version, OutputStream outputStream) throws IOException {
     CompoundDigitalObjectStore dataStore = factory.create();
     dataStore.getCompoundObjectFromShelf(arkId, version, outputStream);
   }
@@ -109,7 +109,7 @@ public class KnowledgeObjectRepository {
     return dataStore.getMetadata(metadataPath);
   }
 
-  public void removeKO(ArkId arkId) throws IOException {
+  public void delete(ArkId arkId) throws IOException {
     CompoundDigitalObjectStore dataStore = factory.create();
     dataStore.removeFile(Paths.get(arkId.getFedoraPath()));
 

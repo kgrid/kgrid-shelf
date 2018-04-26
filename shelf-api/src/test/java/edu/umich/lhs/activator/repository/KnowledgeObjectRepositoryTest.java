@@ -31,7 +31,7 @@ public class KnowledgeObjectRepositoryTest {
 
   @After
   public void clearShelf() throws Exception {
-    repository.removeKO(new ArkId("ark:/99999/fk45m6gq9t"));
+    repository.delete(new ArkId("ark:/99999/fk45m6gq9t"));
   }
 
   @Test
@@ -39,8 +39,8 @@ public class KnowledgeObjectRepositoryTest {
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/99999-fk45m6gq9t.zip");
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", "99999-fk45m6gq9t.zip", "application/zip", zippedKO);
-    repository.saveKnowledgeObject(koZip);
-    assertNotNull(repository.getCompoundKnowledgeObject(new ArkId("ark:/99999/fk45m6gq9t"), "v0.0.1"));
+    repository.save(koZip);
+    assertNotNull(repository.findByArkIdAndVersion(new ArkId("ark:/99999/fk45m6gq9t"), "v0.0.1"));
   }
 
   @Test
@@ -48,8 +48,8 @@ public class KnowledgeObjectRepositoryTest {
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/99999-fk45m6gq9t.zip");
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", "99999-fk45m6gq9t.zip", "application/zip", zippedKO);
-    repository.saveKnowledgeObject(koZip);
-    assertNotNull(repository.knowledgeObjectVersions(new ArkId("ark:/99999/fk45m6gq9t")));
+    repository.save(koZip);
+    assertNotNull(repository.findByArkId(new ArkId("ark:/99999/fk45m6gq9t")));
   }
 
 

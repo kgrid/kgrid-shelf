@@ -45,14 +45,14 @@ public class ShelfController {
   @GetMapping("/ark:/{naan}/{name}")
   public Map<String, ObjectNode> getKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name) {
     ArkId arkId = new ArkId(naan, name);
-    return shelf.knowledgeObjectVersions(arkId);
+    return shelf.findByArkId(arkId);
   }
 
   @GetMapping("/ark:/{naan}/{name}/{version}")
   public KnowledgeObject getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version) {
     ArkId arkId = new ArkId(naan, name);
 
-    return shelf.getCompoundKnowledgeObject(arkId, version);
+    return shelf.findByArkIdAndVersion(arkId, version);
   }
 
   @GetMapping(path = "/ark:/{naan}/{name}/{version}", produces = "application/zip")
@@ -60,7 +60,7 @@ public class ShelfController {
     ArkId arkId = new ArkId(naan, name);
     response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
     try {
-      shelf.getZippedKnowledgeObject(arkId, version, response.getOutputStream());
+      shelf.findByArkIdAndVersion(arkId, version, response.getOutputStream());
     } catch (IOException ex) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     }
@@ -70,7 +70,7 @@ public class ShelfController {
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
 
-    ArkId arkId = shelf.saveKnowledgeObject(zippedKo);
+    ArkId arkId = shelf.save(zippedKo);
     if(!pathArk.equals(arkId)) {
     }
     String response = arkId + " added to the shelf";
@@ -83,7 +83,7 @@ public class ShelfController {
   @PutMapping(path = {"/ark:/{naan}/{name}/{version}"})
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
-    ArkId arkId = shelf.saveKnowledgeObject(zippedKo);
+    ArkId arkId = shelf.save(zippedKo);
     String response = arkId + " added to the shelf";
 
     ResponseEntity<String> result = new ResponseEntity<>(response, HttpStatus.CREATED);
@@ -95,14 +95,14 @@ public class ShelfController {
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, null, data);
-    return new ResponseEntity<>(shelf.getCompoundKnowledgeObject(arkId, version), HttpStatus.OK);
+    return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 
   @PutMapping(path = {"/ark:/{naan}/{name}/{version}/{path}"}, consumes = MediaType.APPLICATION_JSON_VALUE )
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @PathVariable String path, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, path, data);
-    return new ResponseEntity<>(shelf.getCompoundKnowledgeObject(arkId, version), HttpStatus.OK);
+    return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 
   //Exception handling:
