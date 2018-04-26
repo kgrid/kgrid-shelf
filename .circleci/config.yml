@@ -35,7 +35,7 @@ jobs:
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
       # run skipping tests for now
-      - run: mvn install -DskipTests
+      - run: mvn install
 
       #allows access to artifacts
       - store_artifacts:
