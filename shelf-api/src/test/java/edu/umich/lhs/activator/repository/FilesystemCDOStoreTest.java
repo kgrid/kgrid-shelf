@@ -23,16 +23,23 @@ import java.util.Objects;
 import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 import org.springframework.mock.web.MockMultipartFile;
 
 public class FilesystemCDOStoreTest {
 
-  private CompoundDigitalObjectStore koStore = new FilesystemCDOStore(System.getProperty("user.home") + "/activator/shelf/testShelf");
+  private CompoundDigitalObjectStore koStore;
   private ArkId arkId;
+
+  @Rule
+  public TemporaryFolder folder = new TemporaryFolder();
+
 
   @Before
   public void setUp() throws Exception {
+    koStore = new FilesystemCDOStore(folder.getRoot().getAbsolutePath());
     Path shelf = Paths.get(koStore.getAbsoluteLocation(null));
     if(Files.isDirectory(shelf)) {
       nukeTestShelf(shelf);
