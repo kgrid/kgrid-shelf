@@ -56,7 +56,7 @@ public class KnowledgeObjectRepository {
     return versionMap;
   }
 
-  public Map<String, Map<String, ObjectNode>> getAllObjects(){
+  public Map<String, Map<String, ObjectNode>> findAll(){
     CompoundDigitalObjectStore dataStore = factory.create();
     Map<String, Map<String, ObjectNode>> knowledgeObjects = new HashMap<>();
 
