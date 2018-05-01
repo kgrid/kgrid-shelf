@@ -2,6 +2,10 @@
 #
 # Check https://circleci.com/docs/2.0/language-java/ for more details
 #
+
+defaults: &defaults
+  working_directory: ~/shelf
+
 version: 2
 jobs:
 
@@ -9,10 +13,11 @@ jobs:
   # Build job uses a go cli tool to create a github release
   ##############
   build:
+
+    <<: *defaults
+
     docker:
       - image: circleci/openjdk:8-jdk
-
-    working_directory: ~/repo
 
     environment:
       # Customize the JVM maximum heap limit
@@ -40,6 +45,12 @@ jobs:
       # run build and test
       - run: mvn install
 
+      - persist_to_workspace:
+          root: shelf-gateway
+          paths:
+            - target
+
+
       # save test results
       - run:
           name: Save test results
@@ -47,23 +58,26 @@ jobs:
             mkdir -p ~/junit/
             find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/junit/ \;
           when: always
+
       - store_test_results:
           path: ~/junit
+
       - store_artifacts:
           path: ~/junit
 
-      #allows access to artifacts
       - store_artifacts:
           path: shelf-gateway/target
+
+
 
   ##############
   # Integration Test Job
   ##############
   integration_test:
+    <<: *defaults
+
     docker:
       - image: circleci/openjdk:8-jdk
-
-    working_directory: ~/repo
 
     environment:
       # Customize the JVM maximum heap limit
@@ -77,10 +91,14 @@ jobs:
   # Release job uses a go cli tool to create a github release
   ##############
   release:
+    <<: *defaults
+
     docker:
       - image: circleci/golang:1.8
 
     steps:
+     - attach_workspace:
+        at: /shelf/shelf-gateway
      - checkout
      - run: go get github.com/aktau/github-release
      - run:
@@ -90,8 +108,10 @@ jobs:
               git fetch && git tag -d 0.5.8-SNAPSHOT && git push origin :refs/tags/0.5.8-SNAPSHOT || true
      - run:
         name: Create Release
-        command: github-release release  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name "0.5.8-SNAPSHOT" --description "blah blah blah blah"
-        when: always
+        command: github-release release  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name "0.5.8-SNAPSHOT"
+     - run:
+        name: find file
+        command: github-release upload --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name shelf-gateway-0.5.8-SNAPSHOT.jar --file "./shelf-gateway/target/shelf-gateway-0.5.8-SNAPSHOT.jar"
 
 workflows:
   version: 2
