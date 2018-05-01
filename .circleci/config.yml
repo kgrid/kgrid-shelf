@@ -86,17 +86,12 @@ jobs:
      - run:
         name: Delete Release
         command: |
-            github-release info --user kgrid --repo kgrid-shelf | grep 0.5.8-SNAPSHOT
-            if [ $? -eq 0 ];then
-              github-release delete  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT
-              git fetch && git tag -d 0.5.8-SNAPSHOT && git push origin :refs/tags/0.5.8-SNAPSHOT
-            fi
+              github-release delete  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT || true
+              git fetch && git tag -d 0.5.8-SNAPSHOT && git push origin :refs/tags/0.5.8-SNAPSHOT || true
      - run:
         name: Create Release
         command: github-release release  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name "0.5.8-SNAPSHOT" --description "blah blah blah blah"
         when: always
-
-
 
 workflows:
   version: 2
