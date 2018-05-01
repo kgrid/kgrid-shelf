@@ -21,7 +21,7 @@ public class FedoraCDOStoreTest {
 
   @Before
   public void setUp() throws Exception {
-    store = new FedoraCDOStore().initialize("fedoraAdmin", "secret3", new URI("http://localhost:8080/fcrepo/rest"));
+    store = new FedoraCDOStore("http://localhost:8080/fcrepo/rest", "fedoraAdmin", "secret3");
     String filename = "99999-fk45m6gq9t.zip";
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/" + filename);
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
@@ -37,7 +37,7 @@ public class FedoraCDOStoreTest {
 
   @Test
   public void getAbsolutePathOfLocalServer() throws Exception {
-    String location = store.getAbsoluteLocation(null);
+    Path location = store.getAbsoluteLocation(null);
     assertEquals("http://localhost:8080/fcrepo/rest", location);
   }
 

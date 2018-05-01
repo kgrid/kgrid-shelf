@@ -5,7 +5,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import edu.umich.lhs.activator.domain.ArkId;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -23,32 +22,35 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
+@Primary
 @Component
+@Qualifier("filesystem")
 public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   private String localStoragePath;
 
   private final Logger log = LoggerFactory.getLogger(FilesystemCDOStore.class);
 
-  public FilesystemCDOStore( @Value("${shelf.path:.}") String localStoragePath) {
+  public FilesystemCDOStore( @Value("${shelf.location:.}") String localStoragePath) {
     this.localStoragePath = localStoragePath;
   }
 
   @Override
-  public List<String> getChildren(Path filePath) {
+  public List<Path> getChildren(Path filePath) {
     Path path = Paths.get(localStoragePath);
     if(filePath != null) {
       path = path.resolve(filePath);
     }
-    List<String> children = new ArrayList<>();
+    List<Path> children = new ArrayList<>();
     try {
       children = Files.walk(path, 1)
           .filter(Files::isDirectory)
-          .map(filepath -> filepath.getFileName().toString())
           .collect(Collectors.toList());
       children.remove(0); //Remove the parent directory
     } catch(IOException ioEx) {
@@ -58,12 +60,12 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public String getAbsoluteLocation(Path relativeFilePath) {
+  public Path getAbsoluteLocation(Path relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
     if(relativeFilePath == null) {
-      return shelf.toString();
+      return shelf;
     }
-    return shelf.resolve(relativeFilePath).toString();
+    return shelf.resolve(relativeFilePath);
   }
 
   @Override
@@ -75,13 +77,18 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
     ObjectMapper mapper = new ObjectMapper();
     mapper.setSerializationInclusion(Include.NON_NULL);
-    ObjectNode koMetadata = null;
+    JsonNode koMetadata = null;
     try {
-      koMetadata = (ObjectNode)mapper.readTree(metadataFile);
+      koMetadata = mapper.readTree(metadataFile);
+      if(koMetadata.isArray()) {
+        // Parent object in json-ld is array, get first element which is parent object.
+        return (ObjectNode)koMetadata.get(0);
+      } else {
+        return (ObjectNode)koMetadata;
+      }
     } catch (IOException ioEx) {
-      log.error("Cannot read metadata file at path " + metadataFile + " " + ioEx);
+      throw new IllegalArgumentException("Cannot read metadata file at path " + metadataFile + " " + ioEx);
     }
-    return koMetadata;
   }
 
   @Override
@@ -162,7 +169,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
     if(version == null) {
       // TODO: Get default version?
-      version = getChildren(Paths.get(objectRoot)).get(0);
+      version = getChildren(Paths.get(objectRoot)).get(0).getFileName().toString();
     }
     Path metadataLocation = Paths.get(objectRoot, version, "metadata.json");
     return getMetadata(metadataLocation);
@@ -198,10 +205,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
-  public void getCompoundObjectFromShelf(ArkId arkId, String version, OutputStream outputStream) throws IOException {
+  public void getCompoundObjectFromShelf(Path versionDir, OutputStream outputStream) throws IOException {
     Path shelf = Paths.get(localStoragePath);
-    String arkFilename = arkId.getFedoraPath();
-    Path versionDir = Paths.get(arkFilename, version);
 //    try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(shelf.resolve(arkFilename + "-" + version + ".zip")))) {
     ZipOutputStream zs = new ZipOutputStream(outputStream);
     Path parentPath = shelf.resolve(versionDir);

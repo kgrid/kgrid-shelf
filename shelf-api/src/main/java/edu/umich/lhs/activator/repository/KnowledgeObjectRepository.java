@@ -11,7 +11,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,16 +25,17 @@ import org.springframework.web.multipart.MultipartFile;
 public class KnowledgeObjectRepository {
 
   private CompoundDigitalObjectStoreFactory factory;
+  private CompoundDigitalObjectStore dataStore;
   private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
 
   @Autowired
   KnowledgeObjectRepository(CompoundDigitalObjectStoreFactory factory) {
     this.factory = factory;
+    this.dataStore = factory.create();
+
   }
 
   public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
-    CompoundDigitalObjectStore dataStore = factory.create(arkId.getFedoraPath());
-
     KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
     ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation());
     JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
@@ -45,24 +45,22 @@ public class KnowledgeObjectRepository {
   }
 
   public Map<String, ObjectNode> findByArkId(ArkId arkId) {
-    CompoundDigitalObjectStore dataStore = factory.create(arkId.getFedoraPath());
     Map<String, ObjectNode> versionMap = new HashMap<>();
 
-    List<String> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
-    for (String version : versions) {
-      versionMap.put(version, findByArkIdAndVersion(arkId, version).getMetadata());
+    List<Path> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
+    for (Path version : versions) {
+      versionMap.put(version.getFileName().toString(), findByArkIdAndVersion(arkId, version.getFileName().toString()).getMetadata());
     }
 
     return versionMap;
   }
 
   public Map<String, Map<String, ObjectNode>> findAll(){
-    CompoundDigitalObjectStore dataStore = factory.create();
     Map<String, Map<String, ObjectNode>> knowledgeObjects = new HashMap<>();
 
     List<ArkId> arkIds = dataStore.getChildren(null).stream()
         .map(name -> {
-            try {return new ArkId(name);
+            try {return new ArkId(name.getFileName().toString());
           } catch (IllegalArgumentException | NullPointerException e) {
             log.error(e.getMessage());return null;
           }
@@ -82,22 +80,17 @@ public class KnowledgeObjectRepository {
   }
 
   public void findByArkIdAndVersion(ArkId arkId, String version, OutputStream outputStream) throws IOException {
-    CompoundDigitalObjectStore dataStore = factory.create();
-    dataStore.getCompoundObjectFromShelf(arkId, version, outputStream);
+    Path relativeDestination = Paths.get(arkId.getFedoraPath(), version);
+    dataStore.getCompoundObjectFromShelf(relativeDestination, outputStream);
   }
 
   public ObjectNode editMetadata(ArkId arkId, String version, String path, String metadata) {
-    CompoundDigitalObjectStore dataStore = factory.create();
     Path metadataPath;
     if (path != null && !"".equals(path)) {
       metadataPath = Paths.get(arkId.getFedoraPath(), version, path, "metadata.json");
     } else {
       metadataPath = Paths.get(arkId.getFedoraPath(), version, "metadata.json");
     }
-
-    List<String> immutableFields = new ArrayList<>();
-    immutableFields.add("arkId");
-    immutableFields.add("version");
     try {
       JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
 
@@ -110,9 +103,7 @@ public class KnowledgeObjectRepository {
   }
 
   public void delete(ArkId arkId) throws IOException {
-    CompoundDigitalObjectStore dataStore = factory.create();
     dataStore.removeFile(Paths.get(arkId.getFedoraPath()));
-
   }
 
 }

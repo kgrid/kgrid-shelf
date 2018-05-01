@@ -26,6 +26,7 @@ public class KnowledgeObjectRepositoryTest {
 
   @Before
   public void setUp() {
+    factory.setShelfClass("filesystemCDOStore");
     repository = new KnowledgeObjectRepository(factory);
   }
 

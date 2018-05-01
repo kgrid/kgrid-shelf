@@ -1,9 +1,10 @@
 package edu.umich.lhs.activator.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import edu.umich.lhs.activator.domain.ArkId;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -32,6 +33,7 @@ import org.apache.jena.rdf.model.Statement;
 import org.apache.jena.rdf.model.StmtIterator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -42,10 +44,12 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.stereotype.Component;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 @Component
+@Qualifier("fedora")
 public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private String userName;
@@ -56,74 +60,56 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private final Logger log = LoggerFactory.getLogger(FedoraCDOStore.class);
 
-  public FedoraCDOStore() { }
-
-  private FedoraCDOStore (@Value("${shelf.path:.}") String storagePath) {
+  public FedoraCDOStore (@Value("${shelf.location:.}") String storagePath, @Value("${fedora.username:}") String userName, @Value("${fedora.password:}") String password) {
     try {
       this.storagePath = new URI(storagePath);
+      this.userName = userName;
+      this.password = password;
     } catch (URISyntaxException e) {
       log.error("Cannot create storage path URI from " + storagePath + " " + e);
     }
   }
 
-  public FedoraCDOStore initialize(String userName, String password, URI storagePath) {
-    this.userName = userName;
-    this.password = password;
-    this.storagePath = storagePath;
-    return this;
-  }
-
   @Override
-  public List<String> getChildren(Path filePath) {
-    Model rdf = null;
+  public List<Path> getChildren(Path filePath) {
     try {
-       rdf = getRdfJson(new URI(storagePath.toString() + filePath.toString()));
+      URI metadataURI =  new URI(storagePath.toString() + filePath.toString());
+       ObjectNode rdf = getRdfJson(metadataURI);
+      ArrayList<Path> children = new ArrayList<>();
+        rdf.get("http://www.w3.org/ns/ldp#contains").forEach(jsonNode -> {
+          children.add(Paths.get(jsonNode.get("@id").asText()));
+        });
+      return children;
     } catch (URISyntaxException ex) {
-      ex.printStackTrace();
+      throw new IllegalArgumentException(ex);
     }
-    List<String> children = new ArrayList<>();
-    StmtIterator iterator = rdf.listStatements();
-    while(iterator.hasNext()) {
 
-      Statement statement = iterator.nextStatement();
-      if(statement.getPredicate().getLocalName().equals("contains")) {
-        children.add(statement.getObject().toString().substring(storagePath.toString().length()));
-      }
-    }
-    return children;
   }
 
   @Override
-  public String getAbsoluteLocation(Path relativePath) {
+  public Path getAbsoluteLocation(Path relativePath) {
     if(relativePath != null) {
-      return storagePath.toString() + "/" + relativePath.toString();
+      return Paths.get(storagePath.toString()  + relativePath.toString());
     } else {
-      return storagePath.toString();
+      return Paths.get(storagePath.toString());
     }
   }
 
   @Override
   public ObjectNode getMetadata(Path relativePath) {
-
     try {
-      Model metadataRDF = getRdfJson(new URI(storagePath + "/" + relativePath));
-      StringWriter stringWriter = new StringWriter();
-      metadataRDF.write(stringWriter, "JSON-LD");
-      ObjectMapper mapper = new ObjectMapper();
-      ObjectNode node = (ObjectNode)mapper.readTree(stringWriter.toString());
-      return node;
-    } catch (URISyntaxException | IOException e) {
-      log.error("Cannot get metadata from location " + relativePath + " " + e);
+      return getRdfJson(new URI(storagePath + relativePath.toString()));
+    } catch (URISyntaxException ex) {
+      log.error("Cannot create uri from path " + relativePath);
       return null;
     }
-
   }
 
   @Override
   public byte[] getBinary(Path relativePath) {
     URI path = null;
     try {
-      path = new URI(storagePath + "/" + relativePath);
+      path = new URI(storagePath + relativePath.toString());
     } catch (URISyntaxException e) {
       log.warn(e.getMessage());
     }
@@ -138,7 +124,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   @Override
   public void saveMetadata(Path relativePath, JsonNode node) {
     try {
-      URI destination = new URI(storagePath + "/" + relativePath.toString());
+      URI destination = new URI(storagePath + relativePath.toString());
       HttpClient instance = HttpClientBuilder.create()
           .setRedirectStrategy(new DefaultRedirectStrategy()).build();
       RestTemplate restTemplate = new RestTemplate(
@@ -167,7 +153,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   @Override
   public void saveBinary(Path relativePath, byte[] data) {
     try {
-      URI destination = new URI(storagePath + "/" + relativePath.toString());
+      URI destination = new URI(storagePath + relativePath.toString());
       HttpClient instance = HttpClientBuilder.create()
           .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
@@ -221,8 +207,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void getCompoundObjectFromShelf(ArkId arkId, String version, OutputStream outputStream) throws IOException {
-
+  public void getCompoundObjectFromShelf(Path relativeDestination, OutputStream outputStream) throws IOException {
+    // Todo: implement me
   }
 
   private void addJsonToRdfResource(JsonNode json, Resource resource, Model metadataModel) {
@@ -242,7 +228,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   @Override
   public void removeFile(Path relativePath) {
     try {
-      URI destination = new URI(storagePath + "/" + relativePath);
+      URI destination = new URI(storagePath + relativePath.toString());
       HttpClient instance = HttpClientBuilder.create()
           .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
@@ -265,7 +251,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     
   }
 
-  public Model getRdfJson(URI objectURI) {
+  public ObjectNode getRdfJson(URI objectURI) {
 
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
@@ -277,21 +263,27 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     headers.putAll(authenticationHeader().getHeaders());
 
     HttpEntity<String> entity = new HttpEntity<>("parameters", headers);
-
-    ResponseEntity<String> response = restTemplate.exchange(objectURI, HttpMethod.GET,
-        entity, String.class);
-
-    InputStream ins = new ByteArrayInputStream(response.getBody().getBytes());
-
-    Model model = ModelFactory.createDefaultModel().read(ins, this.storagePath.toString(), "JSON-LD");
-
     try {
-      ins.close();
-    } catch (IOException ex) {
-      ex.printStackTrace();
-    }
-    return model;
+      if(objectURI.toString().endsWith("metadata.json")) {
+        objectURI = new URI(objectURI.toString().substring(0, objectURI.toString().length() - "metadata.json".length()));
+      }
+      ResponseEntity<String> response = restTemplate.exchange(objectURI, HttpMethod.GET,
+          entity, String.class);
 
+      InputStream ins = new ByteArrayInputStream(response.getBody().getBytes());
+
+      JsonNode node = new ObjectMapper().readTree(ins);
+
+      ins.close();
+
+      if(node.isArray()) {
+        return (ObjectNode)node.get(0);
+      }
+      return (ObjectNode)node;
+
+    } catch (HttpClientErrorException | URISyntaxException | IOException ex) {
+      throw new IllegalArgumentException("Cannot find object at URI " + objectURI);
+    }
   }
 
   public URI createContainer(URI uri) throws URISyntaxException {

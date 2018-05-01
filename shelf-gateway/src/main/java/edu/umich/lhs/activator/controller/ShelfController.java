@@ -9,6 +9,7 @@ import edu.umich.lhs.activator.repository.KnowledgeObjectRepository;
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.InputMismatchException;
 import java.util.Map;
 import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -72,6 +73,7 @@ public class ShelfController {
 
     ArkId arkId = shelf.save(zippedKo);
     if(!pathArk.equals(arkId)) {
+      throw new InputMismatchException("URL must match internal arkId of object");
     }
     String response = arkId + " added to the shelf";
 
@@ -98,7 +100,7 @@ public class ShelfController {
     return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 
-  @PutMapping(path = {"/ark:/{naan}/{name}/{version}/{path}"}, consumes = MediaType.APPLICATION_JSON_VALUE )
+  @PutMapping(path = {"/ark:/{naan}/{name}/{version}/{path}"}, consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @PathVariable String path, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, path, data);
