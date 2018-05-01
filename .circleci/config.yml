@@ -56,16 +56,22 @@ jobs:
       - store_artifacts:
           path: shelf-gateway/target
 
-
   ##############
-  # Release job uses a go cli tool to create a github release
+  # Integration Test Job
   ##############
   integration_test:
     docker:
       - image: circleci/openjdk:8-jdk
 
+    working_directory: ~/repo
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+
     steps:
-      - run: mvn install
+      - checkout
+
 
   ##############
   # Release job uses a go cli tool to create a github release
@@ -84,5 +90,9 @@ workflows:
   build_test_release:
     jobs:
       - build
-      - integration_test
-      - release
+      - integration_test:
+          requires:
+            - build
+      - release:
+          requires:
+            - integration_test
