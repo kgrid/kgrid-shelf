@@ -4,7 +4,7 @@
 #
 
 defaults: &defaults
-  working_directory: /tmp
+  working_directory: ~/shelf
 
 version: 2
 jobs:
@@ -98,7 +98,7 @@ jobs:
 
     steps:
      - attach_workspace:
-        at: /tmp/shelf-gateway
+        at: shelf/shelf-gateway
      - checkout
      - run: go get github.com/aktau/github-release
      - run:
