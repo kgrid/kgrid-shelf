@@ -82,7 +82,19 @@ jobs:
 
     steps:
      - run: go get github.com/aktau/github-release
-     - run: github-release delete  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT
+     - run:
+        name: Delete Release
+        command: github-release delete  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT
+        when: always
+     - run:
+        name: Delete Tags
+        command: git fetch && git tag -d 0.5.8-SNAPSHOT && git push origin :refs/tags/0.5.8-SNAPSHOT
+        when: always
+     - run:
+        name: Create Release
+        command: github-release release  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name "0.5.8-SNAPSHOT" --description "blah blah blah blah"
+        when: always
+
 
 
 workflows:
