@@ -112,7 +112,7 @@ jobs:
         at: shelf/shelf-gateway
      - run:
         name: find file
-        command: github-release upload --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name shelf-gateway-0.5.8-SNAPSHOT.jar --file "./shelf-gateway/target/shelf-gateway-0.5.8-SNAPSHOT.jar"
+        command: ls -al
 
 workflows:
   version: 2
