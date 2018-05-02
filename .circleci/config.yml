@@ -97,8 +97,7 @@ jobs:
       - image: circleci/golang:1.8
 
     steps:
-     - attach_workspace:
-        at: shelf/shelf-gateway
+
      - checkout
      - run: go get github.com/aktau/github-release
      - run:
@@ -109,6 +108,8 @@ jobs:
      - run:
         name: Create Release
         command: github-release release  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name "0.5.8-SNAPSHOT"
+    - attach_workspace:
+        at: shelf/shelf-gateway
      - run:
         name: find file
         command: github-release upload --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name shelf-gateway-0.5.8-SNAPSHOT.jar --file "./shelf-gateway/target/shelf-gateway-0.5.8-SNAPSHOT.jar"
