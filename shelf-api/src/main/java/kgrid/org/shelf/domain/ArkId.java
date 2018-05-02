@@ -1,4 +1,4 @@
-package edu.umich.lhs.activator.domain;
+package kgrid.org.shelf.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 

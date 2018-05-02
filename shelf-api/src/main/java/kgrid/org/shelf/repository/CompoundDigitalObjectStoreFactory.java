@@ -1,4 +1,4 @@
-package edu.umich.lhs.activator.repository;
+package kgrid.org.shelf.repository;
 
 import javax.annotation.Resource;
 import org.springframework.beans.factory.NoSuchBeanDefinitionException;

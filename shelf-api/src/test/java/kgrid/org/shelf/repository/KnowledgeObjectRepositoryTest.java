@@ -1,8 +1,8 @@
-package edu.umich.lhs.activator.repository;
+package kgrid.org.shelf.repository;
 
 import static org.junit.Assert.assertNotNull;
 
-import edu.umich.lhs.activator.domain.ArkId;
+import kgrid.org.shelf.domain.ArkId;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;

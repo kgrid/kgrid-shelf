@@ -1,11 +1,11 @@
-package edu.umich.lhs.activator.repository;
+package kgrid.org.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import edu.umich.lhs.activator.domain.ArkId;
-import edu.umich.lhs.activator.domain.CompoundKnowledgeObject;
-import edu.umich.lhs.activator.domain.KnowledgeObject;
+import kgrid.org.shelf.domain.ArkId;
+import kgrid.org.shelf.domain.CompoundKnowledgeObject;
+import kgrid.org.shelf.domain.KnowledgeObject;
 
 import java.io.IOException;
 import java.io.OutputStream;

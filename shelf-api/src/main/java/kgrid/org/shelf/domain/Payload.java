@@ -1,4 +1,4 @@
-package edu.umich.lhs.activator.domain;
+package kgrid.org.shelf.domain;
 
 /**
  * Extracted from KnoweledgeObject by grosscol on 2017-09-11.

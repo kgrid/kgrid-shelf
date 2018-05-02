@@ -1,4 +1,4 @@
-package edu.umich.lhs.activator.repository;
+package kgrid.org.shelf.repository;
 
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;

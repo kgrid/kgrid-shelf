@@ -1,4 +1,4 @@
-package edu.umich.lhs.activator;
+package kgrid.org.shelf;
 
 import org.springframework.beans.BeansException;
 import org.springframework.boot.SpringApplication;

@@ -1,8 +1,7 @@
-package edu.umich.lhs.activator.domain;
+package kgrid.org.shelf.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.net.URI;
 import java.nio.file.Path;
 
 @JsonIgnoreProperties(ignoreUnknown = true)

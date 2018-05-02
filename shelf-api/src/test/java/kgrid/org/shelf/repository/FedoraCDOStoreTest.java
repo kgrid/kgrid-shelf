@@ -1,9 +1,8 @@
-package edu.umich.lhs.activator.repository;
+package kgrid.org.shelf.repository;
 
 import static org.junit.Assert.*;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.net.URI;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
