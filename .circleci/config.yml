@@ -98,21 +98,15 @@ jobs:
 
     steps:
 
-     - checkout
      - run: go get github.com/aktau/github-release
      - run:
-        name: Delete Release
-        command: |
-              github-release delete  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT || true
-              git fetch && git tag -d 0.5.8-SNAPSHOT && git push origin :refs/tags/0.5.8-SNAPSHOT || true
-     - run:
         name: Create Release
-        command: github-release release  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name "0.5.8-SNAPSHOT"
+        command: github-release release  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT.$CIRCLE_BUILD_NUM --name "0.5.8-SNAPSHOT"
      - attach_workspace:
         at: shelf/shelf-gateway
      - run:
-        name: find file
-        command: github-release upload --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name shelf-gateway-0.5.8-SNAPSHOT.jar --file "./shelf/shelf-gateway/target/shelf-gateway-0.5.8-SNAPSHOT.jar"
+        name: Upload artifacts
+        command: github-release upload --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT.$CIRCLE_BUILD_NUM  --name shelf-gateway-0.5.8-SNAPSHOT.jar --file "./shelf/shelf-gateway/target/shelf-gateway-0.5.8-SNAPSHOT.jar"
 
 workflows:
   version: 2
