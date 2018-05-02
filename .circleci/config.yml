@@ -108,7 +108,7 @@ jobs:
      - run:
         name: Create Release
         command: github-release release  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT --name "0.5.8-SNAPSHOT"
-    - attach_workspace:
+     - attach_workspace:
         at: shelf/shelf-gateway
      - run:
         name: find file
