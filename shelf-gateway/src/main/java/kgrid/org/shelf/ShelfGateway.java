@@ -25,7 +25,6 @@ public class ShelfGateway implements ApplicationContextAware {
     this.ctx = applicationContext;
   }
 
-
   // Set the URL suffix pattern matching to not cut off final periods and anything after them
   @Configuration
   public class AppConfig extends WebMvcConfigurationSupport {

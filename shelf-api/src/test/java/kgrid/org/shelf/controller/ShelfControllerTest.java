@@ -1,5 +1,6 @@
 package kgrid.org.shelf.controller;
 
+import kgrid.org.shelf.repository.IntegrationTest;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;

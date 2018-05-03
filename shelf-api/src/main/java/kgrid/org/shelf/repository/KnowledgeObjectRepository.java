@@ -106,4 +106,8 @@ public class KnowledgeObjectRepository {
     dataStore.removeFile(Paths.get(arkId.getFedoraPath()));
   }
 
+    public Path getConnection() {
+
+    return this.dataStore.getAbsoluteLocation(Paths.get(""));
+    }
 }
