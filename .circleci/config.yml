@@ -43,7 +43,7 @@ jobs:
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
       # run build and test
-      - run: mvn install
+      - run: mvn package
 
       - persist_to_workspace:
           root: shelf-gateway
@@ -85,28 +85,22 @@ jobs:
 
     steps:
       - checkout
+      - run: mvn verify
 
+      # save test results
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/junit/
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/junit/ \;
+          when: always
 
-  ##############
-  # Release job uses a go cli tool to create a github release
-  ##############
-  release:
-    <<: *defaults
+      - store_test_results:
+          path: ~/junit
 
-    docker:
-      - image: circleci/golang:1.8
+      - store_artifacts:
+          path: ~/junit
 
-    steps:
-
-     - run: go get github.com/aktau/github-release
-     - run:
-        name: Create Release
-        command: github-release release  --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT.$CIRCLE_BUILD_NUM --name "0.5.8-SNAPSHOT"
-     - attach_workspace:
-        at: shelf/shelf-gateway
-     - run:
-        name: Upload artifacts
-        command: github-release upload --user kgrid --repo kgrid-shelf  --tag 0.5.8-SNAPSHOT.$CIRCLE_BUILD_NUM  --name shelf-gateway-0.5.8-SNAPSHOT.jar --file "./shelf/shelf-gateway/target/shelf-gateway-0.5.8-SNAPSHOT.jar"
 
 workflows:
   version: 2
@@ -116,6 +110,3 @@ workflows:
       - integration_test:
           requires:
             - build
-      - release:
-          requires:
-            - integration_test
