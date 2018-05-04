@@ -1,21 +1,15 @@
-package kgrid.org.shelf.controller;
+package kgrid.org.shelf;
 
-import kgrid.org.shelf.repository.IntegrationTest;
-import org.junit.Rule;
+import kgrid.org.shelf.IntegrationTest;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.LinkedMultiValueMap;
-
-import java.io.IOException;
-import java.net.URISyntaxException;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
@@ -26,7 +20,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Category(IntegrationTest.class)
-
 public class ShelfControllerTest {
 
     @Autowired
