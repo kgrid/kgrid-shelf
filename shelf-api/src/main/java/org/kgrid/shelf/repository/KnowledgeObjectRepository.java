@@ -62,10 +62,11 @@ public class KnowledgeObjectRepository {
         .map(name -> {
             try {return new ArkId(name.getFileName().toString());
           } catch (IllegalArgumentException | NullPointerException e) {
-            log.error(e.getMessage());return null;
+            return new ArkId(name.getParent().getFileName().toString());
           }
         })
         .filter(Objects::nonNull)
+        .distinct()
         .collect(Collectors.toList());
     for (ArkId arkId : arkIds) {
       knowledgeObjects.put(arkId.getArkId(), findByArkId(arkId));

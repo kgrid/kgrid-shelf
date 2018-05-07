@@ -205,6 +205,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
+  @Override
   public void getCompoundObjectFromShelf(Path versionDir, OutputStream outputStream) throws IOException {
     Path shelf = Paths.get(localStoragePath);
 //    try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(shelf.resolve(arkFilename + "-" + version + ".zip")))) {

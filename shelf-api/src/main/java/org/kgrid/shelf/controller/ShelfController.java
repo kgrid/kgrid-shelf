@@ -59,6 +59,12 @@ public class ShelfController {
       shelf.findByArkIdAndVersion(arkId, version, response.getOutputStream());
     } catch (IOException ex) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    } finally {
+      try {
+        response.getOutputStream().close();
+      } catch (IOException e) {
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      }
     }
   }
 
