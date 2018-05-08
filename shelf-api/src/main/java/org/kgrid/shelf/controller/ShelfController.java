@@ -108,6 +108,28 @@ public class ShelfController {
     return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 
+  @DeleteMapping(path = {"/ark:/{naan}/{name}"})
+  public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan, @PathVariable String name) {
+    ArkId arkId = new ArkId(naan, name);
+    try {
+      shelf.delete(arkId);
+      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    } catch (IOException ex) {
+      throw new IllegalArgumentException(ex);
+    }
+  }
+
+  @DeleteMapping(path = {"/ark:/{naan}/{name}/{version}"})
+  public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version) {
+    ArkId arkId = new ArkId(naan, name);
+    try {
+      shelf.delete(arkId, version);
+      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+    } catch (IOException ex) {
+      throw new IllegalArgumentException(ex);
+    }
+  }
+
   //Exception handling:
   @ExceptionHandler(NullPointerException.class)
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NullPointerException e, WebRequest request) {

@@ -105,10 +105,16 @@ public class KnowledgeObjectRepository {
 
   public void delete(ArkId arkId) throws IOException {
     dataStore.removeFile(Paths.get(arkId.getFedoraPath()));
+    log.info("Deleted ko with ark id " + arkId);
   }
 
-    public Path getConnection() {
+  public void delete(ArkId arkId, String version) throws IOException {
+    dataStore.removeFile(Paths.get(arkId.getFedoraPath(), version));
+    log.info("Deleted ko with ark id " + arkId + " and version " + version);
+  }
 
-    return this.dataStore.getAbsoluteLocation(Paths.get(""));
-    }
+  public Path getConnection() {
+
+  return this.dataStore.getAbsoluteLocation(Paths.get(""));
+  }
 }
