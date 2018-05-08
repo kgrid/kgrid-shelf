@@ -1,19 +1,15 @@
 package org.kgrid.shelf.controller;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerMapping;
+import org.springframework.web.servlet.config.annotation.PathMatchConfigurer;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurerAdapter;
 
 @Configuration
-public class WebControllerConfig extends WebMvcConfigurationSupport {
+public class WebControllerConfig extends WebMvcConfigurerAdapter {
 
   @Override
-  @Bean
-  public RequestMappingHandlerMapping requestMappingHandlerMapping() {
-    RequestMappingHandlerMapping mapping = super.requestMappingHandlerMapping();
-    mapping.setUseSuffixPatternMatch(false);
-    return mapping;
+  public void configurePathMatch(PathMatchConfigurer configurer) {
+    configurer.setUseSuffixPatternMatch(false);
   }
 
 }
