@@ -49,7 +49,7 @@ public class ShelfControllerTest {
 
         HttpEntity entity = createMultipartHttpEntity(new ClassPathResource("/99999-fk45m6gq9t.zip"));
 
-        ResponseEntity<String> response = testRestTemplate.exchange("/ark:/99999/fk45m6gq9t",
+        ResponseEntity<String> response = testRestTemplate.exchange("/99999/fk45m6gq9t",
                 HttpMethod.PUT, entity, String.class);
 
         // Expect Ok
@@ -59,27 +59,27 @@ public class ShelfControllerTest {
 
     @Test
     public void findAllMetadata() {
-        ResponseEntity<String> response  = this.testRestTemplate.getForEntity("/ark:/99999/fk45m6gq9t", String.class);
+        ResponseEntity<String> response  = this.testRestTemplate.getForEntity("/99999/fk45m6gq9t", String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         jsonPath("$..metadata", hasSize(2));
     }
 
     @Test
     public void findVersionMetadata() {
-        ResponseEntity<String> response  = this.testRestTemplate.getForEntity("/ark:/99999/fk45m6gq9t/default", String.class);
+        ResponseEntity<String> response  = this.testRestTemplate.getForEntity("/99999/fk45m6gq9t/default", String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
         jsonPath("$..metadata", hasSize(1));
     }
 
     @Test
     public void allMetadataNotFound() {
-        ResponseEntity<String> response  = this.testRestTemplate.getForEntity("/ark:/99999/ssssss", String.class);
+        ResponseEntity<String> response  = this.testRestTemplate.getForEntity("/99999/ssssss", String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
     }
 
     @Test
     public void versionMetadataNotFound() {
-        ResponseEntity<String> response  = this.testRestTemplate.getForEntity("/ark:/99999/fk45m6gq9t/XXXXX", String.class);
+        ResponseEntity<String> response  = this.testRestTemplate.getForEntity("/99999/fk45m6gq9t/XXXXX", String.class);
         assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
     }
 
@@ -87,11 +87,11 @@ public class ShelfControllerTest {
     public void parseSemanticVersions () {
         HttpEntity entity = createMultipartHttpEntity(new ClassPathResource("/99999-newko.zip"));
 
-        ResponseEntity<String> response = testRestTemplate.exchange("/ark:/99999/newko",
+        ResponseEntity<String> response = testRestTemplate.exchange("/99999/newko",
             HttpMethod.PUT, entity, String.class);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
 
-        response  = this.testRestTemplate.getForEntity("/ark:/99999/newko/v0.0.1", String.class);
+        response  = this.testRestTemplate.getForEntity("/99999/newko/v0.0.1", String.class);
         assertEquals(HttpStatus.OK, response.getStatusCode());
 
 

@@ -6,43 +6,45 @@
 - Returns map of all versions of all knowledge objects as flattened json-ld
  - 200 ok on success
 
-#### /ark:/{naan}/{name}
+#### /{naan}/{name}
 - Returns a map of all versions of a single knowledge object as flattened json-ld
 - 200 ok if success
 
-#### /ark:/{naan}/{name}/{version}
+#### /{naan}/{name}/{version}
 - returns a version of an object as flattened json-ld
 - 200 ok if success
 
-#### /ark:/{naan}/{name}/{version} 
+#### /{naan}/{name}/{version} 
 ##### with header accept = application/zip
 - returns a zipped copy of a complete version of the knowledge object
 - 200 ok if success
 
 ## Put:
 
-#### /ark:/{naan}/{name}/{version}
+#### /{naan}/{name}/{version}
 - creates a new knowledge object from a multipart file upload
 - multipart data needs to have a complete zipped knowledge object with key "ko"
 - 201 created on success
 
-#### /ark:/{naan}/{name}/{version}
+#### /{naan}/{name}/{version}
 - Replace the metadata at the root of the object with the body of the request in json-ld
 - Returns the new metadata as flattened json-ld
 - 200 ok on success
 
-#### /ark:/{naan}/{name}/{version}/{path}
+#### /{naan}/{name}/{version}/{path}
 - Replace the metadata at the specified path in the object with the body of the request in json-ld
 - Returns the new metadata as flattened json-ld
 - 200 ok on success
 
 ## Delete:
 
-#### /ark:/{naan}/{name}
+#### /{naan}/{name}
 - Deletes the specified knowledge object
 - returns a 204 no content on success 
 
-#### /ark:/{naan}/{name}/{version}
+#### /{naan}/{name}/{version}
 - Deletes the specified knowledge object
 - returns a 204 no content on success 
 
+
+\*It is possible to use {naan}-{name} in any url in place of {naan}/{name}

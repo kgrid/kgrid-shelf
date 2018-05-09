@@ -38,20 +38,20 @@ public class ShelfController {
     return shelf.findAll();
   }
 
-  @GetMapping("/ark:/{naan}/{name}")
+  @GetMapping(path = {"/{naan}/{name}", "/{naan}-{name}"})
   public Map<String, ObjectNode> getKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name) {
     ArkId arkId = new ArkId(naan, name);
     return shelf.findByArkId(arkId);
   }
 
-  @GetMapping("/ark:/{naan}/{name}/{version}")
+  @GetMapping(path = {"/{naan}/{name}/{version}", "/{naan}-{name}/{version}"})
   public KnowledgeObject getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version) {
     ArkId arkId = new ArkId(naan, name);
 
     return shelf.findByArkIdAndVersion(arkId, version);
   }
 
-  @GetMapping(path = "/ark:/{naan}/{name}/{version}", produces = "application/zip")
+  @GetMapping(path = {"/{naan}/{name}/{version}", "/{naan}-{name}"}, produces = "application/zip")
   public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletResponse response) {
     ArkId arkId = new ArkId(naan, name);
     response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
@@ -68,7 +68,7 @@ public class ShelfController {
     }
   }
 
-  @PutMapping(path = {"/ark:/{naan}/{name}"})
+  @PutMapping(path = {"/{naan}/{name}", "{naan}-{name}"})
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
 
@@ -83,7 +83,7 @@ public class ShelfController {
     return result;
   }
 
-  @PutMapping(path = {"/ark:/{naan}/{name}/{version}"})
+  @PutMapping(path = {"/{naan}/{name}/{version}", "/{naan}-{name}/{version}"})
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
     ArkId arkId = shelf.save(zippedKo);
@@ -94,21 +94,21 @@ public class ShelfController {
     return result;
   }
 
-  @PutMapping(path = {"/ark:/{naan}/{name}/{version}"}, consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(path = {"/{naan}/{name}/{version}", "/{naan}-{name}/{version}"}, consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, null, data);
     return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 
-  @PutMapping(path = {"/ark:/{naan}/{name}/{version}/{path}"}, consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(path = {"/{naan}/{name}/{version}/{path}", "/{naan}-{name}/{version}/{path}"}, consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @PathVariable String path, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, path, data);
     return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 
-  @DeleteMapping(path = {"/ark:/{naan}/{name}"})
+  @DeleteMapping(path = {"/{naan}/{name}", "/{naan}-{name}"})
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan, @PathVariable String name) {
     ArkId arkId = new ArkId(naan, name);
     try {
@@ -119,7 +119,7 @@ public class ShelfController {
     }
   }
 
-  @DeleteMapping(path = {"/ark:/{naan}/{name}/{version}"})
+  @DeleteMapping(path = {"/{naan}/{name}/{version}", "/{naan}-{name}/{version}"})
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version) {
     ArkId arkId = new ArkId(naan, name);
     try {
