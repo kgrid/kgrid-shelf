@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import org.kgrid.shelf.domain.CompoundKnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -171,7 +172,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       // TODO: Get default version?
       version = getChildren(Paths.get(objectRoot)).get(0).getFileName().toString();
     }
-    Path metadataLocation = Paths.get(objectRoot, version, "metadata.json");
+    Path metadataLocation = Paths.get(objectRoot, version, CompoundKnowledgeObject.METADATA_FILENAME);
     return getMetadata(metadataLocation);
   }
 

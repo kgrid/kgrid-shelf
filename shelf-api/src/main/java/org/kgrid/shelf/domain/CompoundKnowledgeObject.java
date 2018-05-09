@@ -25,7 +25,7 @@ public class CompoundKnowledgeObject implements KnowledgeObject {
   private static final String MODELS_DIR_NAME = "models/";
   private static final String RESOURCE_DIR_NAME = "resource/";
   private static final String SERVICE_DIR_NAME = "service/";
-  private static final String METADATA_FILENAME = "metadata.json";
+  public static final String METADATA_FILENAME = "metadata.json";
   private static final String ARK_ID_LABEL = "arkId";
   private static final String VERSION_LABEL = "version";
   private static final String TITLE_LABEL = "title";

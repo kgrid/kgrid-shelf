@@ -28,6 +28,8 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
+import org.apache.jena.util.FileUtils;
+import org.kgrid.shelf.domain.CompoundKnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -55,6 +57,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private URI storagePath;
 
+  private static final String KGRID_NAMESPACE = "http://kgrid.org/ko#";
+
   private final Logger log = LoggerFactory.getLogger(FedoraCDOStore.class);
 
   public FedoraCDOStore (@Value("${shelf.location:.}") String storagePath, @Value("${fedora.username:}") String userName, @Value("${fedora.password:}") String password) {
@@ -69,8 +73,14 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public List<Path> getChildren(Path relativePath) {
+    final String EXPANDED_CONTAINS = "http://www.w3.org/ns/ldp#contains";
+    final String CONTAINS = "contains";
+    final String GRAPH = "@graph";
+    final String ID = "@id";
+
     try {
       URI metadataURI;
+
       if(relativePath != null) {
         metadataURI = new URI(storagePath.toString() + relativePath.toString());
       } else {
@@ -78,14 +88,14 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       }
        ObjectNode rdf = getRdfJson(metadataURI);
       ArrayList<Path> children = new ArrayList<>();
-      if(rdf.has("@graph") && rdf.get("@graph").get(0).has("contains")) {
-        rdf.get("@graph").get(0).get("contains").forEach(jsonNode -> {
-          children.add(Paths.get(jsonNode.asText().substring(storagePath.toString().length())));
-        });
-      } else if (rdf.has("http://www.w3.org/ns/ldp#contains")){
-        rdf.get("http://www.w3.org/ns/ldp#contains").forEach(jsonNode -> {
-          children.add(Paths.get(jsonNode.get("@id").asText().substring(storagePath.toString().length())));
-        });
+      if(rdf.has(GRAPH) && rdf.get(GRAPH).get(0).has(CONTAINS)) {
+        rdf.get(GRAPH).get(0).get(CONTAINS).forEach(jsonNode ->
+          children.add(Paths.get(jsonNode.asText().substring(storagePath.toString().length())))
+        );
+      } else if (rdf.has(EXPANDED_CONTAINS)){
+        rdf.get(EXPANDED_CONTAINS).forEach(jsonNode ->
+          children.add(Paths.get(jsonNode.get(ID).asText().substring(storagePath.toString().length())))
+        );
       }
       return children;
     } catch (URISyntaxException ex) {
@@ -137,16 +147,14 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
           .setRedirectStrategy(new DefaultRedirectStrategy()).build();
       RestTemplate restTemplate = new RestTemplate(
           new HttpComponentsClientHttpRequestFactory(instance));
-      HttpHeaders headers = new HttpHeaders();
-      headers.setContentType(new MediaType("application", "n-triples"));
-      headers.putAll(authenticationHeader().getHeaders());
 
       Model metadataModel = ModelFactory.createDefaultModel();
       Resource resource = metadataModel.createResource(destination.toString());
       addJsonToRdfResource(node, resource, metadataModel);
 
       StringWriter writer = new StringWriter();
-      metadataModel.write(writer, "N-TRIPLE");
+      metadataModel.write(writer, FileUtils.langNTriple);
+
       RequestEntity request = RequestEntity.put(new URI(destination.toString() + "/fcr:metadata"))
           .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
           .contentType(new MediaType("application", "n-triples", StandardCharsets.UTF_8))
@@ -190,11 +198,11 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
           if (!entry.isDirectory()) {
             StringBuilder dataString = new StringBuilder();
             Scanner sc = new Scanner(zis);
-            if(entry.getName().endsWith("metadata.json")) {
+            if(entry.getName().endsWith(CompoundKnowledgeObject.METADATA_FILENAME)) {
               while (sc.hasNextLine()) {
                 dataString.append(sc.nextLine());
               }
-              dir = dir.substring(0, dir.length() - ("metadata.json".length() + 1));
+              dir = dir.substring(0, dir.length() - (CompoundKnowledgeObject.METADATA_FILENAME.length() + 1));
               JsonNode node = new ObjectMapper().readTree(dataString.toString());
               saveMetadata(Paths.get(dir), node);
             } else {
@@ -215,14 +223,18 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public void getCompoundObjectFromShelf(Path relativeDestination, OutputStream outputStream) throws IOException {
+    getCompoundObjectFromShelf(relativeDestination, outputStream, 10);
+  }
+
+  private void getCompoundObjectFromShelf(Path relativeDestination, OutputStream outputStream, int maxDepth) throws IOException {
     ZipOutputStream zos = new ZipOutputStream(outputStream);
-    List<Path> descendants = getAllFedoraDescendants(relativeDestination, 10);
+    List<Path> descendants = getAllFedoraDescendants(relativeDestination, maxDepth);
     descendants.add(relativeDestination); // Add top-level metadata
     for(Path path : descendants) {
       ZipEntry zipEntry;
       try {
         JsonNode metadata = getMetadata(path);
-        zipEntry = new ZipEntry(path.toString()+"/metadata.json");
+        zipEntry = new ZipEntry(path.resolve(CompoundKnowledgeObject.METADATA_FILENAME).toString());
         zos.putNextEntry(zipEntry);
         zos.write(metadata.toString().getBytes());
         zos.closeEntry();
@@ -268,7 +280,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
         element.getValue().elements().forEachRemaining(arrayElement -> addJsonToRdfResource(arrayElement, resource, metadataModel));
       } else {
         resource.addLiteral(
-            metadataModel.createProperty("http://kgrid.org/ko#" + element.getKey()),
+            metadataModel.createProperty(KGRID_NAMESPACE + element.getKey()),
             element.getValue().asText());
       }
     });
@@ -300,7 +312,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     
   }
 
-  public ObjectNode getRdfJson(URI objectURI) {
+  private ObjectNode getRdfJson(URI objectURI) {
 
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
@@ -308,14 +320,14 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     RestTemplate restTemplate = new RestTemplate(
         new HttpComponentsClientHttpRequestFactory(instance));
     HttpHeaders headers = new HttpHeaders();
-    headers.add("Accept", "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#expanded\"");
-    headers.add("Prefer", "return=\"representation\"; omit=\"http://fedora.info/definitions/v4/repository#ServerManaged\"");
+    headers.add("Accept", "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#flattened\"");
+    headers.add("Prefer", "return=\"representation\"; include=\"http://fedora.info/definitions/v4/repository#EmbedResources\"");
     headers.putAll(authenticationHeader().getHeaders());
 
     HttpEntity<String> entity = new HttpEntity<>("", headers);
     try {
-      if(objectURI.toString().endsWith("metadata.json")) {
-        objectURI = new URI(objectURI.toString().substring(0, objectURI.toString().length() - "metadata.json".length()));
+      if(objectURI.toString().endsWith(CompoundKnowledgeObject.METADATA_FILENAME)) {
+        objectURI = new URI(objectURI.toString().substring(0, objectURI.toString().length() - CompoundKnowledgeObject.METADATA_FILENAME.length()));
       }
       ResponseEntity<String> response = restTemplate.exchange(objectURI, HttpMethod.GET,
           entity, String.class);
