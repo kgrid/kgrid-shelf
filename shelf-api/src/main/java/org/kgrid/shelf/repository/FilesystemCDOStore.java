@@ -73,16 +73,19 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   public ObjectNode getMetadata(Path relativePath) {
     Path shelf = Paths.get(localStoragePath);
     File metadataFile = shelf.resolve(relativePath).toFile();
+    if(metadataFile.isDirectory()) {
+      metadataFile = shelf.resolve(relativePath).resolve(CompoundKnowledgeObject.METADATA_FILENAME).toFile();
+    }
     if(!metadataFile.exists()) {
       log.error("Cannot find metadata file for knowledge object at " + metadataFile);
     }
     ObjectMapper mapper = new ObjectMapper();
     mapper.setSerializationInclusion(Include.NON_NULL);
-    JsonNode koMetadata = null;
+    JsonNode koMetadata;
     try {
       koMetadata = mapper.readTree(metadataFile);
       if(koMetadata.isArray()) {
-        // Parent object in json-ld is array, get first element which is parent object.
+        // Parent object in json-ld is array, get first element.
         return (ObjectNode)koMetadata.get(0);
       } else {
         return (ObjectNode)koMetadata;

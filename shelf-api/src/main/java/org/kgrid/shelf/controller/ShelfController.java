@@ -2,6 +2,7 @@ package org.kgrid.shelf.controller;
 
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import javax.servlet.http.HttpServletRequest;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
@@ -17,9 +18,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.HandlerMapping;
 
 @CrossOrigin(origins = "${cors.url}")
 @RestController
@@ -49,6 +52,21 @@ public class ShelfController {
     ArkId arkId = new ArkId(naan, name);
 
     return shelf.findByArkIdAndVersion(arkId, version);
+  }
+
+  // Order of the path mappings matters here, do not reverse or hyphenated naan-name paths will stop working
+  @GetMapping(path = {"/{naan}-{name}/{version}/**", "/{naan}/{name}/{version}/**"})
+  public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletRequest request) {
+    ArkId arkId = new ArkId(naan, name);
+    String requestURI = request.getRequestURI();
+    String path;
+    // if the path has a hyphen and it's before the second slash (the first character is always a slash)
+    if(requestURI.indexOf('-') > 0 && requestURI.indexOf('-') < requestURI.substring(1).indexOf('/')) {
+      path = new AntPathMatcher().extractPathWithinPattern("/{naan}-{name}/{version}/**", request.getRequestURI());
+    } else {
+      path = new AntPathMatcher().extractPathWithinPattern("/{naan}/{name}/{version}/**", request.getRequestURI());
+    }
+    return shelf.getMetadataAtPath(arkId, version, path);
   }
 
   @GetMapping(path = {"/{naan}/{name}/{version}", "/{naan}-{name}"}, produces = "application/zip")

@@ -44,6 +44,11 @@ public class KnowledgeObjectRepository {
     return ko;
   }
 
+  public ObjectNode getMetadataAtPath(ArkId arkId, String version, String path) {
+    return dataStore.getMetadata(Paths.get(arkId.getFedoraPath(), version, path));
+
+  }
+
   public Map<String, ObjectNode> findByArkId(ArkId arkId) {
     Map<String, ObjectNode> versionMap = new HashMap<>();
 

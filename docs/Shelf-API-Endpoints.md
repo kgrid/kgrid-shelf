@@ -14,6 +14,11 @@
 - returns a version of an object as flattened json-ld
 - 200 ok if success
 
+#### /{naan}/{name}/{version}/{path}
+- Get the metadata.json file for that path
+- Returns metadata as flattened json-ld
+- 200 ok on success
+
 #### /{naan}/{name}/{version} 
 ##### with header accept = application/zip
 - returns a zipped copy of a complete version of the knowledge object
