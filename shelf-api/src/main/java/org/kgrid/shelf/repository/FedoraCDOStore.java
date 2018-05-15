@@ -15,7 +15,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
@@ -29,7 +28,7 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.FileUtils;
-import org.kgrid.shelf.domain.CompoundKnowledgeObject;
+import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -198,11 +197,11 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
           if (!entry.isDirectory()) {
             StringBuilder dataString = new StringBuilder();
             Scanner sc = new Scanner(zis);
-            if(entry.getName().endsWith(CompoundKnowledgeObject.METADATA_FILENAME)) {
+            if(entry.getName().endsWith(KnowledgeObject.METADATA_FILENAME)) {
               while (sc.hasNextLine()) {
                 dataString.append(sc.nextLine());
               }
-              dir = dir.substring(0, dir.length() - (CompoundKnowledgeObject.METADATA_FILENAME.length() + 1));
+              dir = dir.substring(0, dir.length() - (KnowledgeObject.METADATA_FILENAME.length() + 1));
               JsonNode node = new ObjectMapper().readTree(dataString.toString());
               saveMetadata(Paths.get(dir), node);
             } else {
@@ -234,7 +233,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       ZipEntry zipEntry;
       try {
         JsonNode metadata = getMetadata(path);
-        zipEntry = new ZipEntry(path.resolve(CompoundKnowledgeObject.METADATA_FILENAME).toString());
+        zipEntry = new ZipEntry(path.resolve(KnowledgeObject.METADATA_FILENAME).toString());
         zos.putNextEntry(zipEntry);
         zos.write(metadata.toString().getBytes());
         zos.closeEntry();
@@ -326,8 +325,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
     HttpEntity<String> entity = new HttpEntity<>("", headers);
     try {
-      if(objectURI.toString().endsWith(CompoundKnowledgeObject.METADATA_FILENAME)) {
-        objectURI = new URI(objectURI.toString().substring(0, objectURI.toString().length() - CompoundKnowledgeObject.METADATA_FILENAME.length()));
+      if(objectURI.toString().endsWith(KnowledgeObject.METADATA_FILENAME)) {
+        objectURI = new URI(objectURI.toString().substring(0, objectURI.toString().length() - KnowledgeObject.METADATA_FILENAME.length()));
       }
       ResponseEntity<String> response = restTemplate.exchange(objectURI, HttpMethod.GET,
           entity, String.class);

@@ -22,7 +22,6 @@ import org.springframework.util.AntPathMatcher;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.HandlerMapping;
 
 @CrossOrigin(origins = "${cors.url}")
 @RestController

@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.CompoundKnowledgeObject;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import java.io.IOException;
 import java.net.URL;
@@ -103,7 +102,7 @@ public class FilesystemCDOStoreTest {
     ArkId arkId = koStore.getChildren(null).stream().map(name -> {try {return new ArkId(name.getFileName().toString());} catch (IllegalArgumentException e) {e.printStackTrace(); return null;}}).filter(
         Objects::nonNull).collect(Collectors.toList()).get(0);
     String version = koStore.getChildren(Paths.get(arkId.getFedoraPath())).get(0).getFileName().toString();
-    KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
+    KnowledgeObject ko = new KnowledgeObject(arkId, version);
     ObjectNode metadata = (ObjectNode)koStore.getMetadata(ko.baseMetadataLocation()).get("metadata");
     assertEquals("Stent Thrombosis Risk Calculator", metadata.get("title").asText());
     metadata.replace("title", new TextNode("TEST"));
@@ -115,7 +114,7 @@ public class FilesystemCDOStoreTest {
   @Test
   public void getResource() throws Exception {
     String version = koStore.getChildren(Paths.get(arkId.getFedoraPath())).get(0).getFileName().toString();
-    KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
+    KnowledgeObject ko = new KnowledgeObject(arkId, version);
     JsonNode metadata = koStore.getMetadata(ko.baseMetadataLocation());
     JsonNode modelMetadata = koStore.getMetadata(ko.modelMetadataLocation());
     ko.setMetadata((ObjectNode)metadata);

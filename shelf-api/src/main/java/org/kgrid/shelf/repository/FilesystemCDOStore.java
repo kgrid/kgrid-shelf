@@ -20,7 +20,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
-import org.kgrid.shelf.domain.CompoundKnowledgeObject;
+import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -53,7 +53,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       children = Files.walk(path, 1)
           .filter(Files::isDirectory)
           .collect(Collectors.toList());
-      children.remove(0); //Remove the parent directory
+      children.remove(0); // Remove the parent directory
     } catch(IOException ioEx) {
       log.error("Cannot read versions in KO at location " + path + " " + ioEx);
     }
@@ -74,7 +74,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     Path shelf = Paths.get(localStoragePath);
     File metadataFile = shelf.resolve(relativePath).toFile();
     if(metadataFile.isDirectory()) {
-      metadataFile = shelf.resolve(relativePath).resolve(CompoundKnowledgeObject.METADATA_FILENAME).toFile();
+      metadataFile = shelf.resolve(relativePath).resolve(KnowledgeObject.METADATA_FILENAME).toFile();
     }
     if(!metadataFile.exists()) {
       log.error("Cannot find metadata file for knowledge object at " + metadataFile);
@@ -175,7 +175,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       // TODO: Get default version?
       version = getChildren(Paths.get(objectRoot)).get(0).getFileName().toString();
     }
-    Path metadataLocation = Paths.get(objectRoot, version, CompoundKnowledgeObject.METADATA_FILENAME);
+    Path metadataLocation = Paths.get(objectRoot, version, KnowledgeObject.METADATA_FILENAME);
     return getMetadata(metadataLocation);
   }
 

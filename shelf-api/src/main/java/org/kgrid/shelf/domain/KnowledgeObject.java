@@ -1,32 +1,116 @@
 package org.kgrid.shelf.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
-public interface KnowledgeObject {
+@JsonInclude(Include.NON_NULL)
+public class KnowledgeObject {
 
-  Path baseMetadataLocation();
+  private ObjectNode metadata;
+  private ArkId arkId;
 
-  Path modelMetadataLocation();
+  private final Path basePath;
+  private final Path versionPath;
+  private final Path modelPath;
+  private final Path resourcePath;
+  private final Path servicePath;
 
-  ArkId getArkId();
 
-  String version();
+  private static final String MODELS_DIR_NAME = "models/";
+  private static final String RESOURCE_DIR_NAME = "resource/";
+  private static final String SERVICE_DIR_NAME = "service/";
+  public static final String METADATA_FILENAME = "metadata.json";
+  private static final String ARK_ID_LABEL = "arkId";
+  private static final String VERSION_LABEL = "version";
+  private static final String TITLE_LABEL = "title";
+  private static final String ADAPTER_LABEL = "adapterType";
+  private static final String FUNCTION_LABEL = "functionName";
+  private static final String RESOURCE_LABEL = "resource";
+  private static final String SERVICE_LABEL = "service";
 
-  String adapterType();
+  public KnowledgeObject(ArkId arkId, String version) {
+    this.arkId = arkId;
+    basePath = Paths.get(arkId.getFedoraPath());
+    versionPath = basePath.resolve(version);
+    modelPath = versionPath.resolve(MODELS_DIR_NAME);
+    resourcePath = modelPath.resolve(RESOURCE_DIR_NAME);
+    servicePath = modelPath.resolve(SERVICE_DIR_NAME);
+  }
 
-  Path resourceLocation();
+  @JsonIgnore
+  public Path getBaseDir() {
+    return basePath;
+  }
 
-  Path serviceLocation();
+  @JsonIgnore
+  public Path getVersionDir() {
+    return versionPath;
+  }
 
-  ObjectNode getMetadata();
+  @JsonIgnore
+  public Path getModelDir() {
+    return modelPath;
+  }
 
-  ObjectNode getModelMetadata();
+  @JsonIgnore
+  public Path getResourceDir() {
+    return resourcePath;
+  }
 
-  void setMetadata(ObjectNode metadata);
+  @JsonIgnore
+  public Path getServiceDir() {
+    return servicePath;
+  }
 
-  void setModelMetadata(ObjectNode modelMetadata);
+  public Path baseMetadataLocation() {
+    return versionPath.resolve(METADATA_FILENAME);
+  }
+
+  public Path modelMetadataLocation() {
+    return modelPath.resolve(METADATA_FILENAME);
+  }
+
+  public Path resourceLocation() {
+    return modelPath.resolve(getModelMetadata().get(RESOURCE_LABEL).asText());
+  }
+
+  public Path serviceLocation() {
+    return modelPath.resolve(SERVICE_DIR_NAME);
+  }
+
+  @JsonIgnore
+  public ArkId getArkId() {
+    return arkId;
+  }
+
+  public String version() {
+    return metadata.get(VERSION_LABEL).asText();
+  }
+
+  public String adapterType() {
+    return getModelMetadata().get(ADAPTER_LABEL).asText();
+  }
+
+  public void setMetadata(ObjectNode metadata) {
+    this.metadata = metadata;
+  }
+
+  public ObjectNode getMetadata() {
+    return metadata;
+  }
+
+  public ObjectNode getModelMetadata() {
+    return (ObjectNode) metadata.get(MODELS_DIR_NAME);
+  }
+
+  public void setModelMetadata(ObjectNode metadataNode) {
+    this.metadata.set(MODELS_DIR_NAME, metadataNode);
+  }
 
 }

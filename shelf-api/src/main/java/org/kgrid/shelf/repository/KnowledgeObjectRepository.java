@@ -4,7 +4,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.CompoundKnowledgeObject;
 import org.kgrid.shelf.domain.KnowledgeObject;
 
 import java.io.IOException;
@@ -32,11 +31,10 @@ public class KnowledgeObjectRepository {
   KnowledgeObjectRepository(CompoundDigitalObjectStoreFactory factory) {
     this.factory = factory;
     this.dataStore = factory.create();
-
   }
 
   public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
-    KnowledgeObject ko = new CompoundKnowledgeObject(arkId, version);
+    KnowledgeObject ko = new KnowledgeObject(arkId, version);
     ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation());
     JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
     metadataNode.set("models", modelMetadataNode);
@@ -56,7 +54,6 @@ public class KnowledgeObjectRepository {
     for (Path version : versions) {
       versionMap.put(version.getFileName().toString(), findByArkIdAndVersion(arkId, version.getFileName().toString()).getMetadata());
     }
-
     return versionMap;
   }
 
