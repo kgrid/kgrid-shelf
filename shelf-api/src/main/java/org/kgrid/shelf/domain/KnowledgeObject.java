@@ -22,9 +22,9 @@ public class KnowledgeObject {
   private final Path servicePath;
 
 
-  private static final String MODELS_DIR_NAME = "models/";
-  private static final String RESOURCE_DIR_NAME = "resource/";
-  private static final String SERVICE_DIR_NAME = "service/";
+  private static final String MODELS_DIR_NAME = "models";
+  private static final String RESOURCE_DIR_NAME = "resource";
+  private static final String SERVICE_DIR_NAME = "service";
   public static final String METADATA_FILENAME = "metadata.json";
   private static final String ARK_ID_LABEL = "arkId";
   private static final String VERSION_LABEL = "version";
@@ -112,5 +112,11 @@ public class KnowledgeObject {
   public void setModelMetadata(ObjectNode metadataNode) {
     this.metadata.set(MODELS_DIR_NAME, metadataNode);
   }
+
+  public String getExecutorKey() {
+    return this.getArkId() + this.version() +
+        "/" + this.getModelMetadata().get("functionName").asText();
+  }
+
 
 }
