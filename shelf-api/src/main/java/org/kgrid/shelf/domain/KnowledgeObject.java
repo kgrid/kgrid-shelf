@@ -104,7 +104,7 @@ public class KnowledgeObject {
   public ObjectNode getMetadata() {
     return metadata;
   }
-
+  @JsonIgnore
   public ObjectNode getModelMetadata() {
     return (ObjectNode) metadata.get(MODELS_DIR_NAME);
   }
@@ -113,10 +113,6 @@ public class KnowledgeObject {
     this.metadata.set(MODELS_DIR_NAME, metadataNode);
   }
 
-  public String getExecutorKey() {
-    return this.getArkId() + this.version() +
-        "/" + this.getModelMetadata().get("functionName").asText();
-  }
 
 
 }
