@@ -90,7 +90,7 @@ public class KnowledgeObject {
   }
 
   public String version() {
-    return metadata.get(VERSION_LABEL).asText();
+    return versionPath.getFileName().toString();
   }
 
   public String adapterType() {
