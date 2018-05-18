@@ -64,7 +64,8 @@ public class KnowledgeObjectRepository {
         .map(name -> {
             try {return new ArkId(name.getFileName().toString());
           } catch (IllegalArgumentException | NullPointerException e) {
-            return new ArkId(name.getParent().getFileName().toString());
+              log.warn("Found this directory on shelf " + name.getFileName() + ", name not in Ark id format (naan-name)");
+              return null;
           }
         })
         .filter(Objects::nonNull)
