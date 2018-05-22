@@ -31,6 +31,11 @@ public class ArkId {
     }
   }
 
+  @JsonIgnore
+  public String getNaanName() {
+    return naan + "/" + name;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;
