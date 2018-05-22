@@ -44,13 +44,13 @@ public class ShelfController {
     return shelf.findAll();
   }
 
-  @GetMapping(path = "/{naan:\\d+}/{name}")
+  @GetMapping(path = "/{naan}/{name}")
   public Map<String, ObjectNode> getKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name) {
     ArkId arkId = new ArkId(naan, name);
     return shelf.findByArkId(arkId);
   }
 
-  @GetMapping(path = "/{naan:\\d+}/{name}/{version}")
+  @GetMapping(path = "/{naan}/{name}/{version}")
   public KnowledgeObject getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, RequestEntity request) {
     ArkId arkId = new ArkId(naan, name);
     KnowledgeObject ko = shelf.findByArkIdAndVersion(arkId, version);
@@ -58,7 +58,7 @@ public class ShelfController {
     return ko;
   }
 
-  @GetMapping(path = "/{naan:\\d+}/{name}/{version}/**")
+  @GetMapping(path = "/{naan}/{name}/{version}/**")
   public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletRequest request) {
     ArkId arkId = new ArkId(naan, name);
     String path = new AntPathMatcher().extractPathWithinPattern("/{naan}/{name}/{version}/**", request.getRequestURI());
@@ -66,7 +66,7 @@ public class ShelfController {
     return shelf.getMetadataAtPath(arkId, version, path);
   }
 
-  @GetMapping(path = "/{naan:\\d+}/{name}/{version}", produces = "application/zip")
+  @GetMapping(path = "/{naan}/{name}/{version}", produces = "application/zip")
   public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletResponse response) {
     ArkId arkId = new ArkId(naan, name);
     response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
@@ -83,7 +83,7 @@ public class ShelfController {
     }
   }
 
-  @PutMapping(path = "/{naan:\\d+}/{name}")
+  @PutMapping(path = "/{naan}/{name}")
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
 
@@ -98,7 +98,7 @@ public class ShelfController {
     return result;
   }
 
-  @PutMapping(path = "/{naan:\\d+}/{name}/{version}")
+  @PutMapping(path = "/{naan}/{name}/{version}")
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
     ArkId arkId = shelf.save(zippedKo);
@@ -109,21 +109,21 @@ public class ShelfController {
     return result;
   }
 
-  @PutMapping(path = "/{naan:\\d+}/{name}/{version}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(path = "/{naan}/{name}/{version}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, null, data);
     return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 
-  @PutMapping(path = "/{naan:\\d+}/{name}/{version}/{path}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  @PutMapping(path = "/{naan}/{name}/{version}/{path}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @PathVariable String path, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, path, data);
     return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 
-  @DeleteMapping(path = "/{naan:\\d+}/{name}")
+  @DeleteMapping(path = "/{naan}/{name}")
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan, @PathVariable String name) {
     ArkId arkId = new ArkId(naan, name);
     try {
@@ -134,7 +134,7 @@ public class ShelfController {
     }
   }
 
-  @DeleteMapping(path = "/{naan:\\d+}/{name}/{version}")
+  @DeleteMapping(path = "/{naan}/{name}/{version}")
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version) {
     ArkId arkId = new ArkId(naan, name);
     try {
