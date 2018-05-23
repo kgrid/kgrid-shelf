@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -111,7 +112,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   public void saveMetadata(Path relativePath, JsonNode metadata) {
     File metadataFile = new File(localStoragePath, relativePath.toString());
     try {
-      ObjectWriter writer = new ObjectMapper().writer();
+      ObjectWriter writer = new ObjectMapper().writer().with(SerializationFeature.INDENT_OUTPUT);
       writer.writeValue(metadataFile, metadata);
     } catch(IOException ioEx) {
       log.error("Could not write to file at " + relativePath + " " + ioEx);
