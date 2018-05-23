@@ -3,6 +3,7 @@ package org.kgrid.shelf.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
@@ -40,13 +41,20 @@ public class ShelfController {
   }
 
   @GetMapping
-  public Map<String, Map<String, ObjectNode>> getAllObjects() {
+  public Map getAllObjects(@RequestHeader(value = "Prefer", required = false) String prefer, RequestEntity request) {
+    if(prefer != null && prefer.matches(".*return\\s*=\\s*minimal.*")) {
+      return shelf.findAll().keySet().stream()
+          .collect(Collectors.toMap(ArkId::toString, key -> request.getUrl() + key.getNaanName()));
+    }
     return shelf.findAll();
   }
 
   @GetMapping(path = "/{naan}/{name}")
-  public Map<String, ObjectNode> getKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name) {
+  public Map getKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer, RequestEntity request) {
     ArkId arkId = new ArkId(naan, name);
+    if(prefer != null && prefer.matches(".*return\\s*=\\s*minimal.*")) {
+      return shelf.findByArkId(arkId).keySet().stream().collect(Collectors.toMap(version -> version, version -> request.getUrl() + "/" + version));
+    }
     return shelf.findByArkId(arkId);
   }
 
@@ -54,7 +62,7 @@ public class ShelfController {
   public KnowledgeObject getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, RequestEntity request) {
     ArkId arkId = new ArkId(naan, name);
     KnowledgeObject ko = shelf.findByArkIdAndVersion(arkId, version);
-    kod.ifPresent(kod -> kod.decorate(ko, request));
+    kod.ifPresent(decorator -> decorator.decorate(ko, request));
     return ko;
   }
 

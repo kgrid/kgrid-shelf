@@ -57,8 +57,8 @@ public class KnowledgeObjectRepository {
     return versionMap;
   }
 
-  public Map<String, Map<String, ObjectNode>> findAll(){
-    Map<String, Map<String, ObjectNode>> knowledgeObjects = new HashMap<>();
+  public Map<ArkId, Map<String, ObjectNode>> findAll(){
+    Map<ArkId, Map<String, ObjectNode>> knowledgeObjects = new HashMap<>();
 
     List<ArkId> arkIds = dataStore.getChildren(null).stream()
         .map(name -> {
@@ -72,7 +72,7 @@ public class KnowledgeObjectRepository {
         .distinct()
         .collect(Collectors.toList());
     for (ArkId arkId : arkIds) {
-      knowledgeObjects.put(arkId.getArkId(), findByArkId(arkId));
+      knowledgeObjects.put(arkId, findByArkId(arkId));
     }
     return knowledgeObjects;
   }
