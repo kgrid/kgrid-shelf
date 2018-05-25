@@ -2,38 +2,27 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
 
-  <artifactId>shelf-api</artifactId>
-  <groupId>org.kgrid</groupId>
-  <version>0.5.8-SNAPSHOT</version>
-
-  <name>shelf-api</name>
-  <description>KGrid: Shelf API</description>
 
   <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>1.5.10.RELEASE</version>
-    <relativePath />
+    <groupId>org.kgrid</groupId>
+    <artifactId>kgrid-shelf</artifactId>
+    <version>0.5.8-SNAPSHOT</version>
   </parent>
 
-  <properties>
-    <java.version>1.8</java.version> <!-- override spring boot parent; sets java source & target -->
-    <packaging>jar</packaging>
-  </properties>
+
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>org.kgrid</groupId>
+  <artifactId>shelf-api</artifactId>
+  <name>kgrid-shelf-api</name>
+  <description>KGrid Shelf API</description>
+
+  <scm>
+    <url>https://github.com/kgrid/kgrid-shelf/tree/master</url>
+  </scm>
 
   <dependencies>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
+     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-context</artifactId>
       <version>4.3.13.RELEASE</version>
@@ -99,32 +88,7 @@
           <excludedGroups>org.kgrid.shelf.repository.IntegrationTest</excludedGroups>
         </configuration>
       </plugin>
-      <!--<plugin>-->
-        <!--<artifactId>maven-failsafe-plugin</artifactId>-->
-        <!--<version>2.18.1</version>-->
-        <!--<dependencies>-->
-          <!--<dependency>-->
-            <!--<groupId>org.apache.maven.surefire</groupId>-->
-            <!--<artifactId>surefire-junit47</artifactId>-->
-            <!--<version>2.12</version>-->
-          <!--</dependency>-->
-        <!--</dependencies>-->
-        <!--<configuration>-->
-          <!--<groups>IntegrationTest</groups>-->
-        <!--</configuration>-->
-        <!--<executions>-->
-          <!--<execution>-->
-            <!--<goals>-->
-              <!--<goal>integration-test</goal>-->
-            <!--</goals>-->
-            <!--<configuration>-->
-              <!--<includes>-->
-                <!--<include>**/*.class</include>-->
-              <!--</includes>-->
-            <!--</configuration>-->
-          <!--</execution>-->
-        <!--</executions>-->
-      <!--</plugin>-->
+
     </plugins>
   </build>
 
