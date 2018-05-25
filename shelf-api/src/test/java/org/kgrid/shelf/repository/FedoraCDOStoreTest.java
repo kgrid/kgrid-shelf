@@ -34,13 +34,13 @@ public class FedoraCDOStoreTest {
     store.removeFile(Paths.get("99999-fk45m6gq9t/fcr:tombstone"));
   }
 
-  @Test
+//  @Test
   public void getAbsolutePathOfLocalServer() throws Exception {
     Path location = store.getAbsoluteLocation(null);
     assertEquals("http://localhost:8080/fcrepo/rest", location);
   }
 
-  @Test
+//  @Test
   public void addSampleObjectZipToStore() throws Exception {
     String filename = "99999-fk45m6gq9t.zip";
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/" + filename);
@@ -49,13 +49,13 @@ public class FedoraCDOStoreTest {
     ObjectNode json = store.addCompoundObjectToShelf(koZip);
   }
 
-  @Test
+//  @Test
   public void getMetadataFromStore() throws Exception {
     Path filename = Paths.get("99999-fk45m6gq9t");
     assertEquals("{\"@id\":\"ht", store.getMetadata(filename).toString().substring(0, 10));
   }
 
-  @Test
+//  @Test
   public void getBinaryDataFromStore() throws Exception {
     Path filename = Paths.get("99999-fk45m6gq9t/v0.0.1/models/resource/content.js");
     byte[] data = store.getBinary(filename);

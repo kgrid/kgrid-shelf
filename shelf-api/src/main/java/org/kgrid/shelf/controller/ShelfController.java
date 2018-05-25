@@ -26,7 +26,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 
-@CrossOrigin(origins = "${cors.url}")
+@CrossOrigin(origins = "${cors.url:}")
 @RestController
 @RequestMapping("${shelf.endpoint:}")
 public class ShelfController {
