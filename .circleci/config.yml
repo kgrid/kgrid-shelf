@@ -68,8 +68,6 @@ jobs:
       - store_artifacts:
           path: shelf-gateway/target
 
-
-
   ##############
   # Integration Test Job
   ##############
@@ -116,8 +114,8 @@ jobs:
 
     steps:
       - checkout
-      - run: mvn clean deploy -Dmaven.test.skip=true
-
+      - run: echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
+      - run: mvn clean deploy -Dmaven.test.skip=true -P ci -s .circleci/settings.xml
 
 workflows:
   version: 2
