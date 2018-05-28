@@ -26,7 +26,7 @@ Explain how to run the automated tests for this system
 Spring Boot shelf gateway application can be used to access the shelf behavior
 
 ```
-java -jar shelf-gateway/target/shelf-gateway-0.5.8-SNAPSHOT-boot.jar --shelf.endpoint=myshelf
+java -jar shelf-gateway/target/shelf-gateway-0.5.8-SNAPSHOT-boot.jar --shelf.location=/kgrid/myshelf
 ```
 
 The shelf allows for the following customizatoins
