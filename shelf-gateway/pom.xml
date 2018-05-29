@@ -2,44 +2,28 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0"
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+
+  <parent>
+    <groupId>org.kgrid</groupId>
+    <artifactId>kgrid-shelf</artifactId>
+    <version>0.5.8-SNAPSHOT</version>
+  </parent>
+
   <modelVersion>4.0.0</modelVersion>
 
   <artifactId>shelf-gateway</artifactId>
   <groupId>org.kgrid</groupId>
-  <version>0.5.8-SNAPSHOT</version>
 
-  <name>shelf-gateway</name>
-  <description>KGrid: Shelf Gateway</description>
-
-  <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>1.5.10.RELEASE</version>
-    <relativePath />
-  </parent>
-
-  <properties>
-    <java.version>1.8</java.version> <!-- override spring boot parent; sets java source & target -->
-    <packaging>jar</packaging>
-  </properties>
+  <name>kgrid-shelf-gateway</name>
+  <description>KGrid Shelf Gateway</description>
 
   <dependencies>
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-web</artifactId>
-    </dependency>
     <dependency>
       <groupId>org.kgrid</groupId>
       <artifactId>shelf-api</artifactId>
       <version>0.5.8-SNAPSHOT</version>
     </dependency>
-    <!-- tag::test[] -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-starter-test</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <!-- end::test[] -->
   </dependencies>
 
   <build>

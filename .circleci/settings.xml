@@ -1,0 +1,34 @@
+<settings>
+  <profiles>
+    <profile>
+      <id>ci</id>
+      <properties>
+          <gpg.keyname>${env.GPG_KEYNAME}</gpg.keyname>
+          <gpg.executable>gpg</gpg.executable>
+      </properties>
+      <repositories>
+        <repository>
+          <id>dependency-snapshots-repo</id>
+          <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+          <releases>
+            <enabled>false</enabled>
+          </releases>
+          <snapshots>
+            <enabled>true</enabled>
+          </snapshots>
+        </repository>
+      </repositories>
+    </profile>
+  </profiles>
+  <servers>
+    <server>
+      <id>ossrh</id>
+      <username>${env.SONATYPE_USER}</username>
+      <password>${env.SONATYPE_PASSWORD}</password>
+    </server>
+    <server>
+      <id>gpg.passphrase</id>
+      <passphrase>${GPG_PASSPHRASE}</passphrase>
+    </server>
+  </servers>
+</settings>
