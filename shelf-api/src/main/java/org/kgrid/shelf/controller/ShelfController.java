@@ -2,27 +2,35 @@ package org.kgrid.shelf.controller;
 
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.Optional;
-import java.util.stream.Collectors;
-import javax.servlet.http.HttpServletRequest;
-import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObject;
-import org.kgrid.shelf.repository.KnowledgeObjectRepository;
-
 import java.io.IOException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-
+import org.apache.commons.lang3.StringUtils;
+import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.KnowledgeObject;
+import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
-import org.springframework.util.AntPathMatcher;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -69,9 +77,12 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}/{version}/**")
   public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletRequest request) {
     ArkId arkId = new ArkId(naan, name);
-    String path = new AntPathMatcher().extractPathWithinPattern("/{naan}/{name}/{version}/**", request.getRequestURI());
 
-    return shelf.getMetadataAtPath(arkId, version, path);
+    String requestURI = request.getRequestURI();
+    String basePath = StringUtils.join(naan, "/", name, "/", version, "/");
+    String childPath = StringUtils.substringAfterLast(requestURI, basePath.toString());
+
+    return shelf.getMetadataAtPath(arkId, version, childPath);
   }
 
   @GetMapping(path = "/{naan}/{name}/{version}", produces = "application/zip")
