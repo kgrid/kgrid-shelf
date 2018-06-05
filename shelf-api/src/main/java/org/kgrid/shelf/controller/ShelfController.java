@@ -3,6 +3,7 @@ package org.kgrid.shelf.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.InputMismatchException;
@@ -58,12 +59,21 @@ public class ShelfController {
   }
 
   @GetMapping(path = "/{naan}/{name}")
-  public Map getKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer, RequestEntity request) {
+  public ResponseEntity<Map> getKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer, RequestEntity request) {
     ArkId arkId = new ArkId(naan, name);
+    Map results;
+    // Display only a list of versions if prefer header is "return=minimal" otherwise return full metadata for each version
     if(prefer != null && prefer.matches(".*return\\s*=\\s*minimal.*")) {
-      return shelf.findByArkId(arkId).keySet().stream().collect(Collectors.toMap(version -> version, version -> request.getUrl() + "/" + version));
+      results = shelf.findByArkId(arkId).keySet().stream().collect(Collectors.toMap(version -> version, version -> request.getUrl() + "/" + version));
+    } else {
+      results = shelf.findByArkId(arkId);
     }
-    return shelf.findByArkId(arkId);
+
+    if(results.isEmpty()) {
+      throw new IllegalArgumentException("Object not found with id " + naan + "-" + name);
+    }
+
+    return new ResponseEntity<>(results, HttpStatus.OK);
   }
 
   @GetMapping(path = "/{naan}/{name}/{version}")

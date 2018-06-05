@@ -57,7 +57,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
           .collect(Collectors.toList());
       children.remove(0); // Remove the parent directory
     } catch(IOException ioEx) {
-      log.error("Cannot read versions in KO at location " + path + " " + ioEx);
+      log.error("Cannot read children at location " + path + " " + ioEx);
     }
     return children;
   }
