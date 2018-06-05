@@ -60,7 +60,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private final Logger log = LoggerFactory.getLogger(FedoraCDOStore.class);
 
-  public FedoraCDOStore (@Value("${shelf.location:.}") String storagePath, @Value("${fedora.username:}") String userName, @Value("${fedora.password:}") String password) {
+  public FedoraCDOStore (@Value("${kgrid.shelf.fcrepo.filesystem.location:.}") String storagePath, @Value("${fedora.username:}") String userName, @Value("${fedora.password:}") String password) {
     try {
       this.storagePath = new URI(storagePath);
       this.userName = userName;
@@ -100,7 +100,6 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     } catch (URISyntaxException ex) {
       throw new IllegalArgumentException(ex);
     }
-
   }
 
   @Override

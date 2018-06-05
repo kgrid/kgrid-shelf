@@ -57,7 +57,7 @@ public class FedoraCDOStoreTest {
 
 //  @Test
   public void getBinaryDataFromStore() throws Exception {
-    Path filename = Paths.get("99999-fk45m6gq9t/v0.0.1/models/resource/content.js");
+    Path filename = Paths.get("99999-fk45m6gq9t/v0.0.1/model/resource/content.js");
     byte[] data = store.getBinary(filename);
     assertEquals("function c", new String(data).substring(0, 10));
   }

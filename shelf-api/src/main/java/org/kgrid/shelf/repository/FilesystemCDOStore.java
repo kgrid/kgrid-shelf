@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -39,7 +40,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   private final Logger log = LoggerFactory.getLogger(FilesystemCDOStore.class);
 
-  public FilesystemCDOStore( @Value("${shelf.location:shelf}") String localStoragePath) {
+  public FilesystemCDOStore( @Value("${kgrid.shelf.cdostore.filesystem.location:shelf}") String localStoragePath) {
     this.localStoragePath = localStoragePath;
   }
 
@@ -87,12 +88,22 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       koMetadata = mapper.readTree(metadataFile);
       if(koMetadata.isArray()) {
         // Parent object in json-ld is array, get first element.
-        return (ObjectNode)koMetadata.get(0);
-      } else {
-        return (ObjectNode)koMetadata;
+        koMetadata = koMetadata.get(0);
       }
+     ArrayNode children = ((ObjectNode)koMetadata).putArray("children");
+      getChildren(Paths.get(metadataFile.getAbsolutePath()).getParent()).forEach(path -> {
+        if(path.toFile().isDirectory() && path.toFile().listFiles().length > 0) {
+          for (File child : path.toFile().listFiles()) {
+            if(!child.getName().startsWith(".")) {
+              children.add(child.getAbsolutePath().substring(shelf.toString().length()));
+            }
+          }
+        }
+      });
+
+      return ((ObjectNode)koMetadata);
     } catch (IOException ioEx) {
-      throw new IllegalArgumentException("Cannot read metadata file at path " + metadataFile + " " + ioEx);
+      throw new IllegalArgumentException("Cannot read metadata file at path " + shelf.resolve(metadataFile.getAbsolutePath())+ " " + ioEx);
     }
   }
 

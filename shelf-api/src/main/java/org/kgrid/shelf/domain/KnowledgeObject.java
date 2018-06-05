@@ -21,8 +21,7 @@ public class KnowledgeObject {
   private final Path resourcePath;
   private final Path servicePath;
 
-
-  private static final String MODELS_DIR_NAME = "models";
+  public static final String MODEL_DIR_NAME = "model";
   private static final String RESOURCE_DIR_NAME = "resource";
   private static final String SERVICE_DIR_NAME = "service";
   public static final String METADATA_FILENAME = "metadata.json";
@@ -38,7 +37,7 @@ public class KnowledgeObject {
     this.arkId = arkId;
     basePath = Paths.get(arkId.getFedoraPath());
     versionPath = basePath.resolve(version);
-    modelPath = versionPath.resolve(MODELS_DIR_NAME);
+    modelPath = versionPath.resolve(MODEL_DIR_NAME);
     resourcePath = modelPath.resolve(RESOURCE_DIR_NAME);
     servicePath = modelPath.resolve(SERVICE_DIR_NAME);
   }
@@ -76,10 +75,6 @@ public class KnowledgeObject {
     return modelPath.resolve(METADATA_FILENAME);
   }
 
-  public Path resourceLocation() {
-    return modelPath.resolve(getModelMetadata().get(RESOURCE_LABEL).asText());
-  }
-
   public Path serviceLocation() {
     return modelPath.resolve(SERVICE_DIR_NAME);
   }
@@ -93,10 +88,6 @@ public class KnowledgeObject {
     return versionPath.getFileName().toString();
   }
 
-  public String adapterType() {
-    return getModelMetadata().get(ADAPTER_LABEL).asText();
-  }
-
   public void setMetadata(ObjectNode metadata) {
     this.metadata = metadata;
   }
@@ -104,15 +95,5 @@ public class KnowledgeObject {
   public ObjectNode getMetadata() {
     return metadata;
   }
-  @JsonIgnore
-  public ObjectNode getModelMetadata() {
-    return (ObjectNode) metadata.get(MODELS_DIR_NAME);
-  }
-
-  public void setModelMetadata(ObjectNode metadataNode) {
-    this.metadata.set(MODELS_DIR_NAME, metadataNode);
-  }
-
-
 
 }

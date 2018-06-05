@@ -67,11 +67,11 @@ public class ShelfController {
   }
 
   @GetMapping(path = "/{naan}/{name}/{version}")
-  public KnowledgeObject getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, RequestEntity request) {
+  public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, RequestEntity request) {
     ArkId arkId = new ArkId(naan, name);
     KnowledgeObject ko = shelf.findByArkIdAndVersion(arkId, version);
     kod.ifPresent(decorator -> decorator.decorate(ko, request));
-    return ko;
+    return ko.getMetadata();
   }
 
   @GetMapping(path = "/{naan}/{name}/{version}/**")
@@ -132,13 +132,6 @@ public class ShelfController {
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, null, data);
-    return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
-  }
-
-  @PutMapping(path = "/{naan}/{name}/{version}/{path}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @PathVariable String path, @RequestBody String data) {
-    ArkId arkId = new ArkId(naan, name);
-    shelf.editMetadata(arkId, version, path, data);
     return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 

@@ -37,14 +37,13 @@ public class KnowledgeObjectRepository {
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
     ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation());
     JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
-    metadataNode.set("models", modelMetadataNode);
+    ((ObjectNode)metadataNode.get("metadata")).set(KnowledgeObject.MODEL_DIR_NAME, modelMetadataNode);
     ko.setMetadata(metadataNode);
     return ko;
   }
 
   public ObjectNode getMetadataAtPath(ArkId arkId, String version, String path) {
     return dataStore.getMetadata(Paths.get(arkId.getFedoraPath(), version, path));
-
   }
 
   public Map<String, ObjectNode> findByArkId(ArkId arkId) {
@@ -91,9 +90,9 @@ public class KnowledgeObjectRepository {
   public ObjectNode editMetadata(ArkId arkId, String version, String path, String metadata) {
     Path metadataPath;
     if (path != null && !"".equals(path)) {
-      metadataPath = Paths.get(arkId.getFedoraPath(), version, path, "metadata.json");
+      metadataPath = Paths.get(arkId.getFedoraPath(), version, path, KnowledgeObject.METADATA_FILENAME);
     } else {
-      metadataPath = Paths.get(arkId.getFedoraPath(), version, "metadata.json");
+      metadataPath = Paths.get(arkId.getFedoraPath(), version, KnowledgeObject.METADATA_FILENAME);
     }
     try {
       JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
