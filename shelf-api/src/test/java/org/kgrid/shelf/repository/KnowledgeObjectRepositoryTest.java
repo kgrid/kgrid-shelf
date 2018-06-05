@@ -5,6 +5,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.util.Map;
 import org.kgrid.shelf.domain.ArkId;
 import java.net.URL;
 import java.nio.file.Files;
@@ -68,5 +69,20 @@ public class KnowledgeObjectRepositoryTest {
     ObjectNode modelMetadata = repository.getMetadataAtPath(arkId, "v0.0.1", KnowledgeObject.MODEL_DIR_NAME);
     assertTrue(modelMetadata.has("resource"));
   }
+
+  @Test
+  public void listAllObjects() {
+    Map<ArkId, Map<String, ObjectNode>>  objects = repository.findAll();
+    assertEquals(1, objects.size());
+    assertEquals("v0.0.1", objects.get(arkId).get("v0.0.1").get("version").asText());
+  }
+
+  @Test
+  public void testEditMainMetadata() {
+    String testdata = "{\"test\":\"data\"}";
+    ObjectNode metadata = repository.editMetadata(arkId, "v0.0.1", null, testdata);
+    assertEquals("data", metadata.get("test").asText());
+  }
+
 
 }
