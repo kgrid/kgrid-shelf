@@ -117,6 +117,6 @@ public class KnowledgeObjectRepository {
 
   public Path getConnection() {
 
-  return this.dataStore.getAbsoluteLocation(Paths.get(""));
+    return this.dataStore.getAbsoluteLocation(Paths.get(""));
   }
 }
