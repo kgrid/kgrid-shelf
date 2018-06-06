@@ -3,20 +3,21 @@
   xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
   xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 
+  <modelVersion>4.0.0</modelVersion>
+
+  <artifactId>shelf-gateway</artifactId>
+  <groupId>org.kgrid</groupId>
+  <version>0.5.8-SNAPSHOT</version>
+
+  <name>kgrid-shelf-gateway</name>
+  <description>KGrid Shelf Gateway</description>
+
   <parent>
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>1.5.10.RELEASE</version>
     <relativePath />
   </parent>
-
-  <modelVersion>4.0.0</modelVersion>
-
-  <artifactId>shelf-gateway</artifactId>
-  <groupId>org.kgrid</groupId>
-
-  <name>kgrid-shelf-gateway</name>
-  <description>KGrid Shelf Gateway</description>
 
   <dependencies>
     <dependency>
