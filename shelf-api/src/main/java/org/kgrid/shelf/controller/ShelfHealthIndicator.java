@@ -17,8 +17,7 @@ public class ShelfHealthIndicator implements HealthIndicator {
     @Override
     public Health health() {
         try {
-            shelf.findAll();
-            return Health.up().withDetail("shelf.connection", shelf.getConnection()).build();
+            return Health.up().withDetail("kgrid.shelf.cdostore.*.location", shelf.getConnection()).build();
         } catch (Exception ex) {
             return Health.down().withException(ex).build();
         }

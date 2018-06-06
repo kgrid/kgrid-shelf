@@ -65,6 +65,11 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   @Override
   public Path getAbsoluteLocation(Path relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
+    if(!shelf.toFile().exists()) {
+      throw new IllegalStateException(
+          "Filesystem shelf location " + shelf + " is not a valid directory."
+              + " Make sure the property kgrid.shelf.cdostore.filesystem.location is set correctly.");
+    }
     if(relativeFilePath == null) {
       return shelf;
     }
