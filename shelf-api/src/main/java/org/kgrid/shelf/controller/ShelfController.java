@@ -181,23 +181,29 @@ public class ShelfController {
   @ExceptionHandler(NullPointerException.class)
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NullPointerException e, WebRequest request) {
 
-    return new ResponseEntity<>(getErrorMap(request, e.getMessage()), HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler(IllegalArgumentException.class)
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(IllegalArgumentException e, WebRequest request) {
 
-    return new ResponseEntity<>(getErrorMap(request, e.getMessage()), HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
   }
 
   @ExceptionHandler(IOException.class)
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(IOException e, WebRequest request) {
 
-    return new ResponseEntity<>(getErrorMap(request, e.getMessage()), HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
   }
 
-  private Map<String, String> getErrorMap(WebRequest request, String message) {
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Map<String, String>> handleGeneralExceptions (Exception e, WebRequest request) {
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
+  }
+
+  private Map<String, String> getErrorMap(WebRequest request, String message, HttpStatus status) {
     Map<String, String> errorInfo = new HashMap<>();
+    errorInfo.put("Status", status.toString());
     errorInfo.put("Error", message);
     errorInfo.put("Request", request.getDescription(false));
     errorInfo.put("Time", new Date().toString());
