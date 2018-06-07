@@ -22,7 +22,7 @@ For building and running the application you need:
 To get started you can simply clone this repository using git:
 ```
 git clone https://github.com/kgrid/kgrid-shelf.git
-cd kgrid-activator
+cd kgrid-shelf
 ```
 
 ### Quick start
@@ -32,7 +32,6 @@ This example can loads a sample KO shelf (_where to look for the KOs_) via the _
 mvn clean package
 java -jar target/kgrid-shelf*.jar --kgrid.shelf.cdostore.filesystem.location=etc/shelf
 ```
-
 Once Running access the [Activators Health Endpoint](http://localhost:8080/health).  All _statuses_ reported should be **UP**
 
 ```$xslt
