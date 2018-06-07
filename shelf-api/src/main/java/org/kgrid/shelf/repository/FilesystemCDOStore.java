@@ -151,9 +151,10 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     String filename = zip.getOriginalFilename();
     int entries = 0;
     long totalSize = 0;
+    final String zipExt = ".zip";
 
-    if(filename.endsWith(".zip")) {
-      filename = filename.substring(0, filename.length()-4);
+    if(filename.endsWith(zipExt)) {
+      filename = filename.substring(0, filename.length() - zipExt.length());
     }
     String[] parts  = filename.split("-");
     String version = null;
@@ -164,14 +165,15 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       ZipEntry entry;
       while((entry = zis.getNextEntry()) != null) {
         if(!entry.getName().contains("/.") && !entry.getName().contains("__MACOSX")) {
-          Path dir = shelf.resolve(entry.getName());
-          if(!dir.toFile().exists() && entry.isDirectory()) {
-            dir.toFile().mkdirs();
-          } else {
-            Files.copy(zis, dir, StandardCopyOption.REPLACE_EXISTING);
+          Path path = shelf.resolve(entry.getName());
+          if (!path.toFile().exists()) {
+            path.toFile().mkdirs();
+          }
+          if (!entry.isDirectory()) {
+            Files.copy(zis, path, StandardCopyOption.REPLACE_EXISTING);
 
             // Prevent zip bombs from using all available resources
-            totalSize += Files.size(dir);
+            totalSize += Files.size(path);
             entries++;
             if (entries > 1024) {
               throw new IllegalStateException("Zip file " + zip.getName() + " has too many files in it to unzip.");
@@ -184,7 +186,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
         }
       }
     } catch (IOException ioEx) {
-      log.error("Cannot find file " + shelf + " " + ioEx);
+      log.error("IO Error on shelf " + shelf + " " + ioEx, ioEx);
+      throw new IllegalArgumentException(ioEx);
     }
     String objectRoot = parts[0] + "-" + parts[1];
 
@@ -227,21 +230,28 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void getCompoundObjectFromShelf(Path versionDir, OutputStream outputStream) throws IOException {
+  public void getCompoundObjectFromShelf(Path objectDir, boolean isVersion, OutputStream outputStream) throws IOException {
     Path shelf = Paths.get(localStoragePath);
 //    try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(shelf.resolve(arkFilename + "-" + version + ".zip")))) {
     ZipOutputStream zs = new ZipOutputStream(outputStream);
-    Path parentPath = shelf.resolve(versionDir);
+    Path parentPath = shelf.resolve(objectDir);
+
     Files.walk(parentPath)
         .filter(path -> !Files.isDirectory(path))
         .forEach(file -> {
-          ZipEntry zipEntry = new ZipEntry(parentPath.relativize(file).toString());
+          ZipEntry zipEntry;
+          if(isVersion) {
+            zipEntry = new ZipEntry(
+                parentPath.getParent().getParent().relativize(file).toString());
+          } else
+            zipEntry = new ZipEntry(
+                parentPath.getParent().relativize(file).toString());
           try {
             zs.putNextEntry(zipEntry);
             Files.copy(file, zs);
             zs.closeEntry();
           } catch (IOException ioEx) {
-            log.error("Cannot create zip of ko due to error " + ioEx);
+            log.error("Cannot create zip of ko due to file error.", ioEx);
           }
         });
     zs.close();

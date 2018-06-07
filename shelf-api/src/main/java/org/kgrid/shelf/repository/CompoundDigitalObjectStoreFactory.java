@@ -26,7 +26,6 @@ public class CompoundDigitalObjectStoreFactory {
   public CompoundDigitalObjectStore create() {
     try {
       cdoStore = (CompoundDigitalObjectStore)applicationContext.getBean(shelfClass);
-      System.out.println(cdoStore);
     } catch (NoSuchBeanDefinitionException nsbdEx) {
       throw new IllegalStateException("Cannot find specified CDO store implementation " + shelfClass + " " + nsbdEx);
     }

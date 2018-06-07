@@ -3,7 +3,6 @@ package org.kgrid.shelf.controller;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.InputMismatchException;
@@ -79,7 +78,7 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}/{version}")
   public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, RequestEntity request) {
     ArkId arkId = new ArkId(naan, name);
-    KnowledgeObject ko = shelf.findByArkIdAndVersion(arkId, version);
+    KnowledgeObject ko = shelf.putVersionZipFileIntoOutputStream(arkId, version);
     kod.ifPresent(decorator -> decorator.decorate(ko, request));
     return ko.getMetadata();
   }
@@ -95,12 +94,29 @@ public class ShelfController {
     return shelf.getMetadataAtPath(arkId, version, childPath);
   }
 
-  @GetMapping(path = "/{naan}/{name}/{version}", produces = "application/zip")
-  public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletResponse response) {
+  @GetMapping(path = "/{naan}/{name}", produces = "application/zip")
+  public void getZippedKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name, HttpServletResponse response) {
     ArkId arkId = new ArkId(naan, name);
-    response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
+    response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + ".zip\"");
     try {
-      shelf.findByArkIdAndVersion(arkId, version, response.getOutputStream());
+      shelf.putZipFileIntoOutputStream(arkId, response.getOutputStream());
+    } catch (IOException ex) {
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    } finally {
+      try {
+        response.getOutputStream().close();
+      } catch (IOException e) {
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      }
+    }
+  }
+
+  @GetMapping(path = "/{naan}/{name}/{version}", produces = "application/zip")
+  public void getZippedKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletResponse response) {
+    ArkId arkId = new ArkId(naan, name);
+    response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + ".zip\"");
+    try {
+      shelf.putVersionZipFileIntoOutputStream(arkId, version, response.getOutputStream());
     } catch (IOException ex) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     } finally {
@@ -114,24 +130,18 @@ public class ShelfController {
 
   @PutMapping(path = "/{naan}/{name}")
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @RequestParam("ko") MultipartFile zippedKo) {
-    ArkId pathArk = new ArkId(naan, name);
 
-    ArkId arkId = shelf.save(zippedKo);
-    if(!pathArk.equals(arkId)) {
-      throw new InputMismatchException("URL must match internal arkId of object");
-    }
-    String response = arkId + " added to the shelf";
-
-    ResponseEntity<String> result = new ResponseEntity<>(response, HttpStatus.CREATED);
-
-    return result;
+    return addKOZipFolder(naan, name,  null, zippedKo);
   }
 
   @PutMapping(path = "/{naan}/{name}/{version}")
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
     ArkId arkId = shelf.save(zippedKo);
-    String response = arkId + " added to the shelf";
+    if(!arkId.equals(pathArk)) {
+      throw new InputMismatchException("URL must match internal arkId of object");
+    }
+    String response = arkId + "/" + version + " added to the shelf";
 
     ResponseEntity<String> result = new ResponseEntity<>(response, HttpStatus.CREATED);
 
@@ -142,7 +152,7 @@ public class ShelfController {
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, null, data);
-    return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
+    return new ResponseEntity<>(shelf.putVersionZipFileIntoOutputStream(arkId, version), HttpStatus.OK);
   }
 
   @DeleteMapping(path = "/{naan}/{name}")

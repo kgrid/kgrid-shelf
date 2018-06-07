@@ -26,7 +26,7 @@ public interface CompoundDigitalObjectStore {
 
   ObjectNode addCompoundObjectToShelf(MultipartFile zip);
 
-  void getCompoundObjectFromShelf(Path relativeDestination, OutputStream outputStream) throws IOException;
+  void getCompoundObjectFromShelf(Path relativeDestination, boolean isVersion, OutputStream outputStream) throws IOException;
 
   void removeFile(Path relativeLocation) throws IOException;
 

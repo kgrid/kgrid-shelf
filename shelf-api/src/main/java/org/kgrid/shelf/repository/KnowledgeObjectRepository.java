@@ -33,7 +33,7 @@ public class KnowledgeObjectRepository {
     this.dataStore = factory.create();
   }
 
-  public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
+  public KnowledgeObject putVersionZipFileIntoOutputStream(ArkId arkId, String version) {
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
     ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation());
     JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
@@ -51,7 +51,7 @@ public class KnowledgeObjectRepository {
 
     List<Path> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
     for (Path version : versions) {
-      versionMap.put(version.getFileName().toString(), findByArkIdAndVersion(arkId, version.getFileName().toString()).getMetadata());
+      versionMap.put(version.getFileName().toString(), putVersionZipFileIntoOutputStream(arkId, version.getFileName().toString()).getMetadata());
     }
     return versionMap;
   }
@@ -82,9 +82,14 @@ public class KnowledgeObjectRepository {
     return new ArkId(jsonData.get("metadata").get("arkId").get("arkId").asText());
   }
 
-  public void findByArkIdAndVersion(ArkId arkId, String version, OutputStream outputStream) throws IOException {
+  public void putZipFileIntoOutputStream(ArkId arkId, OutputStream outputStream) throws IOException {
+    Path relativeDestination = Paths.get(arkId.getFedoraPath());
+    dataStore.getCompoundObjectFromShelf(relativeDestination, false, outputStream);
+  }
+
+  public void putVersionZipFileIntoOutputStream(ArkId arkId, String version, OutputStream outputStream) throws IOException {
     Path relativeDestination = Paths.get(arkId.getFedoraPath(), version);
-    dataStore.getCompoundObjectFromShelf(relativeDestination, outputStream);
+    dataStore.getCompoundObjectFromShelf(relativeDestination, true, outputStream);
   }
 
   public ObjectNode editMetadata(ArkId arkId, String version, String path, String metadata) {
