@@ -97,7 +97,7 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}", produces = "application/zip")
   public void getZippedKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name, HttpServletResponse response) {
     ArkId arkId = new ArkId(naan, name);
-    response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + ".zip\"");
+    response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + "-complete.zip\"");
     try {
       shelf.putZipFileIntoOutputStream(arkId, response.getOutputStream());
     } catch (IOException ex) {
@@ -114,7 +114,7 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}/{version}", produces = "application/zip")
   public void getZippedKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name, @PathVariable String version, HttpServletResponse response) {
     ArkId arkId = new ArkId(naan, name);
-    response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + ".zip\"");
+    response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
     try {
       shelf.putVersionZipFileIntoOutputStream(arkId, version, response.getOutputStream());
     } catch (IOException ex) {
