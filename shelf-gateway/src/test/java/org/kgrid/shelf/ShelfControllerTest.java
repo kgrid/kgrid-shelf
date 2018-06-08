@@ -67,7 +67,7 @@ public class ShelfControllerTest {
         this.mockMvc.perform(get("/99999/fk45m6gq9t"))
             .andExpect(status().isOk())
             .andExpect(content().contentType("application/json;charset=UTF-8"))
-            .andExpect(jsonPath("$..metadata", hasSize(2)));
+            .andExpect(jsonPath("$..*", hasSize(54)));
     }
 
     @Test
@@ -75,7 +75,8 @@ public class ShelfControllerTest {
         this.mockMvc.perform(get("/99999/fk45m6gq9t/default"))
             .andExpect(status().isOk())
             .andExpect(content().contentType("application/json;charset=UTF-8"))
-            .andExpect(jsonPath("$..metadata", hasSize(1)));
+            .andExpect(jsonPath("$..*", hasSize(24)))
+            .andExpect(jsonPath("$..model..*", hasSize(7)));
     }
 
     @Test

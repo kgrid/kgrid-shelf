@@ -97,7 +97,7 @@ public class KnowledgeObject {
   }
 
   public ObjectNode getModelMetadata() {
-    return (ObjectNode)metadata.get("metadata").get(MODEL_DIR_NAME);
+    return (ObjectNode)metadata.get(MODEL_DIR_NAME);
   }
 
 }

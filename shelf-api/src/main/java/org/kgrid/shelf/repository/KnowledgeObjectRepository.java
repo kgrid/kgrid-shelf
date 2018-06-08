@@ -35,7 +35,7 @@ public class KnowledgeObjectRepository {
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
     ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation());
     JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
-    ((ObjectNode)metadataNode.get("metadata")).set(KnowledgeObject.MODEL_DIR_NAME, modelMetadataNode);
+    metadataNode.set(KnowledgeObject.MODEL_DIR_NAME, modelMetadataNode);
     ko.setMetadata(metadataNode);
     return ko;
   }
@@ -77,7 +77,7 @@ public class KnowledgeObjectRepository {
   public ArkId save(MultipartFile zippedKO) {
     CompoundDigitalObjectStore dataStore = factory.create();
     ObjectNode jsonData = dataStore.addCompoundObjectToShelf(zippedKO);
-    return new ArkId(jsonData.get("metadata").get("arkId").get("arkId").asText());
+    return new ArkId(jsonData.get("arkId").asText());
   }
 
   public void putZipFileIntoOutputStream(ArkId arkId, OutputStream outputStream) throws IOException {

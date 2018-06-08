@@ -318,8 +318,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     RestTemplate restTemplate = new RestTemplate(
         new HttpComponentsClientHttpRequestFactory(instance));
     HttpHeaders headers = new HttpHeaders();
-    headers.add("Accept", "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#flattened\"");
-    headers.add("Prefer", "return=\"representation\"; include=\"http://fedora.info/definitions/v4/repository#EmbedResources\"");
+    headers.add("Accept", "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#compacted\"");
+    headers.add("Prefer", "return=\"representation\";");
     headers.putAll(authenticationHeader().getHeaders());
 
     HttpEntity<String> entity = new HttpEntity<>("", headers);

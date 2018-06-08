@@ -75,7 +75,7 @@ public class FilesystemCDOStoreTest {
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
     ObjectNode json = koStore.addCompoundObjectToShelf(koZip);
-    return new ArkId(json.get("metadata").get("arkId").get("arkId").asText());
+    return new ArkId(json.get("arkId").asText());
   }
 
   @Test
@@ -103,7 +103,7 @@ public class FilesystemCDOStoreTest {
         Objects::nonNull).collect(Collectors.toList()).get(0);
     String version = koStore.getChildren(Paths.get(arkId.getFedoraPath())).get(0).getFileName().toString();
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
-    ObjectNode metadata = (ObjectNode)koStore.getMetadata(ko.baseMetadataLocation()).get("metadata");
+    ObjectNode metadata = koStore.getMetadata(ko.baseMetadataLocation());
     assertEquals("Stent Thrombosis Risk Calculator", metadata.get("title").asText());
     metadata.replace("title", new TextNode("TEST"));
     koStore.saveMetadata(ko.baseMetadataLocation(), metadata);

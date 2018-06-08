@@ -59,7 +59,7 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void getCorrectMetadata() throws Exception {
     KnowledgeObject ko = repository.findByArkIdAndVersion(arkId, "v0.0.1");
-    assertTrue(ko.getMetadata().get("metadata").has("arkId"));
+    assertTrue(ko.getMetadata().has("arkId"));
     String resource = ko.getModelMetadata().get("resource").asText();
     assertEquals("resource/content.js", resource);
   }
