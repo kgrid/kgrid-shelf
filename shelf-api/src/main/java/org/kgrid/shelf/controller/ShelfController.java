@@ -149,10 +149,10 @@ public class ShelfController {
   }
 
   @PutMapping(path = "/{naan}/{name}/{version}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
+  public ResponseEntity<ObjectNode> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, null, data);
-    return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
+    return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version).getMetadata(), HttpStatus.OK);
   }
 
   @DeleteMapping(path = "/{naan}/{name}")
