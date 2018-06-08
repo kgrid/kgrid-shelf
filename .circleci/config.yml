@@ -115,9 +115,9 @@ jobs:
     steps:
       - checkout
       - run: echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
-      - run: mvn clean deploy -Dmaven.test.skip=true -P ci -s .circleci/settings.xml -pl shelf-api
-      - run: curl -v -X POST  https://circleci.com/api/v1.1/project/github/kgrid/kgrid-adapter/tree/master?circle-token=$CIRCLECI_TOKEN
-      - run: curl -v -X POST  https://circleci.com/api/v1.1/project/github/kgrid/kgrid-library/tree/master?circle-token=$CIRCLECI_TOKEN
+      - run: mvn clean deploy  -P ci -s .circleci/settings.xml -pl shelf-api
+      - run: curl -v -X POST --header 'Content-Type:application/json' -d '{"build_parameters":{"CIRCLE_JOB":"deploy_heroku"}}' https://circleci.com/api/v1.1/project/github/kgrid/kgrid-activator/tree/master?circle-token=$CIRCLECI_TOKEN
+      - run: curl -v -X POST --header 'Content-Type:application/json' -d '{"build_parameters":{"CIRCLE_JOB":"deploy_heroku"}}' https://circleci.com/api/v1.1/project/github/kgrid/kgrid-library/tree/master?circle-token=$CIRCLECI_TOKEN
 
 workflows:
   version: 2
