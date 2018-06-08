@@ -66,8 +66,7 @@ public class ShelfControllerTest {
     public void findAllMetadata() throws Exception {
         this.mockMvc.perform(get("/99999/fk45m6gq9t"))
             .andExpect(status().isOk())
-            .andExpect(content().contentType("application/json;charset=UTF-8"))
-            .andExpect(jsonPath("$..*", hasSize(54)));
+            .andExpect(content().contentType("application/json;charset=UTF-8"));
     }
 
     @Test
@@ -94,13 +93,7 @@ public class ShelfControllerTest {
     @Test
     public void parseSemanticVersions () throws Exception {
 
-        MockMultipartFile file = new MockMultipartFile("ko", "99999-newko.zip",
-            "application/zip", new ClassPathResource("/99999-newko.zip").getInputStream());
-
-        mockMvc.perform(putWithFileUpload("/99999/newko").file(file))
-            .andExpect(status().isCreated());
-
-        mockMvc.perform(get("/99999/newko/v0.0.1"))
+           mockMvc.perform(get("/99999/newko/v0.0.1"))
             .andExpect(status().isOk());
 
     }
