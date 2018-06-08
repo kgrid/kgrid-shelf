@@ -78,7 +78,7 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}/{version}")
   public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name, @PathVariable String version, RequestEntity request) {
     ArkId arkId = new ArkId(naan, name);
-    KnowledgeObject ko = shelf.putVersionZipFileIntoOutputStream(arkId, version);
+    KnowledgeObject ko = shelf.findByArkIdAndVersion(arkId, version);
     kod.ifPresent(decorator -> decorator.decorate(ko, request));
     return ko.getMetadata();
   }
@@ -116,7 +116,7 @@ public class ShelfController {
     ArkId arkId = new ArkId(naan, name);
     response.addHeader("Content-Disposition", "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
     try {
-      shelf.putVersionZipFileIntoOutputStream(arkId, version, response.getOutputStream());
+      shelf.findByArkIdAndVersion(arkId, version, response.getOutputStream());
     } catch (IOException ex) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     } finally {
@@ -152,7 +152,7 @@ public class ShelfController {
   public ResponseEntity<KnowledgeObject> editMetadata(@PathVariable String naan, @PathVariable String name, @PathVariable String version, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, version, null, data);
-    return new ResponseEntity<>(shelf.putVersionZipFileIntoOutputStream(arkId, version), HttpStatus.OK);
+    return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version), HttpStatus.OK);
   }
 
   @DeleteMapping(path = "/{naan}/{name}")

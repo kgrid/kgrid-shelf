@@ -13,8 +13,6 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
-import java.util.stream.Collectors;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -33,7 +31,7 @@ public class KnowledgeObjectRepository {
     this.dataStore = factory.create();
   }
 
-  public KnowledgeObject putVersionZipFileIntoOutputStream(ArkId arkId, String version) {
+  public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
     ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation());
     JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
@@ -46,12 +44,17 @@ public class KnowledgeObjectRepository {
     return dataStore.getMetadata(Paths.get(arkId.getFedoraPath(), version, path));
   }
 
+  public Map<String, ObjectNode> findByPath(Path koPath){
+
+    return findByArkId(new ArkId(koPath.getFileName().toString()));
+
+  }
   public Map<String, ObjectNode> findByArkId(ArkId arkId) {
     Map<String, ObjectNode> versionMap = new HashMap<>();
 
     List<Path> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
     for (Path version : versions) {
-      versionMap.put(version.getFileName().toString(), putVersionZipFileIntoOutputStream(arkId, version.getFileName().toString()).getMetadata());
+      versionMap.put(version.getFileName().toString(), findByArkIdAndVersion(arkId, version.getFileName().toString()).getMetadata());
     }
     return versionMap;
   }
@@ -59,19 +62,14 @@ public class KnowledgeObjectRepository {
   public Map<ArkId, Map<String, ObjectNode>> findAll(){
     Map<ArkId, Map<String, ObjectNode>> knowledgeObjects = new HashMap<>();
 
-    List<ArkId> arkIds = dataStore.getChildren(null).stream()
-        .map(name -> {
-            try {return new ArkId(name.getFileName().toString());
-          } catch (IllegalArgumentException | NullPointerException e) {
-              log.warn("Found this directory on shelf " + name.getFileName() + ", name not in Ark id format (naan-name)");
-              return null;
-          }
-        })
-        .filter(Objects::nonNull)
-        .distinct()
-        .collect(Collectors.toList());
-    for (ArkId arkId : arkIds) {
-      knowledgeObjects.put(arkId, findByArkId(arkId));
+    //Load KO objects and skip any KOs with exceptions like missing metadata
+    for (Path path : dataStore.getChildren(null) ) {
+
+      try{
+        knowledgeObjects.put(new ArkId(path.getFileName().toString()), findByArkId( new ArkId(path.getFileName().toString())));
+      } catch( Exception e){
+        log.warn("Unable to load KO " + path.getFileName(), e);
+      }
     }
     return knowledgeObjects;
   }
@@ -87,7 +85,7 @@ public class KnowledgeObjectRepository {
     dataStore.getCompoundObjectFromShelf(relativeDestination, false, outputStream);
   }
 
-  public void putVersionZipFileIntoOutputStream(ArkId arkId, String version, OutputStream outputStream) throws IOException {
+  public void findByArkIdAndVersion(ArkId arkId, String version, OutputStream outputStream) throws IOException {
     Path relativeDestination = Paths.get(arkId.getFedoraPath(), version);
     dataStore.getCompoundObjectFromShelf(relativeDestination, true, outputStream);
   }

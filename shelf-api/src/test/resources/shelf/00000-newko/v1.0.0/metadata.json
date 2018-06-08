@@ -1,0 +1,27 @@
+{
+  "metadata" : {
+    "title" : "Knowledge Object Title",
+    "description" : "A new knowledge object.",
+    "arkId" : {
+      "arkId" : "ark:/00000/newko",
+      "fedoraPath" : "00000-newko"
+    },
+    "citations" : [ {
+      "citation_title" : "Citation Title ",
+      "citation_at" : "https://link"
+    } ],
+    "keywords" : "Keywords",
+    "owners" : "Greg",
+    "contributors" : "KGRID Team",
+    "license" : {
+      "licenseName" : "",
+      "licenseLink" : ""
+    },
+    "url" : "http://url",
+    "published" : false,
+    "version" : "v1.0.0",
+    "lastModified" : 1526589480843,
+    "createdOn" : 1526589480842,
+    "index" : "-1"
+  }
+}

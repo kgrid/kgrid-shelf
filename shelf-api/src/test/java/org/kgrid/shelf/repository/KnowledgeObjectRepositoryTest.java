@@ -48,7 +48,7 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getKnowledgeObject() throws Exception {
-    assertNotNull(repository.putVersionZipFileIntoOutputStream(arkId, "v0.0.1"));
+    assertNotNull(repository.findByArkIdAndVersion(arkId, "v0.0.1"));
   }
 
   @Test
@@ -58,7 +58,7 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getCorrectMetadata() throws Exception {
-    KnowledgeObject ko = repository.putVersionZipFileIntoOutputStream(arkId, "v0.0.1");
+    KnowledgeObject ko = repository.findByArkIdAndVersion(arkId, "v0.0.1");
     assertTrue(ko.getMetadata().get("metadata").has("arkId"));
     String resource = ko.getModelMetadata().get("resource").asText();
     assertEquals("resource/content.js", resource);

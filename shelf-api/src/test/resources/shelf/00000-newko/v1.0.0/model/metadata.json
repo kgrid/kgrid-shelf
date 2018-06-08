@@ -1,0 +1,6 @@
+{
+  "functionName":"welcome",
+  "adapterType":"javascript",
+  "resource":"resource/welcome.js",
+  "service":"service/iospec.json"
+}
