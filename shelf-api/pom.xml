@@ -18,7 +18,9 @@
   </parent>
 
   <scm>
-    <url>https://github.com/kgrid/kgrid-shelf/tree/master/shelf-api</url>
+    <url>https://github.com/kgrid/kgrid-shelf</url>
+    <connection>scm:git:git://github.com/kgrid/kgrid-shelf.git</connection>
+    <developerConnection>scm:git:git@github.com:kgrid/kgrid-shelf.git</developerConnection>
   </scm>
 
   <distributionManagement>
