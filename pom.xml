@@ -15,7 +15,6 @@
 
   <modules>
     <module>shelf-api</module>
-    <module>shelf-gateway</module>
   </modules>
 
 </project>

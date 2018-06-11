@@ -36,7 +36,7 @@ public class FindAllKOBadKOTest {
   public void findAllKOs() {
     Map<ArkId, Map<String, ObjectNode>>  objects = repository.findAll();
 
-    assertEquals(2, objects.size());
+    assertEquals(3, objects.size());
 
     }
 
