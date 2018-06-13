@@ -47,7 +47,6 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-@Component
 @Qualifier("fedora")
 public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
