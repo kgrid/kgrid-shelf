@@ -45,12 +45,6 @@ jobs:
       # run build and test
       - run: mvn package
 
-      - persist_to_workspace:
-          root: shelf-gateway
-          paths:
-            - target
-
-
       # save test results
       - run:
           name: Save test results
