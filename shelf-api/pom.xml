@@ -14,7 +14,7 @@
     <groupId>org.springframework.boot</groupId>
     <artifactId>spring-boot-starter-parent</artifactId>
     <version>1.5.10.RELEASE</version>
-    <relativePath />
+    <relativePath/>
   </parent>
 
   <scm>
@@ -173,6 +173,11 @@
               <nexusUrl>https://oss.sonatype.org/</nexusUrl>
               <autoReleaseAfterClose>true</autoReleaseAfterClose>
             </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>2.5.3</version>
           </plugin>
         </plugins>
       </build>
