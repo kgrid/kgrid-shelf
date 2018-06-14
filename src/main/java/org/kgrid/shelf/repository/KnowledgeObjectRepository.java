@@ -43,9 +43,11 @@ public class KnowledgeObjectRepository {
   }
 
   public Map<String, ObjectNode> findByPath(Path koPath) {
-
-    return findByArkId(new ArkId(koPath.getFileName().toString()));
-
+    Map<String, ObjectNode> versions = new HashMap<>();
+    ArkId arkId = new ArkId(koPath.getParent().getFileName().toString());
+    String version = koPath.getFileName().toString();
+    versions.put(arkId.toString(), findByArkIdAndVersion(arkId, version).getMetadata());
+    return versions;
   }
 
   public Map<String, ObjectNode> findByArkId(ArkId arkId) {
@@ -69,7 +71,12 @@ public class KnowledgeObjectRepository {
         knowledgeObjects.put(new ArkId(path.getFileName().toString()),
             findByArkId(new ArkId(path.getFileName().toString())));
       } catch (Exception e) {
-        log.warn("Unable to load KO " + path.getFileName(), e);
+        try {
+          // Some object stores return child paths as arkId/version
+          knowledgeObjects.put(new ArkId(path.getParent().getFileName().toString()), findByPath(path));
+        } catch (Exception ex) {
+          log.warn("Unable to load KO " + path, ex);
+        }
       }
     }
     return knowledgeObjects;
