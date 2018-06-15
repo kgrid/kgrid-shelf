@@ -128,7 +128,6 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     URI path = URI.create(storagePath + relativePath.toString());
 
     HttpClient instance = HttpClientBuilder.create()
-        .setRetryHandler(new DefaultHttpRequestRetryHandler(3, false))
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
     RestTemplate restTemplate = new RestTemplate(
