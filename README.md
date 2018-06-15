@@ -30,7 +30,7 @@ This quick start will run the activator and load two example knowledge objects f
 This example can loads a sample KO shelf (_where to look for the KOs_) via the _kgrid.shelf.cdostore.filesystem.location_ property. By default application will start up and PORT 8080. 
 ```
 mvn clean package
-java -jar target/kgrid-shelf*.jar --kgrid.shelf.cdostore.filesystem.location=etc/shelf
+java -jar target/kgrid-shelf*.jar --kgrid.shelf.cdostore.url=filesystem:file://etc/shelf
 ```
 Once Running access the [Activators Health Endpoint](http://localhost:8080/health).  All _statuses_ reported should be **UP**
 
@@ -39,7 +39,7 @@ Once Running access the [Activators Health Endpoint](http://localhost:8080/healt
   "status": "UP",
   "shelf": {
     "status": "UP",
-    "kgrid.shelf.cdostore.*.location": "file:///Users/developer/kgrid-shelf/etc/shelf/"
+    "kgrid.shelf.cdostore.url": "filesystem:file://etc/shelf/"
   },
   "diskSpace": {
     "status": "UP",
@@ -87,6 +87,6 @@ curl http://localhost:8080/hello/world/v0.0.1
 
 The port of the shelf gateway can be altered via the _server.port_ property 
 ```
-java -jar shelf-gateway/target/shelf-gateway-*-boot.jar --kgrid.shelf.cdostore.filesystem.location=etc/shelf --server.port=8090
+java -jar shelf-gateway/target/shelf-gateway-*-boot.jar --kgrid.shelf.cdostore.url=filesystem:file://etc/shelf --server.port=8090
 
 ```
