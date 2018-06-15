@@ -62,6 +62,10 @@ public class ShelfController {
   public ResponseEntity<Map> getKnowledgeObjectVersion(@PathVariable String naan,
       @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer,
       RequestEntity request) {
+    // Prevent infinite loop when trying to connect to fcrepo on the same address as the library
+    if("fcrepo".equals(naan) && "rest".equals(name)) {
+      throw new IllegalArgumentException("Cannot connect to fcrepo at the same address as the shelf. Make sure shelf and fcrepo configuration is correct.");
+    }
     ArkId arkId = new ArkId(naan, name);
     Map results;
     // Display only a list of versions if prefer header is "return=minimal" otherwise return full metadata for each version
@@ -95,7 +99,7 @@ public class ShelfController {
 
     String requestURI = request.getRequestURI();
     String basePath = StringUtils.join(naan, "/", name, "/", version, "/");
-    String childPath = StringUtils.substringAfterLast(requestURI, basePath.toString());
+    String childPath = StringUtils.substringAfterLast(requestURI, basePath);
 
     return shelf.getMetadataAtPath(arkId, version, childPath);
   }

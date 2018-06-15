@@ -9,13 +9,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 import java.util.zip.ZipEntry;
@@ -42,7 +40,6 @@ import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.stereotype.Component;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -87,34 +84,30 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     final String GRAPH = "@graph";
     final String ID = "@id";
 
-    try {
-      URI metadataURI;
+    URI metadataURI;
 
-      if (relativePath != null) {
-        metadataURI = new URI(storagePath + relativePath.toString());
-      } else {
-        metadataURI = new URI(storagePath);
-      }
-      ObjectNode rdf = getRdfJson(metadataURI);
-      ArrayList<Path> children = new ArrayList<>();
-      if (rdf.has(GRAPH) && rdf.get(GRAPH).get(0).has(CONTAINS)) {
-        rdf.get(GRAPH).get(0).get(CONTAINS).forEach(jsonNode ->
-            children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
-        );
-      } else if (rdf.has(CONTAINS)) {
-        rdf.get(CONTAINS).forEach(jsonNode ->
-            children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
-        );
-      } else if (rdf.has(EXPANDED_CONTAINS)) {
-        rdf.get(EXPANDED_CONTAINS).forEach(jsonNode ->
-            children.add(Paths.get(jsonNode.get(ID).asText().substring(storagePath.length())))
-        );
-      }
-      return children;
-    } catch (URISyntaxException ex) {
-      throw new IllegalArgumentException(ex);
+    if (relativePath != null) {
+      metadataURI = URI.create(storagePath + relativePath.toString());
+    } else {
+      metadataURI = URI.create(storagePath);
     }
-  }
+    ObjectNode rdf = getRdfJson(metadataURI);
+    ArrayList<Path> children = new ArrayList<>();
+    if (rdf.has(GRAPH) && rdf.get(GRAPH).get(0).has(CONTAINS)) {
+      rdf.get(GRAPH).get(0).get(CONTAINS).forEach(jsonNode ->
+          children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
+      );
+    } else if (rdf.has(CONTAINS)) {
+      rdf.get(CONTAINS).forEach(jsonNode ->
+          children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
+      );
+    } else if (rdf.has(EXPANDED_CONTAINS)) {
+      rdf.get(EXPANDED_CONTAINS).forEach(jsonNode ->
+          children.add(Paths.get(jsonNode.get(ID).asText().substring(storagePath.length())))
+      );
+    }
+    return children;
+}
 
   @Override
   public Path getAbsoluteLocation(Path relativePath) {
@@ -127,23 +120,15 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public ObjectNode getMetadata(Path relativePath) {
-    try {
-      return getRdfJson(new URI(storagePath + relativePath.toString()));
-    } catch (URISyntaxException ex) {
-      log.error("Cannot create uri from path " + relativePath);
-      return null;
-    }
+    return getRdfJson(URI.create(storagePath + relativePath.toString()));
   }
 
   @Override
   public byte[] getBinary(Path relativePath) {
-    URI path = null;
-    try {
-      path = new URI(storagePath + relativePath.toString());
-    } catch (URISyntaxException e) {
-      log.warn(e.getMessage());
-    }
+    URI path = URI.create(storagePath + relativePath.toString());
+
     HttpClient instance = HttpClientBuilder.create()
+        .setRetryHandler(new DefaultHttpRequestRetryHandler(3, false))
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
     RestTemplate restTemplate = new RestTemplate(
@@ -155,49 +140,43 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public void saveMetadata(Path relativePath, JsonNode node) {
-    try {
-      URI destination = new URI(storagePath + relativePath.toString());
-      HttpClient instance = HttpClientBuilder.create()
-          .setRedirectStrategy(new DefaultRedirectStrategy()).build();
-      RestTemplate restTemplate = new RestTemplate(
-          new HttpComponentsClientHttpRequestFactory(instance));
 
-      Model metadataModel = ModelFactory.createDefaultModel();
-      Resource resource = metadataModel.createResource(destination.toString());
-      addJsonToRdfResource(node, resource, metadataModel);
+    URI destination = URI.create(storagePath + relativePath.toString());
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+    RestTemplate restTemplate = new RestTemplate(
+        new HttpComponentsClientHttpRequestFactory(instance));
 
-      StringWriter writer = new StringWriter();
-      metadataModel.write(writer, FileUtils.langNTriple);
+    Model metadataModel = ModelFactory.createDefaultModel();
+    Resource resource = metadataModel.createResource(destination.toString());
+    addJsonToRdfResource(node, resource, metadataModel);
 
-      RequestEntity request = RequestEntity.put(new URI(destination.toString() + "/fcr:metadata"))
-          .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
-          .contentType(new MediaType("application", "n-triples", StandardCharsets.UTF_8))
-          .body(writer.toString());
-      ResponseEntity<String> response = restTemplate.exchange(request, String.class);
-    } catch (URISyntaxException e) {
-      log.warn("Cannot put metadata at location " + relativePath + " " + e);
-    }
+    StringWriter writer = new StringWriter();
+    metadataModel.write(writer, FileUtils.langNTriple);
+
+    RequestEntity request = RequestEntity.put(URI.create(destination.toString() + "/fcr:metadata"))
+        .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+        .contentType(new MediaType("application", "n-triples", StandardCharsets.UTF_8))
+        .body(writer.toString());
+    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+
   }
 
   @Override
   public void saveBinary(Path relativePath, byte[] data) {
-    try {
-      URI destination = new URI(storagePath + relativePath.toString());
-      HttpClient instance = HttpClientBuilder.create()
-          .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+    URI destination = URI.create(storagePath + relativePath.toString());
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
-      RestTemplate restTemplate = new RestTemplate(
-          new HttpComponentsClientHttpRequestFactory(instance));
+    RestTemplate restTemplate = new RestTemplate(
+        new HttpComponentsClientHttpRequestFactory(instance));
 
-      RequestEntity request = RequestEntity.put(destination)
-          .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
-          .body(data);
+    RequestEntity request = RequestEntity.put(destination)
+        .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+        .body(data);
 
-      ResponseEntity<String> response = restTemplate.exchange(request, String.class);
-      log.info(response.toString());
-    } catch (URISyntaxException e) {
-      log.error("Cannot create URI " + e);
-    }
+    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+    log.info(response.toString());
   }
 
   @Override
@@ -306,28 +285,23 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public void removeFile(Path relativePath) {
-    try {
-      URI destination = new URI(storagePath + relativePath.toString());
-      HttpClient instance = HttpClientBuilder.create()
-          .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+    URI destination = URI.create(storagePath + relativePath.toString());
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
-      RestTemplate restTemplate = new RestTemplate(
-          new HttpComponentsClientHttpRequestFactory(instance));
+    RestTemplate restTemplate = new RestTemplate(
+        new HttpComponentsClientHttpRequestFactory(instance));
 
-      ResponseEntity<String> response = restTemplate.exchange(destination, HttpMethod.DELETE,
-          authenticationHeader(), String.class);
+    ResponseEntity<String> response = restTemplate.exchange(destination, HttpMethod.DELETE,
+        authenticationHeader(), String.class);
 
-      if (response.getStatusCode() == HttpStatus.GONE
-          || response.getStatusCode() == HttpStatus.NO_CONTENT) {
-        log.info("Fedora resource " + relativePath + " deleted.");
-      } else {
-        log.error(
-            "Unable to delete fedora resource " + relativePath + " due to " + response.getBody());
-      }
-    } catch (URISyntaxException e) {
-      log.error("Cannot remove file at " + relativePath);
+    if (response.getStatusCode() == HttpStatus.GONE
+        || response.getStatusCode() == HttpStatus.NO_CONTENT) {
+      log.info("Fedora resource " + relativePath + " deleted.");
+    } else {
+      log.error(
+          "Unable to delete fedora resource " + relativePath + " due to " + response.getBody());
     }
-
   }
 
   private ObjectNode getRdfJson(URI objectURI) {
@@ -346,7 +320,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     HttpEntity<String> entity = new HttpEntity<>("", headers);
     try {
       if (objectURI.toString().endsWith(KnowledgeObject.METADATA_FILENAME)) {
-        objectURI = new URI(objectURI.toString().substring(0,
+        objectURI = URI.create(objectURI.toString().substring(0,
             objectURI.toString().length() - KnowledgeObject.METADATA_FILENAME.length()));
       }
       ResponseEntity<String> response = restTemplate.exchange(objectURI, HttpMethod.GET,
@@ -363,12 +337,12 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       }
       return (ObjectNode) node;
 
-    } catch (HttpClientErrorException | URISyntaxException | IOException ex) {
+    } catch (HttpClientErrorException | IOException ex) {
       throw new IllegalArgumentException("Cannot find object at URI " + objectURI, ex);
     }
   }
 
-  public URI createContainer(URI uri) throws URISyntaxException {
+  public URI createContainer(URI uri) {
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
@@ -378,7 +352,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     ResponseEntity<String> response = restTemplate.exchange(uri, HttpMethod.PUT,
         authenticationHeader(), String.class);
 
-    return new URI(response.getHeaders().getFirst("Location"));
+    return URI.create(response.getHeaders().getFirst("Location"));
   }
 
   private HttpEntity<HttpHeaders> authenticationHeader() {

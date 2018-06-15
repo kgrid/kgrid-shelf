@@ -46,7 +46,7 @@ public class KnowledgeObjectRepository {
     Map<String, ObjectNode> versions = new HashMap<>();
     ArkId arkId = new ArkId(koPath.getParent().getFileName().toString());
     String version = koPath.getFileName().toString();
-    versions.put(arkId.toString(), findByArkIdAndVersion(arkId, version).getMetadata());
+    versions.put(version, findByArkIdAndVersion(arkId, version).getMetadata());
     return versions;
   }
 
