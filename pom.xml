@@ -19,8 +19,8 @@
 
   <scm>
     <url>https://github.com/kgrid/kgrid-shelf</url>
-    <connection>scm:git:git://github.com/kgrid/kgrid-shelf.git</connection>
-    <developerConnection>scm:git:git@github.com:kgrid/kgrid-shelf.git</developerConnection>
+    <connection>scm:git:https://github.com/kgrid/kgrid-shelf.git</connection>
+    <developerConnection>scm:git:https://github.com/kgrid/kgrid-shelf.git</developerConnection>
   </scm>
 
   <distributionManagement>
@@ -28,6 +28,10 @@
       <id>ossrh</id>
       <url>https://oss.sonatype.org/content/repositories/snapshots</url>
     </snapshotRepository>
+    <repository>
+      <id>ossrh</id>
+      <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
+    </repository>
   </distributionManagement>
 
   <url>https://github.com/kgrid</url>
@@ -177,6 +181,14 @@
               <serverId>ossrh</serverId>
               <nexusUrl>https://oss.sonatype.org/</nexusUrl>
               <autoReleaseAfterClose>true</autoReleaseAfterClose>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-release-plugin</artifactId>
+            <version>2.5.3</version>
+            <configuration>
+              <goals>deploy</goals>
             </configuration>
           </plugin>
         </plugins>
