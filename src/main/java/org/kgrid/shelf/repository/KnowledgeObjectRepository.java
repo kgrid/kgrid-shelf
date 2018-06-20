@@ -66,7 +66,6 @@ public class KnowledgeObjectRepository {
 
     //Load KO objects and skip any KOs with exceptions like missing metadata
     for (Path path : dataStore.getChildren(null)) {
-
       try {
         knowledgeObjects.put(new ArkId(path.getFileName().toString()),
             findByArkId(new ArkId(path.getFileName().toString())));
@@ -75,7 +74,7 @@ public class KnowledgeObjectRepository {
           // Some object stores return child paths as arkId/version
           knowledgeObjects.put(new ArkId(path.getParent().getFileName().toString()), findByPath(path));
         } catch (Exception ex) {
-          log.warn("Unable to load KO " + path, ex);
+          log.warn("Unable to load KO " + path);
         }
       }
     }
