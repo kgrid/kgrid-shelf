@@ -29,9 +29,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Primary;
-import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 @Qualifier("filesystem")
@@ -69,6 +66,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     return children;
   }
 
+  // TODO: this method breaks on windows, says directory does not exist. Fix it.
   @Override
   public Path getAbsoluteLocation(Path relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
@@ -117,8 +115,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       return ((ObjectNode) koMetadata);
     } catch (IOException ioEx) {
       throw new IllegalArgumentException(
-          "Cannot read metadata file at path " + shelf.resolve(metadataFile.getAbsolutePath()) + " "
-              + ioEx);
+          "Cannot read metadata file at path " + shelf.resolve(metadataFile.getAbsolutePath()), ioEx);
     }
   }
 

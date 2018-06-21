@@ -18,15 +18,14 @@ public class CompoundDigitalObjectStoreFactory {
 
   public static CompoundDigitalObjectStore create(String cdoStoreURI) {
     String shelfClass = cdoStoreURI.substring(0, cdoStoreURI.indexOf(':'));
-    CompoundDigitalObjectStore cdoStore;
-    try {
-      cdoStore = BeanFactoryAnnotationUtils
-          .qualifiedBeanOfType(applicationContext.getAutowireCapableBeanFactory(),
-              CompoundDigitalObjectStore.class, shelfClass);
-    } catch (NoSuchBeanDefinitionException nsbdEx) {
-      throw new IllegalStateException(
-          "Cannot find specified CDO store implementation " + shelfClass + " " + nsbdEx);
+    if ("fedora".equals(shelfClass)) {
+      return new FedoraCDOStore(cdoStoreURI);
     }
-    return cdoStore;
+    if ("filesystem".equals(shelfClass)) {
+      return new FilesystemCDOStore(cdoStoreURI);
+    } else {
+      throw new IllegalStateException(
+          "Cannot find specified CDO store implementation " + shelfClass);
+    }
   }
 }
