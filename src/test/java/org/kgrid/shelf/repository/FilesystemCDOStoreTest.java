@@ -37,7 +37,7 @@ public class FilesystemCDOStoreTest {
 
   @Before
   public void setUp() throws Exception {
-    String connectionURL = "filesystem:file://" + folder.getRoot().getAbsolutePath();
+    String connectionURL = "filesystem:" + folder.getRoot().toURI();
     koStore = new FilesystemCDOStore(connectionURL);
     Path shelf = koStore.getAbsoluteLocation(null);
     if(Files.isDirectory(shelf)) {
