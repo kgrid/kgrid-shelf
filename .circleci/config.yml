@@ -77,12 +77,11 @@ jobs:
                 mvn clean deploy  -P ci -s .circleci/settings.xml
             fi
 
-      # Will normally run deploy but if triggered with Release will prepare and perform maven release
+      # Tigger Builds of Activator and Library so the newest snapshot gets used
       - run:
           name: Trigger Activator and Library to build
           command: |
             curl -v -X POST --header 'Content-Type:application/json' \
-              -d '{"build_parameters":{"CIRCLE_JOB":"deploy_heroku"}}' \
               https://circleci.com/api/v1.1/project/github/kgrid/kgrid-activator/tree/master?circle-token=$CIRCLECI_TOKEN
             curl -v -X POST --header 'Content-Type:application/json' \
              -d '{"build_parameters":{"CIRCLE_JOB":"deploy_heroku"}}' \
