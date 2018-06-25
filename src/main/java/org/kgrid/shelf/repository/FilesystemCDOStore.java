@@ -89,9 +89,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       metadataFile = shelf.resolve(relativePath).resolve(KnowledgeObject.METADATA_FILENAME)
           .toFile();
     }
-    if (!metadataFile.exists()) {
-      log.error("Cannot find metadata file for knowledge object at " + metadataFile);
-    }
+
     ObjectMapper mapper = new ObjectMapper();
     mapper.setSerializationInclusion(Include.NON_NULL);
     JsonNode koMetadata;

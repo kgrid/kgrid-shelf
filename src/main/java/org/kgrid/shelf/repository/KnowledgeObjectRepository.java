@@ -55,8 +55,12 @@ public class KnowledgeObjectRepository {
 
     List<Path> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
     for (Path version : versions) {
-      versionMap.put(version.getFileName().toString(),
-          findByArkIdAndVersion(arkId, version.getFileName().toString()).getMetadata());
+     try {
+       versionMap.put(version.getFileName().toString(),
+           findByArkIdAndVersion(arkId, version.getFileName().toString()).getMetadata());
+     } catch (Exception exception){
+       log.error( "Can't load KO " + arkId + "/" + version.getFileName().toString() + " " + exception.getMessage());
+     }
     }
     return versionMap;
   }
@@ -69,13 +73,11 @@ public class KnowledgeObjectRepository {
       try {
         knowledgeObjects.put(new ArkId(path.getFileName().toString()),
             findByArkId(new ArkId(path.getFileName().toString())));
-      } catch (Exception e) {
-        try {
-          // Some object stores return child paths as arkId/version
-          knowledgeObjects.put(new ArkId(path.getParent().getFileName().toString()), findByPath(path));
-        } catch (Exception ex) {
-          log.warn("Unable to load KO " + path);
-        }
+      } catch ( IllegalArgumentException illegalArgument) {
+        log.error("Unable to load KO " + illegalArgument.getMessage());
+      } catch (Exception exception) {
+        // Some object stores return child paths as arkId/version
+        knowledgeObjects.put(new ArkId(path.getParent().getFileName().toString()), findByPath(path));
       }
     }
     return knowledgeObjects;
