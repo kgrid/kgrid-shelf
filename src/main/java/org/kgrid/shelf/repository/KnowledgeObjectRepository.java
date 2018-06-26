@@ -32,8 +32,12 @@ public class KnowledgeObjectRepository {
   public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
     ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation());
-    JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
-    metadataNode.set(KnowledgeObject.MODEL_DIR_NAME, modelMetadataNode);
+    try {
+      JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
+      metadataNode.set(KnowledgeObject.MODEL_DIR_NAME, modelMetadataNode);
+    } catch (IllegalArgumentException | NullPointerException ex) {
+      log.warn("Cannot find model metadata for ko " + arkId + "/" + version);
+    }
     ko.setMetadata(metadataNode);
     return ko;
   }
@@ -54,13 +58,17 @@ public class KnowledgeObjectRepository {
     Map<String, ObjectNode> versionMap = new HashMap<>();
 
     List<Path> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
+    if(versions.isEmpty()) {
+      throw new IllegalArgumentException("Knowledge object with ark id " + arkId + " has no versions");
+    }
+
     for (Path version : versions) {
-     try {
+      try {
        versionMap.put(version.getFileName().toString(),
            findByArkIdAndVersion(arkId, version.getFileName().toString()).getMetadata());
-     } catch (Exception exception){
-       log.error( "Can't load KO " + arkId + "/" + version.getFileName().toString() + " " + exception.getMessage());
-     }
+      } catch (Exception exception){
+       log.warn( "Can't load KO " + arkId + "/" + version.getFileName().toString() + " " + exception.getMessage());
+      }
     }
     return versionMap;
   }
@@ -73,11 +81,8 @@ public class KnowledgeObjectRepository {
       try {
         knowledgeObjects.put(new ArkId(path.getFileName().toString()),
             findByArkId(new ArkId(path.getFileName().toString())));
-      } catch ( IllegalArgumentException illegalArgument) {
-        log.error("Unable to load KO " + illegalArgument.getMessage());
-      } catch (Exception exception) {
-        // Some object stores return child paths as arkId/version
-        knowledgeObjects.put(new ArkId(path.getParent().getFileName().toString()), findByPath(path));
+      } catch (Exception illegalArgument) {
+        log.warn("Unable to load KO " + illegalArgument.getMessage());
       }
     }
     return knowledgeObjects;

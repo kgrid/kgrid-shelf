@@ -1,6 +1,8 @@
 package org.kgrid.shelf.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class ArkId {
 
@@ -88,16 +90,18 @@ public class ArkId {
   }
 
   public void setArkId(String path) {
-    if (path.contains("ark:/")) {
-      String[] parts = path.substring("ark:/".length()).split("/");
-      this.naan = parts[0];
-      this.name = parts[1];
-      this.arkId = String.format("ark:/%s", naan + "/" + name);
-    } else if (path.contains("-")) {
-      String[] parts = path.split("-");
-      this.naan = parts[0];
-      this.name = parts[1];
-      this.arkId = String.format("ark:/%s", naan + "/" + name);
+    String arkIdRegex = "ark:\\/(\\w+)\\/(\\w+)";
+    Matcher arkIdMatcher = Pattern.compile(arkIdRegex).matcher(path);
+    String arkDirectoryRegex = "(\\w+)-(\\w+)";
+    Matcher arkDirectoryMatcher = Pattern.compile(arkDirectoryRegex).matcher(path);
+    if (arkIdMatcher.matches()) {
+      this.naan = arkIdMatcher.group(1);
+      this.name = arkIdMatcher.group(2);
+      this.arkId = String.format("ark:/%s/%s", naan, name);
+    } else if (arkDirectoryMatcher.matches()) {
+      this.naan = arkDirectoryMatcher.group(1);
+      this.name = arkDirectoryMatcher.group(2);
+      this.arkId = String.format("ark:/%s/%s", naan, name);
     } else {
       throw new IllegalArgumentException("Cannot create ark id from " + path);
     }
