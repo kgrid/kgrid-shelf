@@ -39,6 +39,9 @@ public class KnowledgeObjectRepository {
       log.warn("Cannot find model metadata for ko " + arkId + "/" + version);
     }
     ko.setMetadata(metadataNode);
+    if(!ko.hasTitle()) {
+      log.warn("Metadata for ko " + arkId + "/" + version + " is missing a title");
+    }
     return ko;
   }
 

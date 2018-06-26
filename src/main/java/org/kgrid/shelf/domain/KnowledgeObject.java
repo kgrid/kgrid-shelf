@@ -100,4 +100,8 @@ public class KnowledgeObject {
     return (ObjectNode) metadata.get(MODEL_DIR_NAME);
   }
 
+  public boolean hasTitle() {
+    return metadata.has(TITLE_LABEL);
+  }
+
 }
