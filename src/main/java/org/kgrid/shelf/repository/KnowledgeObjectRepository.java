@@ -61,9 +61,6 @@ public class KnowledgeObjectRepository {
     Map<String, ObjectNode> versionMap = new HashMap<>();
 
     List<Path> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
-    if(versions.isEmpty()) {
-      throw new IllegalArgumentException("Knowledge object with ark id " + arkId + " has no versions");
-    }
 
     for (Path version : versions) {
       try {
@@ -72,6 +69,9 @@ public class KnowledgeObjectRepository {
       } catch (Exception exception){
        log.warn( "Can't load KO " + arkId + "/" + version.getFileName().toString() + " " + exception.getMessage());
       }
+    }
+    if(versionMap.isEmpty()) {
+      throw new IllegalArgumentException("Knowledge object with ark id " + arkId + " has no valid versions");
     }
     return versionMap;
   }
