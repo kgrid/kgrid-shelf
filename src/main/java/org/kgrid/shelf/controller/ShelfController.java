@@ -92,18 +92,6 @@ public class ShelfController {
     return ko.getMetadata();
   }
 
-  @GetMapping(path = "/{naan}/{name}/{version}/**")
-  public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name,
-      @PathVariable String version, HttpServletRequest request) {
-    ArkId arkId = new ArkId(naan, name);
-
-    String requestURI = request.getRequestURI();
-    String basePath = StringUtils.join(naan, "/", name, "/", version, "/");
-    String childPath = StringUtils.substringAfterLast(requestURI, basePath);
-
-    return shelf.getMetadataAtPath(arkId, version, childPath);
-  }
-
   @GetMapping(path = "/{naan}/{name}", produces = "application/zip")
   public void getZippedKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name,
       HttpServletResponse response) {
