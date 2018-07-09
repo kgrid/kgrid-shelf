@@ -2,7 +2,9 @@ package org.kgrid.shelf.controller;
 
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.nio.file.NoSuchFileException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.InputMismatchException;
@@ -130,6 +132,26 @@ public class ShelfController {
     }
   }
 
+  @GetMapping(path = "/{naan}/{name}/{version}/**", produces = MediaType.ALL_VALUE)
+  public Object getKnowledgeObject(@PathVariable String naan, @PathVariable String name,
+      @PathVariable String version, HttpServletRequest request) throws NoSuchFileException {
+    ArkId arkId = new ArkId(naan, name);
+
+    String requestURI = request.getRequestURI();
+    String basePath = StringUtils.join(naan, "/", name, "/", version, "/");
+    String childPath = StringUtils.substringAfterLast(requestURI, basePath);
+    if(!childPath.startsWith(KnowledgeObject.MODEL_DIR_NAME)) {
+        throw new IllegalArgumentException("Cannot get files outside of the model directory");
+    }
+
+    byte[] binary = shelf.getBinary(arkId, version, childPath);
+    if(binary != null) {
+      return binary;
+    } else {
+      throw new NoSuchFileException("Cannot fetch file at " + childPath);
+    }
+  }
+
   @PutMapping(path = "/{naan}/{name}")
   public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name,
       @RequestParam("ko") MultipartFile zippedKo) {
@@ -204,6 +226,14 @@ public class ShelfController {
 
   @ExceptionHandler(IOException.class)
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(IOException e,
+      WebRequest request) {
+
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
+        HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(NoSuchFileException.class)
+  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NoSuchFileException e,
       WebRequest request) {
 
     return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),

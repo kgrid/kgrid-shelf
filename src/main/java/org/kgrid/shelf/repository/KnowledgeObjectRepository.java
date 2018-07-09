@@ -141,4 +141,9 @@ public class KnowledgeObjectRepository {
 
     return this.dataStore.getAbsoluteLocation(Paths.get(""));
   }
+
+  public byte[] getBinary(ArkId arkId, String version, String childPath) {
+    Path filepath = Paths.get(arkId.getFedoraPath(), version, childPath);
+    return this.dataStore.getBinary(filepath);
+  }
 }

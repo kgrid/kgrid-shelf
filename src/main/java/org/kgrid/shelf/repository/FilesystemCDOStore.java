@@ -103,7 +103,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
         if (path.toFile().isDirectory() && path.toFile().listFiles().length > 0) {
           for (File child : path.toFile().listFiles()) {
             if (!child.getName().startsWith(".")) {
-              children.add(child.getAbsolutePath().substring(shelf.toString().length()));
+              children.add(child.getAbsolutePath().substring(shelf.toAbsolutePath().toString().length()));
             }
           }
         }
