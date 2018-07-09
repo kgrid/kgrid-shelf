@@ -15,7 +15,9 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
@@ -105,6 +107,16 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       rdf.get(EXPANDED_CONTAINS).forEach(jsonNode ->
           children.add(Paths.get(jsonNode.get(ID).asText().substring(storagePath.length())))
       );
+    }
+
+    // At the top level fcrepo returns the full arkid/version when it is deposited with arkid/version
+    //  so we need to just return the arkid
+    if(relativePath == null) {
+      return children.stream().map(path -> {
+        if(path.getParent() != null)
+          return path.getParent();
+        else return path;
+      }).filter(Objects::nonNull).collect(Collectors.toList());
     }
     return children;
 }
