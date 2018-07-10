@@ -22,6 +22,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.io.IOUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -211,11 +212,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
               JsonNode node = new ObjectMapper().readTree(dataString.toString());
               saveMetadata(Paths.get(dir), node);
             } else {
-              while (sc.hasNextLine()) {
-                dataString.append(sc.nextLine());
-              }
-              saveBinary(Paths.get(dir), dataString.toString().getBytes());
-
+              saveBinary(Paths.get(dir), IOUtils.toByteArray(zis));
             }
           }
         }
