@@ -97,13 +97,21 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     ObjectNode rdf = getRdfJson(metadataURI);
     ArrayList<Path> children = new ArrayList<>();
     if (rdf.has(GRAPH) && rdf.get(GRAPH).get(0).has(CONTAINS)) {
-      rdf.get(GRAPH).get(0).get(CONTAINS).forEach(jsonNode ->
-          children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
-      );
+      if(!rdf.get(GRAPH).get(0).get(CONTAINS).isArray()) {
+        children.add(Paths.get(rdf.get(GRAPH).get(0).get(CONTAINS).asText()));
+      } else {
+        rdf.get(GRAPH).get(0).get(CONTAINS).forEach(jsonNode ->
+            children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
+        );
+      }
     } else if (rdf.has(CONTAINS)) {
-      rdf.get(CONTAINS).forEach(jsonNode ->
-          children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
-      );
+      if(!rdf.get(CONTAINS).isArray()) {
+        children.add(Paths.get(rdf.get(CONTAINS).asText()));
+      } else {
+        rdf.get(CONTAINS).forEach(jsonNode ->
+            children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
+        );
+      }
     } else if (rdf.has(EXPANDED_CONTAINS)) {
       rdf.get(EXPANDED_CONTAINS).forEach(jsonNode ->
           children.add(Paths.get(jsonNode.get(ID).asText().substring(storagePath.length())))
