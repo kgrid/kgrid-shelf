@@ -30,6 +30,8 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.FileUtils;
+
+import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -169,7 +171,12 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
     Model metadataModel = ModelFactory.createDefaultModel();
     Resource resource = metadataModel.createResource(destination.toString());
+
+    // Doing this to add a namespace to objects so we can convert from json to rdf triples
+    // When we are fully json-ld this can possibly be eliminated
     addJsonToRdfResource(node, resource, metadataModel);
+
+    // TODO: Add last modified date from current metadata to the metadata being added to allow overwriting
 
     StringWriter writer = new StringWriter();
     metadataModel.write(writer, FileUtils.langNTriple);
@@ -179,6 +186,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
         .contentType(new MediaType("application", "n-triples", StandardCharsets.UTF_8))
         .body(writer.toString());
     ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+
+    log.info("Saved metadata " + response);
 
   }
 
@@ -200,10 +209,17 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public ObjectNode addCompoundObjectToShelf(MultipartFile zip) {
+  public ArkId addCompoundObjectToShelf(MultipartFile zip) {
 
     try (ZipInputStream zis = new ZipInputStream(zip.getInputStream())) {
       ZipEntry entry;
+      ArkId arkId;
+      String topLevelFolderName = zis.getNextEntry().getName();
+      if(topLevelFolderName.endsWith("/")){
+        arkId = new ArkId(topLevelFolderName.substring(0, topLevelFolderName.length()-1));
+      } else {
+        arkId = new ArkId(topLevelFolderName);
+      }
       while ((entry = zis.getNextEntry()) != null) {
 
         if (!entry.getName().contains("/.")) {
@@ -225,10 +241,14 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
           }
         }
       }
+      return arkId;
+
+    } catch (HttpClientErrorException hcee) {
+      throw new IllegalStateException("Cannot overwrite existing knowledge object in fedora");
     } catch (IOException ex) {
-      ex.printStackTrace();
+      log.warn("Cannot load zip into fedora " + ex.getMessage());
+      throw new IllegalArgumentException(ex);
     }
-    return null;
   }
 
   @Override

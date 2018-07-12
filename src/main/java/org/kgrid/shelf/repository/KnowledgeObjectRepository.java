@@ -92,8 +92,7 @@ public class KnowledgeObjectRepository {
   }
 
   public ArkId save(MultipartFile zippedKO) {
-    ObjectNode jsonData = dataStore.addCompoundObjectToShelf(zippedKO);
-    return new ArkId(jsonData.get("arkId").asText());
+    return dataStore.addCompoundObjectToShelf(zippedKO);
   }
 
   public void putZipFileIntoOutputStream(ArkId arkId, OutputStream outputStream)

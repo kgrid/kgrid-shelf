@@ -23,6 +23,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,23 +151,20 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public ObjectNode addCompoundObjectToShelf(MultipartFile zip) {
+  public ArkId addCompoundObjectToShelf(MultipartFile zip) {
     Path shelf = Paths.get(localStoragePath);
-    String filename = zip.getOriginalFilename();
     int entries = 0;
     long totalSize = 0;
-    final String zipExt = ".zip";
 
-    if (filename.endsWith(zipExt)) {
-      filename = filename.substring(0, filename.length() - zipExt.length());
-    }
-    String[] parts = filename.split("-");
-    String version = null;
-    if (parts.length > 2) {
-      version = parts[2];
-    }
     try (ZipInputStream zis = new ZipInputStream(zip.getInputStream())) {
       ZipEntry entry;
+      ArkId arkId;
+      String topLevelFolderName = zis.getNextEntry().getName();
+      if(topLevelFolderName.endsWith("/")){
+        arkId = new ArkId(topLevelFolderName.substring(0, topLevelFolderName.length()-1));
+      } else {
+        arkId = new ArkId(topLevelFolderName);
+      }
       while ((entry = zis.getNextEntry()) != null) {
         if (!entry.getName().contains("/.") && !entry.getName().contains("__MACOSX")) {
           Path path = shelf.resolve(entry.getName());
@@ -191,18 +189,11 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
           }
         }
       }
+      return arkId;
     } catch (IOException ioEx) {
       log.error("IO Error on shelf " + shelf + " " + ioEx, ioEx);
       throw new IllegalArgumentException(ioEx);
     }
-    String objectRoot = parts[0] + "-" + parts[1];
-
-    if (version == null) {
-      // TODO: Get default version?
-      version = getChildren(Paths.get(objectRoot)).get(0).getFileName().toString();
-    }
-    Path metadataLocation = Paths.get(objectRoot, version, KnowledgeObject.METADATA_FILENAME);
-    return getMetadata(metadataLocation);
   }
 
   // rm -rf repository/arkId ** dangerous! **

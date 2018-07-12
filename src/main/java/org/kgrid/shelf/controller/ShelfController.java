@@ -153,25 +153,29 @@ public class ShelfController {
   }
 
   @PutMapping(path = "/{naan}/{name}")
-  public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name,
+  public ResponseEntity<Map <String, String>> addKOZipFolder(@PathVariable String naan, @PathVariable String name,
       @RequestParam("ko") MultipartFile zippedKo) {
 
-    return addKOZipFolder(naan, name, null, zippedKo);
+    Map<String, String> result = addKOZipFolder(naan, name, null, zippedKo).getBody();
+
+    return new ResponseEntity<>(result, HttpStatus.CREATED);
   }
 
   @PutMapping(path = "/{naan}/{name}/{version}")
-  public ResponseEntity<String> addKOZipFolder(@PathVariable String naan, @PathVariable String name,
+  public ResponseEntity<Map<String, String>> addKOZipFolder(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
     ArkId arkId = shelf.save(zippedKo);
+
     if (!arkId.equals(pathArk)) {
       throw new InputMismatchException("URL must match internal arkId of object");
     }
-    String response = arkId + "/" + version + " added to the shelf";
 
-    ResponseEntity<String> result = new ResponseEntity<>(response, HttpStatus.CREATED);
+    Map<String, String> response = new HashMap<>();
+    response.put("Added", arkId.toString());
 
-    return result;
+    return new ResponseEntity<>(response, HttpStatus.CREATED);
+
   }
 
   @PutMapping(path = "/{naan}/{name}/{version}", consumes = MediaType.APPLICATION_JSON_VALUE)

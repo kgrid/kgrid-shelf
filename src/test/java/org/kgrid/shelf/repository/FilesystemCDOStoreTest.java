@@ -75,8 +75,7 @@ public class FilesystemCDOStoreTest {
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/" + filename);
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
-    ObjectNode json = koStore.addCompoundObjectToShelf(koZip);
-    return new ArkId(json.get("arkId").asText());
+    return koStore.addCompoundObjectToShelf(koZip);
   }
 
   @Test

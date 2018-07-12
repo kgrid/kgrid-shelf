@@ -11,6 +11,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.kgrid.shelf.domain.ArkId;
 import org.springframework.mock.web.MockMultipartFile;
 
 @Category(IntegrationTest.class)
@@ -46,7 +47,7 @@ public class FedoraCDOStoreTest {
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/" + filename);
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
-    ObjectNode json = store.addCompoundObjectToShelf(koZip);
+    ArkId arkId = store.addCompoundObjectToShelf(koZip);
   }
 
 //  @Test

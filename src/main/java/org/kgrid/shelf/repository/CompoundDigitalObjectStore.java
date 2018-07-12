@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.List;
+import org.kgrid.shelf.domain.ArkId;
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,7 +24,7 @@ public interface CompoundDigitalObjectStore {
 
   void saveBinary(Path relativeDestination, byte[] data);
 
-  ObjectNode addCompoundObjectToShelf(MultipartFile zip);
+  ArkId addCompoundObjectToShelf(MultipartFile zip);
 
   void getCompoundObjectFromShelf(Path relativeDestination, boolean isVersion,
       OutputStream outputStream) throws IOException;
