@@ -39,7 +39,7 @@ public class FilesystemCDOStoreTest {
   public void setUp() throws Exception {
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
     koStore = new FilesystemCDOStore(connectionURL);
-    Path shelf = koStore.getAbsoluteLocation(null);
+    Path shelf = Paths.get(koStore.getAbsoluteLocation(null));
     if(Files.isDirectory(shelf)) {
       nukeTestShelf(shelf);
     }
@@ -53,7 +53,7 @@ public class FilesystemCDOStoreTest {
   @After
   public void deleteKO() throws Exception {
     (koStore).removeFile(Paths.get(this.arkId.getFedoraPath()));
-    Path shelf = koStore.getAbsoluteLocation(null);
+    Path shelf = Paths.get(koStore.getAbsoluteLocation(null));
     if(Files.isDirectory(shelf)) {
       nukeTestShelf(shelf);
     }

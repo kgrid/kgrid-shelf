@@ -14,7 +14,7 @@ public interface CompoundDigitalObjectStore {
 
   List<Path> getChildren(Path relativeLocation);
 
-  Path getAbsoluteLocation(Path relativeLocation);
+  String getAbsoluteLocation(Path relativeLocation);
 
   ObjectNode getMetadata(Path relativeLocation);
 

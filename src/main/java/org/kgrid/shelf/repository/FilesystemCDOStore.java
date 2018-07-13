@@ -68,7 +68,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   // TODO: this method breaks on windows, says directory does not exist. Fix it.
   @Override
-  public Path getAbsoluteLocation(Path relativeFilePath) {
+  public String getAbsoluteLocation(Path relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
     if (!shelf.toFile().exists()) {
       throw new IllegalStateException(
@@ -76,9 +76,9 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
               + " Make sure the property kgrid.shelf.cdostore.url is set correctly.");
     }
     if (relativeFilePath == null) {
-      return shelf;
+      return shelf.toString();
     }
-    return shelf.resolve(relativeFilePath);
+    return shelf.resolve(relativeFilePath).toString();
   }
 
   @Override

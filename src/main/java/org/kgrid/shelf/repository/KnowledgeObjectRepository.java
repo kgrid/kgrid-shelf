@@ -136,7 +136,7 @@ public class KnowledgeObjectRepository {
     log.info("Deleted ko with ark id " + arkId + " and version " + version);
   }
 
-  public Path getConnection() {
+  public String getConnection() {
 
     return this.dataStore.getAbsoluteLocation(Paths.get(""));
   }

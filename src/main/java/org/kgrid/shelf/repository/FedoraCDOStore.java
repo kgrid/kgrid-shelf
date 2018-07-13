@@ -30,7 +30,6 @@ import org.apache.jena.rdf.model.Model;
 import org.apache.jena.rdf.model.ModelFactory;
 import org.apache.jena.rdf.model.Resource;
 import org.apache.jena.util.FileUtils;
-
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
@@ -133,11 +132,11 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 }
 
   @Override
-  public Path getAbsoluteLocation(Path relativePath) {
+  public String getAbsoluteLocation(Path relativePath) {
     if (relativePath != null) {
-      return Paths.get(storagePath + relativePath.toString());
+      return storagePath + relativePath.toString();
     } else {
-      return Paths.get(storagePath);
+      return storagePath;
     }
   }
 
@@ -174,7 +173,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
     // Doing this to add a namespace to objects so we can convert from json to rdf triples
     // When we are fully json-ld this can possibly be eliminated
-    addJsonToRdfResource(node, resource, metadataModel);
+    serializeJsonToRdfResource(node, resource, metadataModel);
 
     // TODO: Add last modified date from current metadata to the metadata being added to allow overwriting
 
@@ -215,7 +214,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       ZipEntry entry;
       ArkId arkId;
       String topLevelFolderName = zis.getNextEntry().getName();
-      if(topLevelFolderName.endsWith("/")){
+      if(topLevelFolderName.endsWith("/")) {
         arkId = new ArkId(topLevelFolderName.substring(0, topLevelFolderName.length()-1));
       } else {
         arkId = new ArkId(topLevelFolderName);
@@ -304,13 +303,13 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     return descendants;
   }
 
-  private void addJsonToRdfResource(JsonNode json, Resource resource, Model metadataModel) {
+  private void serializeJsonToRdfResource(JsonNode json, Resource resource, Model metadataModel) {
     json.fields().forEachRemaining(element -> {
       if (element.getValue().isObject()) {
-        addJsonToRdfResource(element.getValue(), resource, metadataModel);
+        serializeJsonToRdfResource(element.getValue(), resource, metadataModel);
       } else if (element.getValue().isArray()) {
         element.getValue().elements().forEachRemaining(
-            arrayElement -> addJsonToRdfResource(arrayElement, resource, metadataModel));
+            arrayElement -> serializeJsonToRdfResource(arrayElement, resource, metadataModel));
       } else {
         resource.addLiteral(
             metadataModel.createProperty(KGRID_NAMESPACE + element.getKey()),

@@ -37,7 +37,7 @@ public class FedoraCDOStoreTest {
 
 //  @Test
   public void getAbsolutePathOfLocalServer() throws Exception {
-    Path location = store.getAbsoluteLocation(null);
+    String location = store.getAbsoluteLocation(null);
     assertEquals("http://localhost:8080/fcrepo/rest", location);
   }
 
