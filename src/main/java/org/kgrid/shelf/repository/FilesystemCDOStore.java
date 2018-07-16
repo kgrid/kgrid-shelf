@@ -18,6 +18,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
@@ -49,15 +50,16 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public List<Path> getChildren(Path filePath) {
+  public List<String> getChildren(String filePath) {
     Path path = Paths.get(localStoragePath);
     if (filePath != null) {
       path = path.resolve(filePath);
     }
-    List<Path> children = new ArrayList<>();
+    List<String> children = new ArrayList<>();
     try {
       children = Files.walk(path, 1)
           .filter(Files::isDirectory)
+          .map(Object::toString)
           .collect(Collectors.toList());
       children.remove(0); // Remove the parent directory
     } catch (IOException ioEx) {
@@ -68,7 +70,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   // TODO: this method breaks on windows, says directory does not exist. Fix it.
   @Override
-  public String getAbsoluteLocation(Path relativeFilePath) {
+  public String getAbsoluteLocation(String relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
     if (!shelf.toFile().exists()) {
       throw new IllegalStateException(
@@ -82,7 +84,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public ObjectNode getMetadata(Path relativePath) {
+  public ObjectNode getMetadata(String relativePath) {
     Path shelf = Paths.get(localStoragePath);
     File metadataFile = shelf.resolve(relativePath).toFile();
     if (metadataFile.isDirectory()) {
@@ -100,7 +102,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
         koMetadata = koMetadata.get(0);
       }
       ArrayNode children = ((ObjectNode) koMetadata).putArray("children");
-      getChildren(Paths.get(metadataFile.getAbsolutePath()).getParent()).forEach(path -> {
+      getChildren(Paths.get(metadataFile.getAbsolutePath()).getParent().toString()).forEach(filename -> {
+        Path path = Paths.get(filename);
         if (path.toFile().isDirectory() && path.toFile().listFiles().length > 0) {
           for (File child : path.toFile().listFiles()) {
             if (!child.getName().startsWith(".")) {
@@ -118,7 +121,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public byte[] getBinary(Path relativeFilePath) {
+  public byte[] getBinary(String relativeFilePath) {
     Path shelf = Paths.get(localStoragePath);
     byte[] bytes = null;
     try {
@@ -130,7 +133,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveMetadata(Path relativePath, JsonNode metadata) {
+  public void saveMetadata(String relativePath, JsonNode metadata) {
     File metadataFile = new File(localStoragePath, relativePath.toString());
     try {
       ObjectWriter writer = new ObjectMapper().writer().with(SerializationFeature.INDENT_OUTPUT);
@@ -141,8 +144,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveBinary(Path relativePath, byte[] output) {
-    File dataFile = new File(localStoragePath, relativePath.toString());
+  public void saveBinary(String relativePath, byte[] output) {
+    File dataFile = new File(localStoragePath, relativePath);
     try (FileOutputStream fos = new FileOutputStream(dataFile)) {
       fos.write(output);
     } catch (IOException ioEx) {
@@ -151,7 +154,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public ArkId addCompoundObjectToShelf(MultipartFile zip) {
+  public ArkId addCompoundObjectToShelf(ArkId urlArkId, MultipartFile zip) {
     Path shelf = Paths.get(localStoragePath);
     int entries = 0;
     long totalSize = 0;
@@ -164,6 +167,9 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
         arkId = new ArkId(topLevelFolderName.substring(0, topLevelFolderName.length()-1));
       } else {
         arkId = new ArkId(topLevelFolderName);
+      }
+      if(!arkId.equals(urlArkId)) {
+        throw new InputMismatchException("URL does not match internal id in zip file url ark=" + urlArkId + " zipped ark=" + arkId);
       }
       while ((entry = zis.getNextEntry()) != null) {
         if (!entry.getName().contains("/.") && !entry.getName().contains("__MACOSX")) {
@@ -198,7 +204,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   // rm -rf repository/arkId ** dangerous! **
   @Override
-  public void removeFile(Path filePath) throws IOException {
+  public void removeFile(String filePath) throws IOException {
     Path shelf = Paths.get(localStoragePath);
     Path ko = shelf.resolve(filePath.toString());
 
@@ -228,7 +234,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void getCompoundObjectFromShelf(Path objectDir, boolean isVersion,
+  public void getCompoundObjectFromShelf(String objectDir, boolean isVersion,
       OutputStream outputStream) throws IOException {
     Path shelf = Paths.get(localStoragePath);
 //    try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(shelf.resolve(arkFilename + "-" + version + ".zip")))) {

@@ -11,18 +11,17 @@ import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.Objects;
-import java.util.Scanner;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
@@ -82,7 +81,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public List<Path> getChildren(Path relativePath) {
+  public List<String> getChildren(String relativePath) {
     final String EXPANDED_CONTAINS = "http://www.w3.org/ns/ldp#contains";
     final String CONTAINS = "contains";
     final String GRAPH = "@graph";
@@ -91,31 +90,31 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     URI metadataURI;
 
     if (relativePath != null) {
-      metadataURI = URI.create(storagePath + relativePath.toString());
+      metadataURI = URI.create(storagePath + relativePath);
     } else {
       metadataURI = URI.create(storagePath);
     }
     ObjectNode rdf = getRdfJson(metadataURI);
-    ArrayList<Path> children = new ArrayList<>();
+    ArrayList<String> children = new ArrayList<>();
     if (rdf.has(GRAPH) && rdf.get(GRAPH).get(0).has(CONTAINS)) {
       if(!rdf.get(GRAPH).get(0).get(CONTAINS).isArray()) {
-        children.add(Paths.get(rdf.get(GRAPH).get(0).get(CONTAINS).asText()));
+        children.add((rdf.get(GRAPH).get(0).get(CONTAINS).asText()));
       } else {
         rdf.get(GRAPH).get(0).get(CONTAINS).forEach(jsonNode ->
-            children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
+            children.add(jsonNode.asText().substring(storagePath.length()))
         );
       }
     } else if (rdf.has(CONTAINS)) {
       if(!rdf.get(CONTAINS).isArray()) {
-        children.add(Paths.get(rdf.get(CONTAINS).asText()));
+        children.add(rdf.get(CONTAINS).asText().substring(storagePath.length()));
       } else {
         rdf.get(CONTAINS).forEach(jsonNode ->
-            children.add(Paths.get(jsonNode.asText().substring(storagePath.length())))
+            children.add(jsonNode.asText().substring(storagePath.length()))
         );
       }
     } else if (rdf.has(EXPANDED_CONTAINS)) {
       rdf.get(EXPANDED_CONTAINS).forEach(jsonNode ->
-          children.add(Paths.get(jsonNode.get(ID).asText().substring(storagePath.length())))
+          children.add(jsonNode.get(ID).asText().substring(storagePath.length()))
       );
     }
 
@@ -123,31 +122,32 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     //  so we need to just return the arkid
     if(relativePath == null) {
       return children.stream().map(path -> {
-        if(path.getParent() != null)
-          return path.getParent();
+        String parent = StringUtils.substringBefore(path, "/");
+        if(parent != null && ! parent.isEmpty())
+          return parent;
         else return path;
       }).filter(Objects::nonNull).collect(Collectors.toList());
     }
     return children;
-}
+  }
 
   @Override
-  public String getAbsoluteLocation(Path relativePath) {
+  public String getAbsoluteLocation(String relativePath) {
     if (relativePath != null) {
-      return storagePath + relativePath.toString();
+      return storagePath + relativePath;
     } else {
       return storagePath;
     }
   }
 
   @Override
-  public ObjectNode getMetadata(Path relativePath) {
-    return getRdfJson(URI.create(storagePath + relativePath.toString()));
+  public ObjectNode getMetadata(String relativePath) {
+    return getRdfJson(URI.create(storagePath + relativePath));
   }
 
   @Override
-  public byte[] getBinary(Path relativePath) {
-    URI path = URI.create(storagePath + relativePath.toString());
+  public byte[] getBinary(String relativePath) {
+    URI path = URI.create(storagePath + relativePath);
 
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
@@ -160,9 +160,9 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveMetadata(Path relativePath, JsonNode node) {
+  public void saveMetadata(String relativePath, JsonNode node) {
 
-    URI destination = URI.create(storagePath + relativePath.toString());
+    URI destination = URI.create(storagePath + relativePath);
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
     RestTemplate restTemplate = new RestTemplate(
@@ -191,8 +191,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveBinary(Path relativePath, byte[] data) {
-    URI destination = URI.create(storagePath + relativePath.toString());
+  public void saveBinary(String relativePath, byte[] data) {
+    URI destination = URI.create(storagePath + relativePath);
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
@@ -208,64 +208,85 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public ArkId addCompoundObjectToShelf(MultipartFile zip) {
+  public ArkId addCompoundObjectToShelf(ArkId urlArkId, MultipartFile zip) {
+    int totalSize = 0;
+    int entries = 0;
+
+    // Create a new transaction in case anything goes wrong
+    String transactionId = createTransaction();
 
     try (ZipInputStream zis = new ZipInputStream(zip.getInputStream())) {
       ZipEntry entry;
       ArkId arkId;
       String topLevelFolderName = zis.getNextEntry().getName();
       if(topLevelFolderName.endsWith("/")) {
-        arkId = new ArkId(topLevelFolderName.substring(0, topLevelFolderName.length()-1));
+        arkId = new ArkId(StringUtils.substringBeforeLast(topLevelFolderName, "/"));
       } else {
         arkId = new ArkId(topLevelFolderName);
+      }
+      if(!arkId.equals(urlArkId)) {
+        rollbackTransaction(transactionId);
+        throw new InputMismatchException("URL does not match internal id in zip file url ark=" + urlArkId + " zipped ark=" + arkId);
       }
       while ((entry = zis.getNextEntry()) != null) {
 
         if (!entry.getName().contains("/.")) {
           String dir = entry.getName();
           if (!entry.isDirectory()) {
-            StringBuilder dataString = new StringBuilder();
-            Scanner sc = new Scanner(zis);
+            byte[] zipContents = IOUtils.toByteArray(zis);
             if (entry.getName().endsWith(KnowledgeObject.METADATA_FILENAME)) {
-              while (sc.hasNextLine()) {
-                dataString.append(sc.nextLine());
-              }
-              dir = dir
-                  .substring(0, dir.length() - (KnowledgeObject.METADATA_FILENAME.length() + 1));
-              JsonNode node = new ObjectMapper().readTree(dataString.toString());
-              saveMetadata(Paths.get(dir), node);
+              // chop off the "/metadata.json" off the end of rdf metadata
+              dir = StringUtils.substringBeforeLast(dir, "/");
+              JsonNode node = new ObjectMapper().readTree(zipContents);
+              saveMetadata(transactionId + "/" + dir, node);
             } else {
-              saveBinary(Paths.get(dir), IOUtils.toByteArray(zis));
+              saveBinary(transactionId + "/" + dir, zipContents);
+            }
+
+            // Prevent zip bombs from using all available resources
+            entries++;
+            totalSize+= zipContents.length;
+            if (entries > 1024) {
+              throw new IllegalStateException(
+                  "Zip file " + zip.getName() + " has too many files in it to unzip.");
+            }
+            if (totalSize > 0x6400000) { // Over 100 MB
+              log.error("Zip file " + zip.getName() + " has too many files in it to unzip.");
+              throw new IllegalStateException(
+                  "Zip file " + zip.getName() + " is too large to unzip.");
             }
           }
         }
       }
+      commitTransaction(transactionId);
       return arkId;
 
     } catch (HttpClientErrorException hcee) {
+      rollbackTransaction(transactionId);
       throw new IllegalStateException("Cannot overwrite existing knowledge object in fedora");
     } catch (IOException ex) {
+      rollbackTransaction(transactionId);
       log.warn("Cannot load zip into fedora " + ex.getMessage());
       throw new IllegalArgumentException(ex);
     }
   }
 
   @Override
-  public void getCompoundObjectFromShelf(Path relativeDestination, boolean isVersion,
+  public void getCompoundObjectFromShelf(String relativeDestination, boolean isVersion,
       OutputStream outputStream) throws IOException {
     getCompoundObjectFromShelf(relativeDestination, outputStream, 10);
   }
 
-  private void getCompoundObjectFromShelf(Path relativeDestination, OutputStream outputStream,
+  private void getCompoundObjectFromShelf(String relativeDestination, OutputStream outputStream,
       int maxDepth) throws IOException {
     ZipOutputStream zos = new ZipOutputStream(outputStream);
-    List<Path> descendants = getAllFedoraDescendants(relativeDestination, maxDepth);
+    List<String> descendants = getAllFedoraDescendants(relativeDestination, maxDepth);
     descendants.add(relativeDestination); // Add top-level metadata
-    for (Path path : descendants) {
+    for (String path : descendants) {
       ZipEntry zipEntry;
       try {
         JsonNode metadata = getMetadata(path);
-        zipEntry = new ZipEntry(path.resolve(KnowledgeObject.METADATA_FILENAME).toString());
+        zipEntry = new ZipEntry(path + "/" + KnowledgeObject.METADATA_FILENAME);
         zos.putNextEntry(zipEntry);
         zos.write(metadata.toString().getBytes());
         zos.closeEntry();
@@ -273,7 +294,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
         log.error("Cannot write file " + path + " to the zip file " + ex);
       } catch (IllegalArgumentException e) {
         try {
-          zipEntry = new ZipEntry(path.toString());
+          zipEntry = new ZipEntry(path);
           zos.putNextEntry(zipEntry);
           zos.write(getBinary(path));
           zos.closeEntry();
@@ -285,9 +306,9 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     zos.close();
   }
 
-  private List<Path> getAllFedoraDescendants(Path start, int maxLevels) {
-    ArrayList<Path> descendants = new ArrayList<>();
-    List<Path> children;
+  private List<String> getAllFedoraDescendants(String start, int maxLevels) {
+    ArrayList<String> descendants = new ArrayList<>();
+    List<String> children;
     try {
       children = getChildren(start);
     } catch (IllegalArgumentException e) {
@@ -295,7 +316,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     }
     if (maxLevels > 0 && children != null && !children.isEmpty()) {
 
-      for (Path child : children) {
+      for (String child : children) {
         descendants.addAll(getAllFedoraDescendants(child, maxLevels - 1));
       }
       descendants.addAll(children);
@@ -319,8 +340,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void removeFile(Path relativePath) {
-    URI destination = URI.create(storagePath + relativePath.toString());
+  public void removeFile(String relativePath) {
+    URI destination = URI.create(storagePath + relativePath);
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
@@ -336,6 +357,71 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     } else {
       log.error(
           "Unable to delete fedora resource " + relativePath + " due to " + response.getBody());
+    }
+  }
+
+  private String createTransaction() {
+    URI destination = URI.create(storagePath + "fcr:tx");
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+
+    RestTemplate restTemplate = new RestTemplate(
+        new HttpComponentsClientHttpRequestFactory(instance));
+
+    RequestEntity request = RequestEntity.post(destination)
+        .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+        .body(null);
+
+    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+    String transactionId = response.getHeaders().get("Location").get(0).substring(storagePath.length());
+    if(response.getStatusCode().equals(HttpStatus.CREATED)) {
+      log.info("Opening transaction with fcrepo with ID " + transactionId);
+    } else {
+      log.warn("Attempted to open transaction with fcrepo but failed with http status " + response.getStatusCode());
+    }
+    return transactionId;
+  }
+
+  private void commitTransaction(String transactionId) {
+    URI destination = URI.create(storagePath + transactionId + "/fcr:tx/fcr:commit");
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+
+    RestTemplate restTemplate = new RestTemplate(
+        new HttpComponentsClientHttpRequestFactory(instance));
+
+    RequestEntity request = RequestEntity.post(destination)
+        .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+        .body(null);
+
+
+    ResponseEntity response = restTemplate.exchange(request, String.class);
+
+    if(response.getStatusCode().equals(HttpStatus.NO_CONTENT)) {
+      log.info("Committed transaction in fcrepo with ID " + transactionId);
+    } else {
+      log.warn("Attempted to commit transaction with id " + transactionId + " but failed with http status " + response.getStatusCode());
+    }
+  }
+
+  private void rollbackTransaction(String transactionId) {
+    URI destination = URI.create(storagePath + transactionId + "/fcr:tx/fcr:rollback");
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+
+    RestTemplate restTemplate = new RestTemplate(
+        new HttpComponentsClientHttpRequestFactory(instance));
+
+    RequestEntity request = RequestEntity.post(destination)
+        .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+        .body(null);
+
+    ResponseEntity response = restTemplate.exchange(request, String.class);
+
+    if(response.getStatusCode().equals(HttpStatus.NO_CONTENT)) {
+      log.info("Rolled back transaction in fcrepo with ID " + transactionId);
+    } else {
+      log.warn("Attempted to commit transaction with id " + transactionId + " but failed with http status " + response.getStatusCode());
     }
   }
 

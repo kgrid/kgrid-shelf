@@ -3,9 +3,6 @@ package org.kgrid.shelf.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObject;
-
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -13,6 +10,9 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.lang3.StringUtils;
+import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -31,9 +31,9 @@ public class KnowledgeObjectRepository {
 
   public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
-    ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation());
+    ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation().toString());
     try {
-      JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation());
+      JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation().toString());
       metadataNode.set(KnowledgeObject.MODEL_DIR_NAME, modelMetadataNode);
     } catch (IllegalArgumentException | NullPointerException ex) {
       log.warn("Cannot find model metadata for ko " + arkId + "/" + version);
@@ -46,7 +46,7 @@ public class KnowledgeObjectRepository {
   }
 
   public ObjectNode getMetadataAtPath(ArkId arkId, String version, String path) {
-    return dataStore.getMetadata(Paths.get(arkId.getFedoraPath(), version, path));
+    return dataStore.getMetadata(Paths.get(arkId.getFedoraPath(), version, path).toString());
   }
 
   public Map<String, ObjectNode> findByPath(Path koPath) {
@@ -60,14 +60,15 @@ public class KnowledgeObjectRepository {
   public Map<String, ObjectNode> findByArkId(ArkId arkId) {
     Map<String, ObjectNode> versionMap = new HashMap<>();
 
-    List<Path> versions = dataStore.getChildren(Paths.get(arkId.getFedoraPath()));
+    List<String> versions = dataStore.getChildren(arkId.getFedoraPath());
 
-    for (Path version : versions) {
+    for (String version : versions) {
       try {
-       versionMap.put(version.getFileName().toString(),
-           findByArkIdAndVersion(arkId, version.getFileName().toString()).getMetadata());
+
+       versionMap.put(StringUtils.substringAfterLast(version, "/"),
+           findByArkIdAndVersion(arkId, StringUtils.substringAfterLast(version, "/")).getMetadata());
       } catch (Exception exception){
-       log.warn( "Can't load KO " + arkId + "/" + version.getFileName().toString() + " " + exception.getMessage());
+       log.warn( "Can't load KO " + arkId + "/" + StringUtils.substringAfterLast(version, "/") + " " + exception.getMessage());
       }
     }
     if(versionMap.isEmpty()) {
@@ -80,10 +81,15 @@ public class KnowledgeObjectRepository {
     Map<ArkId, Map<String, ObjectNode>> knowledgeObjects = new HashMap<>();
 
     //Load KO objects and skip any KOs with exceptions like missing metadata
-    for (Path path : dataStore.getChildren(null)) {
+    for (String path : dataStore.getChildren(null)) {
       try {
-        knowledgeObjects.put(new ArkId(path.getFileName().toString()),
-            findByArkId(new ArkId(path.getFileName().toString())));
+        ArkId arkId;
+        if(path.contains("/")) {
+          arkId = new ArkId(StringUtils.substringAfterLast(path, "/"));
+        } else {
+          arkId = new ArkId(path);
+        }
+        knowledgeObjects.put(arkId, findByArkId(arkId));
       } catch (Exception illegalArgument) {
         log.warn("Unable to load KO " + illegalArgument.getMessage());
       }
@@ -91,20 +97,20 @@ public class KnowledgeObjectRepository {
     return knowledgeObjects;
   }
 
-  public ArkId save(MultipartFile zippedKO) {
-    return dataStore.addCompoundObjectToShelf(zippedKO);
+  public ArkId save(ArkId arkId, MultipartFile zippedKO) {
+    return dataStore.addCompoundObjectToShelf(arkId, zippedKO);
   }
 
   public void putZipFileIntoOutputStream(ArkId arkId, OutputStream outputStream)
       throws IOException {
     Path relativeDestination = Paths.get(arkId.getFedoraPath());
-    dataStore.getCompoundObjectFromShelf(relativeDestination, false, outputStream);
+    dataStore.getCompoundObjectFromShelf(relativeDestination.toString(), false, outputStream);
   }
 
   public void findByArkIdAndVersion(ArkId arkId, String version, OutputStream outputStream)
       throws IOException {
     Path relativeDestination = Paths.get(arkId.getFedoraPath(), version);
-    dataStore.getCompoundObjectFromShelf(relativeDestination, true, outputStream);
+    dataStore.getCompoundObjectFromShelf(relativeDestination.toString(), true, outputStream);
   }
 
   public ObjectNode editMetadata(ArkId arkId, String version, String path, String metadata) {
@@ -118,31 +124,31 @@ public class KnowledgeObjectRepository {
     try {
       JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
 
-      dataStore.saveMetadata(metadataPath, jsonMetadata);
+      dataStore.saveMetadata(metadataPath.toString(), jsonMetadata);
 
     } catch (IOException e) {
       log.error("Cannot edit metadata at " + metadataPath + " " + e);
     }
-    return dataStore.getMetadata(metadataPath);
+    return dataStore.getMetadata(metadataPath.toString());
   }
 
   public void delete(ArkId arkId) throws IOException {
-    dataStore.removeFile(Paths.get(arkId.getFedoraPath()));
+    dataStore.removeFile(Paths.get(arkId.getFedoraPath()).toString());
     log.info("Deleted ko with ark id " + arkId);
   }
 
   public void delete(ArkId arkId, String version) throws IOException {
-    dataStore.removeFile(Paths.get(arkId.getFedoraPath(), version));
+    dataStore.removeFile(Paths.get(arkId.getFedoraPath(), version).toString());
     log.info("Deleted ko with ark id " + arkId + " and version " + version);
   }
 
   public String getConnection() {
 
-    return this.dataStore.getAbsoluteLocation(Paths.get(""));
+    return this.dataStore.getAbsoluteLocation("");
   }
 
   public byte[] getBinary(ArkId arkId, String version, String childPath) {
     Path filepath = Paths.get(arkId.getFedoraPath(), version, childPath);
-    return this.dataStore.getBinary(filepath);
+    return this.dataStore.getBinary(filepath.toString());
   }
 }

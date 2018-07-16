@@ -4,31 +4,29 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.nio.file.Path;
 import java.util.List;
 import org.kgrid.shelf.domain.ArkId;
-import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface CompoundDigitalObjectStore {
 
-  List<Path> getChildren(Path relativeLocation);
+  List<String> getChildren(String relativeLocation);
 
-  String getAbsoluteLocation(Path relativeLocation);
+  String getAbsoluteLocation(String relativeLocation);
 
-  ObjectNode getMetadata(Path relativeLocation);
+  ObjectNode getMetadata(String relativeLocation);
 
-  byte[] getBinary(Path relativeLocation);
+  byte[] getBinary(String relativeLocation);
 
-  void saveMetadata(Path relativeDestination, JsonNode metadata);
+  void saveMetadata(String relativeDestination, JsonNode metadata);
 
-  void saveBinary(Path relativeDestination, byte[] data);
+  void saveBinary(String relativeDestination, byte[] data);
 
-  ArkId addCompoundObjectToShelf(MultipartFile zip);
+  ArkId addCompoundObjectToShelf(ArkId arkId, MultipartFile zip);
 
-  void getCompoundObjectFromShelf(Path relativeDestination, boolean isVersion,
+  void getCompoundObjectFromShelf(String relativeDestination, boolean isVersion,
       OutputStream outputStream) throws IOException;
 
-  void removeFile(Path relativeLocation) throws IOException;
+  void removeFile(String relativeLocation) throws IOException;
 
 }

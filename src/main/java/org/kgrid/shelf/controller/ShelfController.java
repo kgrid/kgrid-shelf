@@ -2,12 +2,10 @@ package org.kgrid.shelf.controller;
 
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.InputMismatchException;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -165,11 +163,7 @@ public class ShelfController {
   public ResponseEntity<Map<String, String>> addKOZipFolder(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
     ArkId pathArk = new ArkId(naan, name);
-    ArkId arkId = shelf.save(zippedKo);
-
-    if (!arkId.equals(pathArk)) {
-      throw new InputMismatchException("URL must match internal arkId of object");
-    }
+    ArkId arkId = shelf.save(pathArk, zippedKo);
 
     Map<String, String> response = new HashMap<>();
     response.put("Added", arkId.toString());

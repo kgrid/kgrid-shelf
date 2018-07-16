@@ -5,15 +5,15 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.Map;
-import org.kgrid.shelf.domain.ArkId;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
@@ -37,7 +37,7 @@ public class KnowledgeObjectRepositoryTest {
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/99999-fk45m6gq9t.zip");
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", "99999-fk45m6gq9t.zip", "application/zip", zippedKO);
-    repository.save(koZip);
+    repository.save(new ArkId("99999-fk45m6gq9t"), koZip);
   }
 
   @After
