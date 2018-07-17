@@ -1,0 +1,65 @@
+openapi: 3.0.0
+servers:
+- url: https://kgrid-activator.herokuapp.com/99999/10101/v0.0.1/
+  description: Development server
+info:
+  version: 1.0.0
+  title: 'Opioid Use Detector'
+  description: 'This object scans a list of prescriptions and determines if the patient is exposed to an opioid.'
+tags:
+  - name: KO Endpoints
+    description:  Opioid Use Detector Endpoints
+paths:
+  /opioidDetector:
+   post:
+      tags:
+        - KO Endpoints
+      summary: detects opioids
+      description: scans a list of prescriptions and determines if the patient is exposed to an opioid
+      operationId: opioidDetector
+      requestBody:
+        description: list of rxcuis for a paitent
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/druglist'
+      responses:
+        '200':
+          description: identifies if an opioid was found, list of rxcui and inputs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/output'
+        default:
+          description: unexpected error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+components:
+  schemas:
+    druglist:
+      required:
+        - rxcuis
+      properties:
+        rxcuis:
+          type: string
+          example: '106500,200240,856917,994226,197446,801958'
+    output:
+      required:
+        - result
+      properties:
+        result:
+          type: string
+          example: {"result":{"condition_satisfied":true,"summary":{"opioid":true},"detail":{"106500":{"opioid":true},"197446":{"opioid":false},"200240":{"opioid":false},"801958":{"opioid":false},"856917":{"opioid":false},"994226":{"opioid":true}}},"info":{"ko":"99999/10101/v0.0.1","inputs":{"rxcuis":"106500,200240,856917,994226,197446,801958"}}}
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int32
+        message:
+          type: string

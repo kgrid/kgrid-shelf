@@ -130,8 +130,29 @@ public class ShelfController {
     }
   }
 
+  @CrossOrigin(origins = "*")
+  @GetMapping(path = "/{naan}/{name}/{version}/service")
+  public Object getServiceDescription(@PathVariable String naan, @PathVariable String name,
+      @PathVariable String version) throws NoSuchFileException, NoSuchFieldException {
+    ArkId arkId = new ArkId(naan, name);
+
+    ObjectNode metadata = shelf.findByArkIdAndVersion(arkId, version).getMetadata();
+    String childPath;
+    if(metadata.has("service")) {
+      childPath = metadata.get("service").asText();
+    } else {
+      throw new NoSuchFieldException("Object has no service description location specified in metadata.");
+    }
+    byte[] binary = shelf.getBinary(arkId, version, childPath);
+    if(binary != null) {
+      return binary;
+    } else {
+      throw new NoSuchFileException("Cannot fetch file at " + childPath);
+    }
+  }
+
   @GetMapping(path = "/{naan}/{name}/{version}/**", produces = MediaType.ALL_VALUE)
-  public Object getKnowledgeObject(@PathVariable String naan, @PathVariable String name,
+  public Object getBinary(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version, HttpServletRequest request) throws NoSuchFileException {
     ArkId arkId = new ArkId(naan, name);
 
@@ -232,6 +253,14 @@ public class ShelfController {
 
   @ExceptionHandler(NoSuchFileException.class)
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NoSuchFileException e,
+      WebRequest request) {
+
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
+        HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(NoSuchFieldException.class)
+  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NoSuchFieldException e,
       WebRequest request) {
 
     return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
