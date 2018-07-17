@@ -1,6 +1,5 @@
 package org.kgrid.shelf.controller;
 
-
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
@@ -130,7 +129,6 @@ public class ShelfController {
     }
   }
 
-  @CrossOrigin(origins = "*")
   @GetMapping(path = "/{naan}/{name}/{version}/service")
   public Object getServiceDescription(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version) throws NoSuchFileException, NoSuchFieldException {
