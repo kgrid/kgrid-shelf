@@ -62,13 +62,19 @@ public class KnowledgeObjectRepository {
 
     List<String> versions = dataStore.getChildren(arkId.getFedoraPath());
 
-    for (String version : versions) {
+    for (String versionPath : versions) {
+      String version = null;
       try {
-
-       versionMap.put(StringUtils.substringAfterLast(version, "/"),
-           findByArkIdAndVersion(arkId, StringUtils.substringAfterLast(version, "/")).getMetadata());
+        if(versionPath.contains("/")) {
+          version = StringUtils.substringAfterLast(versionPath, "/");
+        } else if (versionPath.contains("\\")) {
+          version = StringUtils.substringAfterLast(versionPath, "\\");
+        } else {
+          log.warn("Version path is invalid: " + versionPath);
+        }
+        versionMap.put(version, findByArkIdAndVersion(arkId, version).getMetadata());
       } catch (Exception exception){
-       log.warn( "Can't load KO " + arkId + "/" + StringUtils.substringAfterLast(version, "/") + " " + exception.getMessage());
+       log.warn( "Can't load KO " + arkId + "/" + version + " " + exception.getMessage());
       }
     }
     if(versionMap.isEmpty()) {
@@ -86,7 +92,10 @@ public class KnowledgeObjectRepository {
         ArkId arkId;
         if(path.contains("/")) {
           arkId = new ArkId(StringUtils.substringAfterLast(path, "/"));
-        } else {
+        } else if (path.contains("\\")) {
+          arkId = new ArkId(StringUtils.substringAfterLast(path, "\\"));
+        }
+        else {
           arkId = new ArkId(path);
         }
         knowledgeObjects.put(arkId, findByArkId(arkId));
