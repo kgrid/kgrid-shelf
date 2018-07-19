@@ -12,6 +12,8 @@ public interface CompoundDigitalObjectStore {
 
   List<String> getChildren(String relativeLocation);
 
+  boolean isMetadata(String relativeLocation);
+
   String getAbsoluteLocation(String relativeLocation);
 
   ObjectNode getMetadata(String relativeLocation);

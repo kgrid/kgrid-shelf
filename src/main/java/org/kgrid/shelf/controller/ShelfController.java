@@ -141,7 +141,7 @@ public class ShelfController {
     } else {
       throw new NoSuchFieldException("Object has no service description location specified in metadata.");
     }
-    byte[] binary = shelf.getBinary(arkId, version, childPath);
+    byte[] binary = shelf.getBinaryOrMetadata(arkId, version, childPath);
     if(binary != null) {
       return binary;
     } else {
@@ -161,7 +161,7 @@ public class ShelfController {
         throw new IllegalArgumentException("Cannot get files outside of the model directory");
     }
 
-    byte[] binary = shelf.getBinary(arkId, version, childPath);
+    byte[] binary = shelf.getBinaryOrMetadata(arkId, version, childPath);
     if(binary != null) {
       return binary;
     } else {

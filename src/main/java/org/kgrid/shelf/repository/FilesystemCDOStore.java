@@ -84,6 +84,11 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
+  public boolean isMetadata(String relativePath) {
+    return relativePath.endsWith(KnowledgeObject.METADATA_FILENAME);
+  }
+
+  @Override
   public ObjectNode getMetadata(String relativePath) {
     Path shelf = Paths.get(localStoragePath);
     File metadataFile = shelf.resolve(relativePath).toFile();

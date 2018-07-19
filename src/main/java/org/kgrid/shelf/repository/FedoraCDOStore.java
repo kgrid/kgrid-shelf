@@ -2,6 +2,7 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -141,6 +142,18 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
+  public boolean isMetadata(String relativePath) {
+    ObjectNode json = getRdfJson(URI.create(storagePath + relativePath));
+    if(json.has("@type") && json.get("@type").isArray()) {
+      ArrayNode types = (ArrayNode) json.get("@type");
+      return types.toString().contains("ldp:RDFSource");
+    } else {
+      log.warn("RDF at " + relativePath + " has no types");
+    }
+    return false;
+  }
+
+  @Override
   public ObjectNode getMetadata(String relativePath) {
     return getRdfJson(URI.create(storagePath + relativePath));
   }
@@ -175,13 +188,12 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     // When we are fully json-ld this can possibly be eliminated
     serializeJsonToRdfResource(node, resource, metadataModel);
 
-    // TODO: Add last modified date from current metadata to the metadata being added to allow overwriting
-
     StringWriter writer = new StringWriter();
     metadataModel.write(writer, FileUtils.langNTriple);
 
     RequestEntity request = RequestEntity.put(URI.create(destination.toString() + "/fcr:metadata"))
         .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+        .header("Prefer", "handling=lenient; received=\"minimal\"")
         .contentType(new MediaType("application", "n-triples", StandardCharsets.UTF_8))
         .body(writer.toString());
     ResponseEntity<String> response = restTemplate.exchange(request, String.class);
@@ -212,12 +224,14 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     int totalSize = 0;
     int entries = 0;
 
-    // Create a new transaction in case anything goes wrong
     String transactionId = createTransaction();
 
     try (ZipInputStream zis = new ZipInputStream(zip.getInputStream())) {
       ZipEntry entry;
       ArkId arkId;
+
+      // TODO: Change how this works so that it can work no matter which entry is first
+
       String topLevelFolderName = zis.getNextEntry().getName();
       if(topLevelFolderName.endsWith("/")) {
         arkId = new ArkId(StringUtils.substringBeforeLast(topLevelFolderName, "/"));
@@ -274,7 +288,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   @Override
   public void getCompoundObjectFromShelf(String relativeDestination, boolean isVersion,
       OutputStream outputStream) throws IOException {
-    getCompoundObjectFromShelf(relativeDestination, outputStream, 10);
+    getCompoundObjectFromShelf(relativeDestination, outputStream, 100);
   }
 
   private void getCompoundObjectFromShelf(String relativeDestination, OutputStream outputStream,
