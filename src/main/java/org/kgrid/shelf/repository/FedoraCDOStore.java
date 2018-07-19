@@ -229,12 +229,9 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     try (ZipInputStream zis = new ZipInputStream(zip.getInputStream())) {
       ZipEntry entry;
       ArkId arkId;
-
-      // TODO: Change how this works so that it can work no matter which entry is first
-
       String topLevelFolderName = zis.getNextEntry().getName();
-      if(topLevelFolderName.endsWith("/")) {
-        arkId = new ArkId(StringUtils.substringBeforeLast(topLevelFolderName, "/"));
+      if(topLevelFolderName.contains("/")) {
+        arkId = new ArkId(StringUtils.substringBefore(topLevelFolderName, "/"));
       } else {
         arkId = new ArkId(topLevelFolderName);
       }
