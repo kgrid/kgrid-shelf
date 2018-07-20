@@ -18,7 +18,7 @@ public class ShelfHealthIndicator implements HealthIndicator {
   public Health health() {
     try {
       return Health.up()
-          .withDetail("kgrid.shelf.cdostore.url", shelf.getConnection().toString()).build();
+          .withDetail("kgrid.shelf.cdostore.url", shelf.getConnection()).build();
     } catch (Exception ex) {
       return Health.down().withException(ex).build();
     }

@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
@@ -168,9 +169,11 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       ZipEntry entry;
       ArkId arkId;
       String topLevelFolderName = zis.getNextEntry().getName();
-      if(topLevelFolderName.endsWith("/")){
-        arkId = new ArkId(topLevelFolderName.substring(0, topLevelFolderName.length()-1));
-      } else {
+      if(topLevelFolderName.contains("/")) {
+        arkId = new ArkId(StringUtils.substringBefore(topLevelFolderName, "/"));
+      } else if (topLevelFolderName.contains("\\")) {
+        arkId = new ArkId(StringUtils.substringBefore(topLevelFolderName, "\\"));
+      }else {
         arkId = new ArkId(topLevelFolderName);
       }
       if(!arkId.equals(urlArkId)) {
