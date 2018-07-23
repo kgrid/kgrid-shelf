@@ -34,7 +34,7 @@ jobs:
           - v1-dependencies-
 
       #must run install to ensure multi module dependencies(shelf-api) are cached
-      - run: mvn -DskipTests clean install dependency:resolve-plugins dependency:go-offline
+      - run: mvn -DskipTests clean package dependency:resolve-plugins dependency:go-offline
 
       - save_cache:
           paths:
