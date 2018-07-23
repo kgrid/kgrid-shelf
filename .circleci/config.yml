@@ -45,7 +45,7 @@ jobs:
       - run:
          name: Build and Test And Verify
          command: |
-            mvn verify
+            mvn package
 
       # save test results
       - run:

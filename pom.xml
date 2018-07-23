@@ -114,7 +114,72 @@
           <excludedGroups>org.kgrid.shelf.repository.IntegrationTest</excludedGroups>
         </configuration>
       </plugin>
-
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.22.0</version>
+        <executions>
+        <execution>
+          <goals>
+            <goal>integration-test</goal>
+          </goals>
+          <configuration>
+            <includes>
+              <include>**/*.class</include>
+            </includes>
+          </configuration>
+        </execution>
+        </executions>
+        <configuration>
+          <groups>org.kgrid.shelf.repository.IntegrationTest</groups>
+        </configuration>
+      </plugin>
+      <plugin>
+        <groupId>io.fabric8</groupId>
+        <artifactId>docker-maven-plugin</artifactId>
+        <version>0.26.0</version>
+        <configuration>
+          <images>
+            <image>
+              <name>yinlinchen/fcrepo4-docker</name>
+              <alias>fcrepo_test</alias>
+              <run>
+                <ports>
+                  <port>8090:8080</port>
+                </ports>
+                <log></log>
+                <namingStrategy>alias</namingStrategy>
+                <wait>
+                  <http>
+                    <url>http://localhost:8090/fcrepo/rest/</url>
+                    <method>GET</method>
+                    <status>200</status>
+                  </http>
+                  <time>500000</time>
+                  <kill>10000</kill>
+                  <shutdown>5000</shutdown>
+                </wait>
+              </run>
+            </image>
+          </images>
+        </configuration>
+        <executions>
+          <execution>
+            <id>start</id>
+            <phase>pre-integration-test</phase>
+            <goals>
+              <goal>start</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>stop</id>
+            <phase>post-integration-test</phase>
+            <goals>
+              <goal>stop</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>
     </plugins>
   </build>
 
@@ -165,11 +230,6 @@
                 </goals>
               </execution>
             </executions>
-          </plugin>
-          <plugin>
-            <groupId>org.apache.maven.plugins</groupId>
-            <artifactId>maven-release-plugin</artifactId>
-            <version>2.5.3</version>
           </plugin>
           <plugin>
             <groupId>org.sonatype.plugins</groupId>
