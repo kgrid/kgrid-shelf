@@ -74,7 +74,7 @@ jobs:
             if [ $RELEASE ]; then
                 git config --global user.email "$GIT_USER_EMAIL"
                 git config --global user.name "$GIT_USER_NAME"
-                mvn release:clean release:prepare -B  -DscmCommentPrefix="Release [skip ci] " -DreleaseVersion=$RELEASE -DdevelopmentVersion=$NEXT release:perform -P ci -s .circleci/settings.xml
+                mvn release:clean release:prepare -DskipITs -Ddocker.skip=true -B -DscmCommentPrefix="Release [skip ci] " -DreleaseVersion=$RELEASE -DdevelopmentVersion=$NEXT release:perform -P ci -s .circleci/settings.xml
                 TAG_NAME="shelf-api-$RELEASE"
                 curl POST "https://api.github.com/repos/kgrid/kgrid-shelf/releases?access_token=$GITHUB_TOKEN" \
                   -H 'Content-Type: application/json' -d "{\"tag_name\":\"$TAG_NAME\"}"
