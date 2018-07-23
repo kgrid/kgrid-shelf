@@ -155,7 +155,7 @@
                     <method>GET</method>
                     <status>200</status>
                   </http>
-                  <time>500000</time>
+                  <time>1000000</time>
                   <kill>10000</kill>
                   <shutdown>5000</shutdown>
                 </wait>
