@@ -84,7 +84,7 @@ jobs:
                   -H "Content-Type: application/octet-stream" \
                   --data-binary "@target/$TAG_NAME.jar"
             else
-                mvn clean deploy  -P ci -s .circleci/settings.xml
+                mvn clean deploy -DskipITs -P ci -s .circleci/settings.xml
             fi
 
       # Tigger Builds of Activator and Library so the newest snapshot gets used
