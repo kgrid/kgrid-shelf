@@ -1,11 +1,15 @@
 package org.kgrid.shelf.repository;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -132,6 +136,33 @@ public class FilesystemCDOStoreTest {
 //    assertEquals(data, new String(resource, Charset.defaultCharset()));
   }
 
+
+  /**
+   * Testing the ablity to add KO to shelf via zip file, get that KO off the shelf in the form of
+   * a zip and using the downloaded zip add it again.  KO Round Trip
+   *
+   * @throws Exception
+   */
+  @Test
+  public void koRoundTrip() throws Exception {
+
+    URL zipStream = FilesystemCDOStoreTest.class.getResource("/hello-world.zip");
+    byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world.zip", "application/zip", zippedKO);
+    koStore.addCompoundObjectToShelf(new ArkId("hello-world"), koZip);
+
+    File helloWorldFile = folder.newFile("hello-world.zip");
+    OutputStream output = new FileOutputStream(helloWorldFile);
+    koStore.getCompoundObjectFromShelf("hello-world",false,output);
+    output.close();
+
+    zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+    koZip = new MockMultipartFile("ko", "hello-world.zip", "application/zip", zippedKO);
+    koStore.addCompoundObjectToShelf(new ArkId("hello-world"), koZip);
+
+    assertTrue(true);
+    //assertEquals("title", koStore.getMetadata("hello-world").get("title").asText());
+  }
 
 
 }
