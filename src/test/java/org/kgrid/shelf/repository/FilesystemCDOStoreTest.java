@@ -52,7 +52,7 @@ public class FilesystemCDOStoreTest {
 
   @After
   public void deleteKO() throws Exception {
-    (koStore).removeFile(this.arkId.getFedoraPath());
+    (koStore).removeFile(this.arkId.getAsSimpleArk());
     Path shelf = Paths.get(koStore.getAbsoluteLocation(null));
     if(Files.isDirectory(shelf)) {
       nukeTestShelf(shelf);
@@ -92,7 +92,7 @@ public class FilesystemCDOStoreTest {
     List<String> expectedVersions = new ArrayList<>();
     expectedVersions.add("default");
     expectedVersions.add("v0.0.1");
-    List<String> versions = koStore.getChildren(arkId.getFedoraPath()).stream().map(child -> StringUtils
+    List<String> versions = koStore.getChildren(arkId.getAsSimpleArk()).stream().map(child -> StringUtils
         .substringAfterLast(child, "/")).collect(Collectors.toList());
     versions.sort(Comparator.naturalOrder());
     assertEquals(expectedVersions, versions);
@@ -102,7 +102,7 @@ public class FilesystemCDOStoreTest {
   public void getBaseMetadata() throws Exception {
     ArkId arkId = koStore.getChildren(null).stream().map(name -> {try {return new ArkId(StringUtils.substringAfterLast(name, "/"));} catch (IllegalArgumentException e) {e.printStackTrace(); return null;}}).filter(
         Objects::nonNull).collect(Collectors.toList()).get(0);
-    String version = StringUtils.substringAfterLast(koStore.getChildren(arkId.getFedoraPath()).get(0), "/");
+    String version = StringUtils.substringAfterLast(koStore.getChildren(arkId.getAsSimpleArk()).get(0), "/");
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
     ObjectNode metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
     assertEquals("Stent Thrombosis Risk Calculator", metadata.get("title").asText());
@@ -114,7 +114,7 @@ public class FilesystemCDOStoreTest {
 
   @Test
   public void getResource() throws Exception {
-    String version = StringUtils.substringAfterLast(koStore.getChildren(arkId.getFedoraPath()).get(0), "/");
+    String version = StringUtils.substringAfterLast(koStore.getChildren(arkId.getAsSimpleArk()).get(0), "/");
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
     JsonNode metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
     JsonNode modelMetadata = koStore.getMetadata(ko.modelMetadataLocation().toString());

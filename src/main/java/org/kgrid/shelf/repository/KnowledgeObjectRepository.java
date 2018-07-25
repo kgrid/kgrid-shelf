@@ -46,7 +46,7 @@ public class KnowledgeObjectRepository {
   }
 
   public ObjectNode getMetadataAtPath(ArkId arkId, String version, String path) {
-    return dataStore.getMetadata(Paths.get(arkId.getFedoraPath(), version, path).toString());
+    return dataStore.getMetadata(Paths.get(arkId.getAsSimpleArk(), version, path).toString());
   }
 
   public Map<String, ObjectNode> findByPath(Path koPath) {
@@ -60,7 +60,7 @@ public class KnowledgeObjectRepository {
   public Map<String, ObjectNode> findByArkId(ArkId arkId) {
     Map<String, ObjectNode> versionMap = new HashMap<>();
 
-    List<String> versions = dataStore.getChildren(arkId.getFedoraPath());
+    List<String> versions = dataStore.getChildren(arkId.getAsSimpleArk());
 
     for (String versionPath : versions) {
       String version = null;
@@ -112,13 +112,13 @@ public class KnowledgeObjectRepository {
 
   public void putZipFileIntoOutputStream(ArkId arkId, OutputStream outputStream)
       throws IOException {
-    Path relativeDestination = Paths.get(arkId.getFedoraPath());
+    Path relativeDestination = Paths.get(arkId.getAsSimpleArk());
     dataStore.getCompoundObjectFromShelf(relativeDestination.toString(), false, outputStream);
   }
 
   public void findByArkIdAndVersion(ArkId arkId, String version, OutputStream outputStream)
       throws IOException {
-    Path relativeDestination = Paths.get(arkId.getFedoraPath(), version);
+    Path relativeDestination = Paths.get(arkId.getAsSimpleArk(), version);
     dataStore.getCompoundObjectFromShelf(relativeDestination.toString(), true, outputStream);
   }
 
@@ -126,9 +126,9 @@ public class KnowledgeObjectRepository {
     Path metadataPath;
     if (path != null && !"".equals(path)) {
       metadataPath = Paths
-          .get(arkId.getFedoraPath(), version, path, KnowledgeObject.METADATA_FILENAME);
+          .get(arkId.getAsSimpleArk(), version, path, KnowledgeObject.METADATA_FILENAME);
     } else {
-      metadataPath = Paths.get(arkId.getFedoraPath(), version, KnowledgeObject.METADATA_FILENAME);
+      metadataPath = Paths.get(arkId.getAsSimpleArk(), version, KnowledgeObject.METADATA_FILENAME);
     }
     try {
       JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
@@ -142,12 +142,12 @@ public class KnowledgeObjectRepository {
   }
 
   public void delete(ArkId arkId) throws IOException {
-    dataStore.removeFile(Paths.get(arkId.getFedoraPath()).toString());
+    dataStore.removeFile(Paths.get(arkId.getAsSimpleArk()).toString());
     log.info("Deleted ko with ark id " + arkId);
   }
 
   public void delete(ArkId arkId, String version) throws IOException {
-    dataStore.removeFile(Paths.get(arkId.getFedoraPath(), version).toString());
+    dataStore.removeFile(Paths.get(arkId.getAsSimpleArk(), version).toString());
     log.info("Deleted ko with ark id " + arkId + " and version " + version);
   }
 
@@ -157,7 +157,7 @@ public class KnowledgeObjectRepository {
   }
 
   public byte[] getBinaryOrMetadata(ArkId arkId, String version, String childPath) {
-    String filepath = Paths.get(arkId.getFedoraPath(), version, childPath).toString();
+    String filepath = Paths.get(arkId.getAsSimpleArk(), version, childPath).toString();
     if(this.dataStore.isMetadata(filepath)) {
 
       return this.dataStore.getMetadata(filepath).toString().getBytes();

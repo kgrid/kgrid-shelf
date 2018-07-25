@@ -35,7 +35,7 @@ public class KnowledgeObject {
 
   public KnowledgeObject(ArkId arkId, String version) {
     this.arkId = arkId;
-    basePath = Paths.get(arkId.getFedoraPath());
+    basePath = Paths.get(arkId.getAsSimpleArk());
     versionPath = basePath.resolve(version);
     modelPath = versionPath.resolve(MODEL_DIR_NAME);
     resourcePath = modelPath.resolve(RESOURCE_DIR_NAME);

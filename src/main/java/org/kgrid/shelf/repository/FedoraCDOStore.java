@@ -228,19 +228,23 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
     try (ZipInputStream zis = new ZipInputStream(zip.getInputStream())) {
       ZipEntry entry;
-      ArkId arkId;
-      String topLevelFolderName = zis.getNextEntry().getName();
-      if(topLevelFolderName.contains("/")) {
-        arkId = new ArkId(StringUtils.substringBefore(topLevelFolderName, "/"));
-      } else {
-        arkId = new ArkId(topLevelFolderName);
-      }
-      if(!arkId.equals(urlArkId)) {
-        rollbackTransaction(transactionId);
-        throw new InputMismatchException("URL does not match internal id in zip file url ark=" + urlArkId + " zipped ark=" + arkId);
-      }
+      ArkId arkId = null;
+      String topLevelFolderName = null;
       while ((entry = zis.getNextEntry()) != null) {
-
+        if(topLevelFolderName == null) {
+          topLevelFolderName = entry.getName();
+          if (topLevelFolderName.contains("/")) {
+            arkId = new ArkId(StringUtils.substringBefore(topLevelFolderName, "/"));
+          } else {
+            arkId = new ArkId(topLevelFolderName);
+          }
+          if (!arkId.equals(urlArkId)) {
+            rollbackTransaction(transactionId);
+            throw new InputMismatchException(
+                "URL does not match internal id in zip file url ark=" + urlArkId + " zipped ark="
+                    + arkId);
+          }
+        }
         if (!entry.getName().contains("/.")) {
           String dir = entry.getName();
           if (!entry.isDirectory()) {
