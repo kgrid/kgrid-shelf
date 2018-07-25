@@ -15,9 +15,9 @@ These instructions will get you a copy of the project up and running on your loc
 ### Prerequisites
 For building and running the application you need:
 
-- [Git](https://git-scm.com/downloads)
 - [JDK 1.8](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html)
 - [Maven 3](https://maven.apache.org)
+- [Docker](https://www.docker.com/) for Integration Tests 
 
 ### Clone
 To get started you can simply clone this repository using git:
@@ -31,7 +31,7 @@ This quick start will run the activator and load two example knowledge objects f
 This example can loads a sample KO shelf (_where to look for the KOs_) via the _kgrid.shelf.cdostore.filesystem.location_ property. By default application will start up and PORT 8080. 
 ```
 mvn clean package
-java -jar target/kgrid-shelf*.jar --kgrid.shelf.cdostore.url=filesystem:file://etc/shelf
+java -jar target/kgrid-shelf*.jar --kgrid.shelf.cdostore.url=filesystem:file://shelf
 ```
 Once Running access the [Activators Health Endpoint](http://localhost:8080/health).  All _statuses_ reported should be **UP**
 
@@ -40,7 +40,7 @@ Once Running access the [Activators Health Endpoint](http://localhost:8080/healt
   "status": "UP",
   "shelf": {
     "status": "UP",
-    "kgrid.shelf.cdostore.url": "filesystem:file://etc/shelf/"
+    "kgrid.shelf.cdostore.url": "filesystem:file://shelf/"
   },
   "diskSpace": {
     "status": "UP",
@@ -55,13 +55,43 @@ Once Running access the [Activators Health Endpoint](http://localhost:8080/healt
 ## Running the tests
 
 #### Automated tests 
-Unit and Integration tests can be executed via
+
+##### Unit tests
+
+Unit tests can be executed via mvn test
+
 ```
 mvn clean test
-mvn clean verify
 ```
 
-#### End to End Testing
+
+##### Integration tests
+
+For integration tests we need to have a Fedora Commons instance running.  We use 
+[Fedora 4 Docker](https://hub.docker.com/r/yinlinchen/fcrepo4-docker/) which is part of [Fedora
+Labs](https://github.com/fcrepo4-labs/fcrepo4-docker).  This coupled with
+[docker-maven-plugin](https://github.com/fabric8io/docker-maven-plugin) maintained by
+ [fabric8io](https://fabric8.io/) allows us to spin up fcrepo and run shelf tests against a running
+ fcrepo instance.  The container is stopped and removed after the verify. 
+ 
+```
+mvn clean verify
+```
+  
+The first time we run _mvn verify_ the docker image will be downloaded, this can take several minutes. 
+ Once you have the image tests will take  2-3 minutes to spin up fcrepo, the build will wait until 
+ the fcrepo is up and running than will run the integration tests.  
+ 
+ Integration tests are identified using _@Category(IntegrationTest.class)_. Once the tests are complete the docker container will be stopped and removed.
+
+**Tips and Tricks**
+
+ * You can start up fcrepo docker instance with _mvn docker:start_ and stop it with 
+_mvn docker:stop_.  Once started, access [Docker FCRepo](http://localhost:8090/fcrepo/rest/)
+
+
+
+##### End to End Testing
 
 Sample shelf in place the following tests can be executed against the running activator
 
