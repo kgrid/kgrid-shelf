@@ -146,22 +146,25 @@ public class FilesystemCDOStoreTest {
   @Test
   public void koRoundTrip() throws Exception {
 
+    //Add hello-world to shelf
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/hello-world.zip");
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world.zip", "application/zip", zippedKO);
     koStore.addCompoundObjectToShelf(new ArkId("hello-world"), koZip);
 
+    //Get hello-world from shelf
     File helloWorldFile = folder.newFile("hello-world.zip");
     OutputStream output = new FileOutputStream(helloWorldFile);
     koStore.getCompoundObjectFromShelf("hello-world",false,output);
     output.close();
 
+    //Add KO back to shelf based on downloaded version
     zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     koZip = new MockMultipartFile("ko", "hello-world.zip", "application/zip", zippedKO);
     koStore.addCompoundObjectToShelf(new ArkId("hello-world"), koZip);
 
-    assertTrue(true);
-    //assertEquals("title", koStore.getMetadata("hello-world").get("title").asText());
+    //Make sure metadata is correct
+    assertEquals("Hello, World", koStore.getMetadata("hello-world/v0.0.1").get("title").asText());
   }
 
 
