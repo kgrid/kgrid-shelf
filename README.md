@@ -74,6 +74,10 @@ Labs](https://github.com/fcrepo4-labs/fcrepo4-docker).  This coupled with
  [fabric8io](https://fabric8.io/) allows us to spin up fcrepo and run shelf tests against a running
  fcrepo instance.  The container is stopped and removed after the verify. 
  
+
+**NOTE**: Currently the failsafe plug is configured to skip tests this is also true of the docker 
+maven plugin, to enable the integration tests set the skip property in both plugins in the pom to false.
+
 ```
 mvn clean verify
 ```
