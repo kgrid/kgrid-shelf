@@ -14,6 +14,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -38,6 +40,7 @@ import org.springframework.web.multipart.MultipartFile;
 @RequestMapping("${shelf.endpoint:}")
 public class ShelfController {
 
+  private final Logger log = LoggerFactory.getLogger(ShelfController.class);
   private final Optional<KnowledgeObjectDecorator> kod;
   private KnowledgeObjectRepository shelf;
 
@@ -50,17 +53,23 @@ public class ShelfController {
   @GetMapping
   public Map getAllObjects(@RequestHeader(value = "Prefer", required = false) String prefer,
       RequestEntity request) {
+    log.info("getting all kos");
     if (prefer != null && prefer.matches(".*return\\s*=\\s*minimal.*")) {
       return shelf.findAll().keySet().stream()
           .collect(Collectors.toMap(ArkId::toString, key -> request.getUrl() + key.getNaanName()));
     }
-    return shelf.findAll();
+    Map koMap = shelf.findAll();
+    log.info("found " + koMap.size() + " kos");
+    return koMap;
   }
 
   @GetMapping(path = "/{naan}/{name}")
   public ResponseEntity<Map> getKnowledgeObjectVersion(@PathVariable String naan,
       @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer,
       RequestEntity request) {
+
+    log.info("get ko " + naan + "/" + name );
+
     // Prevent infinite loop when trying to connect to fcrepo on the same address as the library
     if("fcrepo".equals(naan) && "rest".equals(name)) {
       throw new IllegalArgumentException("Cannot connect to fcrepo at the same address as the shelf. Make sure shelf and fcrepo configuration is correct.");
@@ -85,6 +94,9 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}/{version}")
   public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version, RequestEntity request) {
+
+    log.info("getting ko " + naan + "/" + name + "/" + version );
+
     ArkId arkId = new ArkId(naan, name);
     KnowledgeObject ko = shelf.findByArkIdAndVersion(arkId, version);
     kod.ifPresent(decorator -> decorator.decorate(ko, request));
@@ -94,6 +106,9 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}", produces = "application/zip")
   public void getZippedKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name,
       HttpServletResponse response) {
+
+    log.info("get ko zip for " + naan + "/" + name );
+
     ArkId arkId = new ArkId(naan, name);
     response.addHeader("Content-Disposition",
         "attachment; filename=\"" + naan + "-" + name + "-complete.zip\"");
@@ -113,6 +128,9 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}/{version}", produces = "application/zip")
   public void getZippedKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version, HttpServletResponse response) {
+
+    log.info("get ko zip for " + naan + "/" + name + "/" + version);
+
     ArkId arkId = new ArkId(naan, name);
     response.addHeader("Content-Disposition",
         "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
@@ -132,6 +150,9 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}/{version}/service")
   public Object getServiceDescription(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version) throws NoSuchFileException, NoSuchFieldException {
+
+    log.info("getting ko service  " + naan + "/" + name + "/" + version );
+
     ArkId arkId = new ArkId(naan, name);
 
     ObjectNode metadata = shelf.findByArkIdAndVersion(arkId, version).getMetadata();
@@ -152,11 +173,17 @@ public class ShelfController {
   @GetMapping(path = "/{naan}/{name}/{version}/**", produces = MediaType.ALL_VALUE)
   public Object getBinary(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version, HttpServletRequest request) throws NoSuchFileException {
+
+    log.info("getting ko resource " + naan + "/" + name + "/" + version );
+
     ArkId arkId = new ArkId(naan, name);
 
     String requestURI = request.getRequestURI();
     String basePath = StringUtils.join(naan, "/", name, "/", version, "/");
     String childPath = StringUtils.substringAfterLast(requestURI, basePath);
+
+    log.info("getting ko resource " + naan + "/" + name + "/" + version + childPath);
+
     if(!childPath.startsWith(KnowledgeObject.MODEL_DIR_NAME)) {
         throw new IllegalArgumentException("Cannot get files outside of the model directory");
     }
@@ -181,6 +208,9 @@ public class ShelfController {
   @PutMapping(path = "/{naan}/{name}/{version}")
   public ResponseEntity<Map<String, String>> addKOZipFolder(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
+
+    log.info("add ko " + naan + "/" + name + (version==null?"":"/" + version) + " zip file " +zippedKo.getOriginalFilename());
+
     ArkId pathArk = new ArkId(naan, name);
     ArkId arkId = shelf.save(pathArk, zippedKo);
 
