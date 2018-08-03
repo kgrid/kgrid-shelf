@@ -36,23 +36,24 @@ import org.springframework.web.multipart.MultipartFile;
 @Qualifier("filesystem")
 public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
-  private String localStoragePath;
+  private URI localStorageURI;
 
   private final Logger log = LoggerFactory.getLogger(FilesystemCDOStore.class);
 
   public FilesystemCDOStore(
+
       @Value("${kgrid.shelf.cdostore.url:filesystem:file://shelf}") String connectionURI) {
     URI uri = URI.create(connectionURI.substring(connectionURI.indexOf(':') + 1));
     if (uri.getHost() == null) {
-      this.localStoragePath = uri.getPath();
+      this.localStorageURI = uri;
     } else {
-      this.localStoragePath = Paths.get(uri.getHost(), uri.getPath()).toString();
+      this.localStorageURI = Paths.get(uri.getHost(), uri.getPath()).toUri();
     }
   }
 
   @Override
   public List<String> getChildren(String filePath) {
-    Path path = Paths.get(localStoragePath);
+    Path path = Paths.get(localStorageURI);
     if (filePath != null) {
       path = path.resolve(filePath);
     }
@@ -72,7 +73,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   // TODO: this method breaks on windows, says directory does not exist. Fix it.
   @Override
   public String getAbsoluteLocation(String relativeFilePath) {
-    Path shelf = Paths.get(localStoragePath);
+    Path shelf = Paths.get(localStorageURI);
     if (!shelf.toFile().exists()) {
       throw new IllegalStateException(
           "Filesystem shelf location '" + shelf.toAbsolutePath() + "' is not a valid directory."
@@ -91,7 +92,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public ObjectNode getMetadata(String relativePath) {
-    Path shelf = Paths.get(localStoragePath);
+    Path shelf = Paths.get(localStorageURI);
     File metadataFile = shelf.resolve(relativePath).toFile();
     if (metadataFile.isDirectory()) {
       metadataFile = shelf.resolve(relativePath).resolve(KnowledgeObject.METADATA_FILENAME)
@@ -128,7 +129,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public byte[] getBinary(String relativeFilePath) {
-    Path shelf = Paths.get(localStoragePath);
+    Path shelf = Paths.get(localStorageURI);
     byte[] bytes = null;
     try {
       bytes = Files.readAllBytes(shelf.resolve(relativeFilePath));
@@ -140,7 +141,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public void saveMetadata(String relativePath, JsonNode metadata) {
-    File metadataFile = new File(localStoragePath, relativePath.toString());
+    File metadataFile = new File(localStorageURI.getPath(), relativePath.toString());
     try {
       ObjectWriter writer = new ObjectMapper().writer().with(SerializationFeature.INDENT_OUTPUT);
       writer.writeValue(metadataFile, metadata);
@@ -151,7 +152,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public void saveBinary(String relativePath, byte[] output) {
-    File dataFile = new File(localStoragePath, relativePath);
+    File dataFile = new File(localStorageURI.getPath(), relativePath);
     try (FileOutputStream fos = new FileOutputStream(dataFile)) {
       fos.write(output);
     } catch (IOException ioEx) {
@@ -161,7 +162,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public ArkId addCompoundObjectToShelf(ArkId urlArkId, MultipartFile zip) {
-    Path shelf = Paths.get(localStoragePath);
+    Path shelf = Paths.get(localStorageURI);
     int entries = 0;
     long totalSize = 0;
 
@@ -219,7 +220,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   // rm -rf repository/arkId ** dangerous! **
   @Override
   public void removeFile(String filePath) throws IOException {
-    Path shelf = Paths.get(localStoragePath);
+    Path shelf = Paths.get(localStorageURI);
     Path ko = shelf.resolve(filePath.toString());
 
     Files.walk(ko)
@@ -235,7 +236,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   private void createKOFolderStructure(Path resourceLocation, Path serviceLocation) {
-    Path shelf = Paths.get(localStoragePath);
+    Path shelf = Paths.get(localStorageURI);
 
     try {
       Path resourceDir = shelf.resolve(resourceLocation);
@@ -250,7 +251,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   @Override
   public void getCompoundObjectFromShelf(String objectDir, boolean isVersion,
       OutputStream outputStream) throws IOException {
-    Path shelf = Paths.get(localStoragePath);
+    Path shelf = Paths.get(localStorageURI);
 //    try (ZipOutputStream zs = new ZipOutputStream(Files.newOutputStream(shelf.resolve(arkFilename + "-" + version + ".zip")))) {
     ZipOutputStream zs = new ZipOutputStream(outputStream);
     Path parentPath = shelf.resolve(objectDir);
