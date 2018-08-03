@@ -262,10 +262,10 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
           ZipEntry zipEntry;
           if (isVersion) {
             zipEntry = new ZipEntry(
-                parentPath.getParent().getParent().relativize(file).toString());
+                parentPath.getParent().getParent().toUri().relativize(file.toUri()).toString());
           } else {
             zipEntry = new ZipEntry(
-                parentPath.getParent().relativize(file).toString());
+                parentPath.getParent().toUri().relativize(file.toUri()).toString());
           }
           try {
             zs.putNextEntry(zipEntry);
