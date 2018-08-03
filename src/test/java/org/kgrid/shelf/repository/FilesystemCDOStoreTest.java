@@ -11,6 +11,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URL;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -84,7 +85,7 @@ public class FilesystemCDOStoreTest {
 
   @Test
   public void getObjectsOnShelf() throws Exception {
-    List<ArkId> shelfIds = koStore.getChildren(null).stream().map(name -> {try {return new ArkId(StringUtils.substringAfterLast(name, "/"));} catch (IllegalArgumentException e) {e.printStackTrace(); return null;}}).filter(
+    List<ArkId> shelfIds = koStore.getChildren(null).stream().map(name -> {try {return new ArkId(StringUtils.substringAfterLast(name, FileSystems.getDefault().getSeparator()));} catch (IllegalArgumentException e) {e.printStackTrace(); return null;}}).filter(
         Objects::nonNull).collect(Collectors.toList());
     List<ArkId> expectedIds = Collections.singletonList(arkId);
 
@@ -97,17 +98,15 @@ public class FilesystemCDOStoreTest {
     expectedVersions.add("default");
     expectedVersions.add("v0.0.1");
     List<String> versions = koStore.getChildren(arkId.getAsSimpleArk()).stream().map(child -> StringUtils
-        .substringAfterLast(child, "/")).collect(Collectors.toList());
+        .substringAfterLast(child, FileSystems.getDefault().getSeparator())).collect(Collectors.toList());
     versions.sort(Comparator.naturalOrder());
     assertEquals(expectedVersions, versions);
   }
 
   @Test
   public void getBaseMetadata() throws Exception {
-    ArkId arkId = koStore.getChildren(null).stream().map(name -> {try {return new ArkId(StringUtils.substringAfterLast(name, "/"));} catch (IllegalArgumentException e) {e.printStackTrace(); return null;}}).filter(
-        Objects::nonNull).collect(Collectors.toList()).get(0);
-    String version = StringUtils.substringAfterLast(koStore.getChildren(arkId.getAsSimpleArk()).get(0), "/");
-    KnowledgeObject ko = new KnowledgeObject(arkId, version);
+
+    KnowledgeObject ko = new KnowledgeObject(arkId, "v0.0.1");
     ObjectNode metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
     assertEquals("Stent Thrombosis Risk Calculator", metadata.get("title").asText());
     metadata.replace("title", new TextNode("TEST"));
@@ -118,9 +117,9 @@ public class FilesystemCDOStoreTest {
 
   @Test
   public void getResource() throws Exception {
-    String version = StringUtils.substringAfterLast(koStore.getChildren(arkId.getAsSimpleArk()).get(0), "/");
-    KnowledgeObject ko = new KnowledgeObject(arkId, version);
-    JsonNode metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
+      KnowledgeObject ko = new KnowledgeObject(arkId, "v0.0.1");
+
+      JsonNode metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
     JsonNode modelMetadata = koStore.getMetadata(ko.modelMetadataLocation().toString());
     ko.setMetadata((ObjectNode)metadata);
 //    ko.setModelMetadata((ObjectNode)modelMetadata);
