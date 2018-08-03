@@ -15,7 +15,6 @@ import org.junit.AfterClass;
 import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
@@ -23,12 +22,12 @@ import org.kgrid.shelf.domain.ArkId;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.client.HttpClientErrorException;
 
-@Category(IntegrationTest.class)
+@Category(FedoraIntegrationTest.class)
 public class FedoraCDOStoreTest {
 
-  FedoraCDOStore fedoraCDOStore;
+  static FedoraCDOStore fedoraCDOStore =  new FedoraCDOStore("fedora:http://localhost:8080/fcrepo/rest/");
 
-  //The Folder will be created before each test method and (recursively) deleted after each test method.
+    //The Folder will be created before each test method and (recursively) deleted after each test method.
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
@@ -39,8 +38,6 @@ public class FedoraCDOStoreTest {
   public static void loadFedora() {
 
     try {
-      FedoraCDOStore fedoraCDOStore = new FedoraCDOStore(
-          "fedora:http://localhost:8090/fcrepo/rest/");
 
       String filename = "/hello-world.zip";
       URL zipStream = FilesystemCDOStoreTest.class.getResource(filename);
@@ -54,10 +51,6 @@ public class FedoraCDOStoreTest {
 
   }
 
-  @Before
-  public void setupFedoraStore(){
-    fedoraCDOStore = new FedoraCDOStore("fedora:http://localhost:8090/fcrepo/rest/");
-  }
 
   @Test
   public void findKO() throws Exception {
@@ -93,9 +86,6 @@ public class FedoraCDOStoreTest {
 
   @AfterClass
   public static void deleteKO() throws Exception {
-
-    FedoraCDOStore fedoraCDOStore = new FedoraCDOStore(
-        "fedora:http://localhost:8090/fcrepo/rest/");
 
     fedoraCDOStore.removeFile("hello-world");
 

@@ -23,7 +23,6 @@ import org.springframework.web.context.WebApplicationContext;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-@Category(IntegrationTest.class)
 public class ShelfControllerTest {
 
     private MockMvc mockMvc;

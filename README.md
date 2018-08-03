@@ -72,28 +72,22 @@ For integration tests we need to have a Fedora Commons instance running.  We use
 Labs](https://github.com/fcrepo4-labs/fcrepo4-docker).  This coupled with
 [docker-maven-plugin](https://github.com/fabric8io/docker-maven-plugin) maintained by
  [fabric8io](https://fabric8.io/) allows us to spin up fcrepo and run shelf tests against a running
- fcrepo instance.  The container is stopped and removed after the verify. 
+ fcrepo instance.  The container is stopped and removed after the verify. There is a fcrepo_it maven profile that will configure the instance and run the tests
  
-
-**NOTE**: Currently the failsafe plug is configured to skip tests this is also true of the docker 
-maven plugin, to enable the integration tests set the skip property in both plugins in the pom to false.
-
 ```
-mvn clean verify
+mvn clean verify -P fcrepo_it
 ```
   
-The first time we run _mvn verify_ the docker image will be downloaded, this can take several minutes. 
+The first time we run _mvn verify -P fcrepo_it_ the docker image will be downloaded, this can take several minutes. 
  Once you have the image tests will take  2-3 minutes to spin up fcrepo, the build will wait until 
  the fcrepo is up and running than will run the integration tests.  
  
- Integration tests are identified using _@Category(IntegrationTest.class)_. Once the tests are complete the docker container will be stopped and removed.
+ Integration tests are identified using _@Category(FedoraIntegrationTest.class)_. Once the tests are complete the docker container will be stopped and removed.
 
 **Tips and Tricks**
 
- * You can start up fcrepo docker instance with _mvn docker:start_ and stop it with 
-_mvn docker:stop_.  Once started, access [Docker FCRepo](http://localhost:8090/fcrepo/rest/)
-
-
+ * You can start up fcrepo docker instance with _mvn docker:start -P fcrepo_it_ and stop it with 
+_mvn docker:stop -P fcrepo_it_.  Once started, access [Docker FCRepo](http://localhost:8080/fcrepo/rest/)
 
 ##### End to End Testing
 
