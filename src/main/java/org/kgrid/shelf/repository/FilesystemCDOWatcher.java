@@ -1,5 +1,6 @@
 package org.kgrid.shelf.repository;
 
+import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static java.nio.file.LinkOption.NOFOLLOW_LINKS;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_CREATE;
 import static java.nio.file.StandardWatchEventKinds.ENTRY_DELETE;
@@ -16,6 +17,7 @@ import java.nio.file.WatchEvent;
 import java.nio.file.WatchKey;
 import java.nio.file.WatchService;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -97,7 +99,7 @@ public class FilesystemCDOWatcher implements Runnable, AutoCloseable {
 
   public void registerAll(Path path, WatchEvent.Kind... eventKinds)
       throws IOException {
-    Files.walkFileTree(path, new SimpleFileVisitor<Path>() {
+    Files.walkFileTree(path, EnumSet.of(FOLLOW_LINKS), Integer.MAX_VALUE, new SimpleFileVisitor<Path>() {
       @Override
       public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
         if(registerPath(dir, eventKinds))

@@ -1,5 +1,7 @@
 package org.kgrid.shelf.repository;
 
+import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
+
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -18,6 +20,7 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.EnumSet;
 import java.util.InputMismatchException;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -59,7 +62,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
     List<String> children = new ArrayList<>();
     try {
-      children = Files.walk(path, 1)
+      children = Files.walk(path,  1, FOLLOW_LINKS)
           .filter(Files::isDirectory)
           .map(Object::toString)
           .collect(Collectors.toList());
