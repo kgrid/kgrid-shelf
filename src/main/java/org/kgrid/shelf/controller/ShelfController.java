@@ -93,13 +93,13 @@ public class ShelfController {
 
   @GetMapping(path = "/{naan}/{name}/{version}")
   public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name,
-      @PathVariable String version, RequestEntity request) {
+      @PathVariable String version, RequestEntity request, HttpServletRequest httpServletRequest) {
 
-    log.info("getting ko " + naan + "/" + name + "/" + version );
+    log.info("getting ko " + naan + "/" + name + "/" + version + " Look at this "+ request.getUrl()  );
 
     ArkId arkId = new ArkId(naan, name);
     KnowledgeObject ko = shelf.findByArkIdAndVersion(arkId, version);
-    kod.ifPresent(decorator -> decorator.decorate(ko, request));
+    kod.ifPresent(decorator -> decorator.decorate(ko, httpServletRequest));
     return ko.getMetadata();
   }
 
