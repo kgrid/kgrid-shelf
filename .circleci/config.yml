@@ -47,7 +47,7 @@ jobs:
       - run:
          name: Build and Test And Verify
          command: |
-            mvn package
+            mvn clean verify -P fcrepo_it
 
       # save test results
       - run:
@@ -65,8 +65,6 @@ jobs:
 
       - store_artifacts:
           path: target
-
-      - setup_remote_docker
 
       # Will normally run deploy but if triggered with Release will prepare and perform maven release
       - run:
