@@ -151,7 +151,7 @@
          <configuration>
            <images>
              <image>
-               <name>yinlinchen/fcrepo4-docker</name>
+               <name>farrisg/fcrepo:4.7.5</name>
                <alias>fcrepo_test</alias>
                <run>
                  <ports>
