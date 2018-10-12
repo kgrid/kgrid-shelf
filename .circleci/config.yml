@@ -42,6 +42,7 @@ jobs:
             - ~/.m2
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
+      - setup_remote_docker
 
       # run build and test
       - run:
