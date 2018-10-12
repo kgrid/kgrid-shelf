@@ -52,11 +52,7 @@ Once Running access the [Activators Health Endpoint](http://localhost:8080/healt
    
 ```
 
-## Running the tests
-
-#### Automated tests 
-
-##### Unit tests
+## Unit tests
 
 Unit tests can be executed via mvn test
 
@@ -65,7 +61,7 @@ mvn clean test
 ```
 
 
-##### Integration tests
+## Integration tests
 
 For integration tests we need to have a Fedora Commons instance running.  We use 
 [Fedora 4 Docker](https://hub.docker.com/r/yinlinchen/fcrepo4-docker/) which is part of [Fedora
@@ -97,9 +93,14 @@ and stop it with
 mvn docker:stop -P fcrepo_it
 ```
 
+Yo can keep the fcrepo container running after the tests running with the _docker.keepRunning_ switch
+```
+ mvn -Ddocker.keepRunning clean verify -P fcrepo_it
+
+```
 Once started, access [Docker FCRepo](http://localhost:8080/fcrepo/rest/)
 
-##### End to End Testing
+## End to End Testing
 
 Sample shelf in place the following tests can be executed against the running activator
 
