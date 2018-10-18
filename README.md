@@ -64,11 +64,12 @@ mvn clean test
 ## Integration tests
 
 For integration tests we need to have a Fedora Commons instance running.  We use 
-[Fedora 4 Docker](https://hub.docker.com/r/yinlinchen/fcrepo4-docker/) which is part of [Fedora
-Labs](https://github.com/fcrepo4-labs).  This coupled with
+[Fedora image](https://hub.docker.com/r/kgrid/fcrepo/) based on [Fedora Docker](https://hub.docker.com/r/yinlinchen/fcrepo4-docker/) 
+which is part of [Fedora Labs](https://github.com/fcrepo4-labs).  This coupled with
 [docker-maven-plugin](https://github.com/fabric8io/docker-maven-plugin) maintained by
  [fabric8io](https://fabric8.io/) allows us to spin up fcrepo and run shelf tests against a running
- fcrepo instance.  The container is stopped and removed after the verify. There is a fcrepo_it maven profile that will configure the instance and run the tests
+ fcrepo instance.  The container is stopped and removed after the verify. There is a fcrepo_it 
+ maven profile that will configure the instance and run the tests
  
 ```
 mvn clean verify -P fcrepo_it

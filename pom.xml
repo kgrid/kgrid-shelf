@@ -151,7 +151,7 @@
          <configuration>
            <images>
              <image>
-               <name>farrisg/fcrepo:4.7.5</name>
+               <name>kgrid/fcrepo:4.7.5</name>
                <alias>fcrepo_test</alias>
                <run>
                  <ports>
