@@ -18,7 +18,7 @@ jobs:
 
     docker:
       - image: circleci/openjdk:8-jdk
-      - image: farrisg/fcrepo:4.7.5
+      - image: kgrid/fcrepo:4.7.5
 
     environment:
       # Customize the JVM maximum heap limit
