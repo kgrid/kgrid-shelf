@@ -101,34 +101,12 @@ Yo can keep the fcrepo container running after the tests running with the _docke
 ```
 Once started, access [Docker FCRepo](http://localhost:8080/fcrepo/rest/)
 
-## End to End Testing
-
-Sample shelf in place the following tests can be executed against the running activator
-
-
 ## Fedora Repository Characterization Tests
+
 A set of tests that help the KGrid team understand the behavior of the [Fedora Repository](https://wiki.duraspace.org/display/FF) in 
 terms of [JSON LD](https://json-ld.org/) and our [KOIO](http://kgrid.org/koio) ontology.  Details can
 be found at Fedora Repository Characterization Tests [readme](etc/fcrepo/readme.md)
 
-
-View All Knowlege Objects on the shelf
-
-```
-curl http://localhost:8080
-```
-
-View a Knowledge Object
-
-```
-curl http://localhost:8080/hello/world
-```
-
-View a Knowledge Object Version
-
-```
-curl http://localhost:8080/hello/world/v0.0.1
-```
 
 ## Additional Information
 
