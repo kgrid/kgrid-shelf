@@ -1,0 +1,22 @@
+{
+  "name": "fcrepo",
+  "version": "1.0.0",
+  "description": "quick start for kgrid knowledge objects",
+  "main": " ",
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "newman": "^4.1.0",
+    "shelljs": "^0.8.2",
+    "start-server-and-test": "^1.7.5"
+  },
+  "scripts": {
+    "postman": "newman run tests/fcrepo-create.postman_collection.json -e tests/fcrepo-itegration-tests.postman_environment.json --reporters  cli",
+    "test-it": "server-test :8080 postman ",
+    "start": "node scripts/start-fcrepo.js"
+  },
+  "engines": {
+    "node": ">= 8.0.0",
+    "npm": ">= 5.0.0"
+  }
+}
