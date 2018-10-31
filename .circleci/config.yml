@@ -17,7 +17,7 @@ jobs:
     <<: *defaults
 
     docker:
-      - image: circleci/openjdk:8-jdk
+      - image: circleci/openjdk:11-jdk
       - image: kgrid/fcrepo:4.7.5
 
     environment:
