@@ -84,22 +84,22 @@ public class FedoraCDOStoreTest {
         fedoraCDOStore.getChildren("hello-world/v0.0.1/model").size());
   }
 
-//  @AfterClass
-//  public static void deleteKO() throws Exception {
-//
-//    fedoraCDOStore.removeFile("hello-world");
-//
-//    File helloWorldFile = temporaryFolder.newFile("delete.zip");
-//    OutputStream output = new FileOutputStream(helloWorldFile);
-//    try {
-//      fedoraCDOStore.getCompoundObjectFromShelf("hello-world", false, output);
-//      assertFalse("Should throw 410 exception ", true);
-//    } catch (HttpClientErrorException e) {
-//      assertTrue("Should throw 410 exception ", true);
-//    } finally {
-//      output.close();
-//    }
-//  }
+  @AfterClass
+  public static void deleteKO() throws Exception {
+
+    fedoraCDOStore.removeFile("hello-world");
+
+    File helloWorldFile = temporaryFolder.newFile("delete.zip");
+    OutputStream output = new FileOutputStream(helloWorldFile);
+    try {
+      fedoraCDOStore.getCompoundObjectFromShelf("hello-world", false, output);
+      assertFalse("Should throw 410 exception ", true);
+    } catch (HttpClientErrorException e) {
+      assertTrue("Should throw 410 exception ", true);
+    } finally {
+      output.close();
+    }
+  }
 
 
 }

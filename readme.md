@@ -109,7 +109,7 @@ Sample shelf in place the following tests can be executed against the running ac
 ## Fedora Repository Characterization Tests
 A set of tests that help the KGrid team understand the behavior of the [Fedora Repository](https://wiki.duraspace.org/display/FF) in 
 terms of [JSON LD](https://json-ld.org/) and our [KOIO](http://kgrid.org/koio) ontology.  Details can
-be found at Fedora Repository Characterization Tests [readme](src/test/fcrepo/readme.md)
+be found at Fedora Repository Characterization Tests [readme](etc/fcrepo/readme.md)
 
 
 View All Knowlege Objects on the shelf
