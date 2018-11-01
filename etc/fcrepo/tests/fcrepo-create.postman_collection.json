@@ -1199,7 +1199,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"@context\": {\n        \"koio\": \"http://kgrid.org/koio#\",\n        \"dc\": \"http://purl.org/dc/elements/1.1/\",\n        \"ldp\": \"http://www.w3.org/ns/ldp\",\n        \"hasServiceSpecification\": {\n                \"@id\": \"http://kgrid.org/koio#hasServiceSpecification\",\n                 \"@type\": \"@id\"\n         },\n         \"hasDeploymentSpecification\": {\n                \"@id\": \"http://kgrid.org/koio#hasDeploymentSpecification\",\n                 \"@type\": \"@id\"\n         },\n         \"hasPayload\": {\n                \"@id\": \"http://kgrid.org/koio#hasPayload\",\n                 \"@type\": \"@id\"\n         }\n    },\n    \"@graph\": [\n        {\n            \"@id\": \"v0.0.1\",\n            \"@type\":\"koio:Implementation\",\n            \"dc:identifier\":\"v0.0.1\",\n            \"dc:title\": \"Implementation 0.0.1 of Hello Workd\",\n\t\t\t\"hasServiceSpecification\":\"v0.0.1/service-specification.yaml\",\n\t\t\t\"hasDeploymentSpecification\":\"v0.0.1/deployment-specification.yaml\",\n\t\t\t\"hasPayload\":\"v0.0.1/welcome.js\"\n         }\n    ]\n}\n"
+					"raw": "{\n    \"@context\" : [\"http://kgrid.org/koio/contexts/implementation.jsonld\" ],\n    \"@graph\": [\n        {\n            \"@id\": \"v0.0.1\",\n            \"@type\":\"koio:Implementation\",\n            \"dc:identifier\":\"v0.0.1\",\n            \"dc:title\": \"Implementation 0.0.1 of Hello Workd\",\n\t\t\t\"hasServiceSpecification\":\"v0.0.1/service-specification.yaml\",\n\t\t\t\"hasDeploymentSpecification\":\"v0.0.1/deployment-specification.yaml\",\n\t\t\t\"hasPayload\":\"v0.0.1/welcome.js\"\n         }\n    ]\n}\n"
 				},
 				"url": {
 					"raw": "{{fcrepo-url}}/hello/world/v0.0.1",
@@ -1388,7 +1388,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"@context\": {\n        \"koio\": \"http://kgrid.org/koio#\",\n        \"dc\": \"http://purl.org/dc/elements/1.1/\",\n        \"ldp\": \"http://www.w3.org/ns/ldp\",\n        \"hasServiceSpecification\": {\n                \"@id\": \"http://kgrid.org/koio#hasServiceSpecification\",\n                 \"@type\": \"@id\"\n         },\n         \"hasDeploymentSpecification\": {\n                \"@id\": \"http://kgrid.org/koio#hasDeploymentSpecification\",\n                 \"@type\": \"@id\"\n         },\n         \"hasPayload\": {\n                \"@id\": \"http://kgrid.org/koio#hasPayload\",\n                 \"@type\": \"@id\"\n         }\n    },\n    \"@graph\": [\n        {\n            \"@id\": \"v0.0.2\",\n            \"@type\":\"koio:Implementation\",\n            \"dc:identifier\":\"v0.0.2\",\n            \"dc:title\": \"Implementation 0.0.2 of Hello Workd\",\n\t\t\t\"hasServiceSpecification\":\"v0.0.1/service-specification.yaml\",\n\t\t\t\"hasDeploymentSpecification\":\"v0.0.1/deployment-specification.yaml\",\n\t\t\t\"hasPayload\":\"v0.0.1/welcome.js\"\n         }\n    ]\n}\n"
+					"raw": "{\n    \"@context\" : [\"http://kgrid.org/koio/contexts/implementation.jsonld\" ],\n    \"@graph\": [\n        {\n            \"@id\": \"v0.0.2\",\n            \"@type\":\"koio:Implementation\",\n            \"dc:identifier\":\"v0.0.2\",\n            \"dc:title\": \"Implementation 0.0.2 of Hello Workd\",\n\t\t\t\"hasServiceSpecification\":\"v0.0.1/service-specification.yaml\",\n\t\t\t\"hasDeploymentSpecification\":\"v0.0.1/deployment-specification.yaml\",\n\t\t\t\"koio:hasPayload\":{\"@id\":\"v0.0.1/welcome.js\"}\n         }\n    ]\n}\n"
 				},
 				"url": {
 					"raw": "{{fcrepo-url}}/hello/world/v0.0.2",
@@ -1560,7 +1560,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"@context\": {\n        \"koio\": \"http://kgrid.org/koio#\",\n        \"dc\": \"http://purl.org/dc/elements/1.1/\",\n        \"hasImplementation\": {\n                \"@id\": \"http://kgrid.org/koio#hasImplementation\",\n                 \"@type\": \"@id\"\n         }\n    },\n    \"@graph\": [\n        {\n            \"@id\": \"../hello/world\",\n            \"@type\":\"koio:KnowledgeObject\",\n            \"dc:identifer\":\"ark:/hello/world\",\n            \"dc:title\":\"Hello  World Title\",\n            \"koio:contributors\": \"Kgrid Team\",\n            \"dc:description\": \"Test Hello World \", \n            \"koio:keywords\": \"test hello world\",\n             \"hasImplementation\":[\n                  \"../hello/world/v0.0.1\",\n                  \"../hello/world/v0.0.2\"\n             ]\n        }\n    ]\n}\n           "
+					"raw": "{\n    \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ],\n    \"@graph\": [\n        {\n            \"@id\": \"../hello/world\",\n            \"@type\":\"koio:KnowledgeObject\",\n            \"dc:identifer\":\"ark:/hello/world\",\n            \"dc:title\":\"Hello  World Title\",\n            \"koio:contributors\": \"Kgrid Team\",\n            \"dc:description\": \"Test Hello World \", \n            \"koio:keywords\": \"test hello world\",\n             \"hasImplementation\":[\n                  \"../hello/world/v0.0.1\",\n                  \"../hello/world/v0.0.2\"\n             ]\n        }\n    ]\n}\n           "
 				},
 				"url": {
 					"raw": "{{fcrepo-url}}/hello/world",
