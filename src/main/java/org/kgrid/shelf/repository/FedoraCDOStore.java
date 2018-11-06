@@ -8,15 +8,19 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.StringWriter;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.InputMismatchException;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Stack;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -27,10 +31,6 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.util.FileUtils;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
@@ -57,8 +57,6 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   private String password;
 
   private String storagePath;
-
-  private static final String KGRID_NAMESPACE = "http://kgrid.org/ko#";
 
   private final Logger log = LoggerFactory.getLogger(FedoraCDOStore.class);
 
@@ -176,27 +174,23 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   @Override
   public void saveMetadata(String relativePath, JsonNode node) {
 
+    if(relativePath.endsWith(KnowledgeObject.METADATA_FILENAME)) {
+      relativePath = StringUtils.substringBeforeLast(relativePath, "/");
+    }
     URI destination = URI.create(storagePath + relativePath);
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
     RestTemplate restTemplate = new RestTemplate(
         new HttpComponentsClientHttpRequestFactory(instance));
 
-    Model metadataModel = ModelFactory.createDefaultModel();
-    Resource resource = metadataModel.createResource(destination.toString());
+    log.info("Sending jsonLD node to the store at url " + node.toString());
 
-    // Doing this to add a namespace to objects so we can convert from json to rdf triples
-    // When we are fully json-ld this can possibly be eliminated
-    serializeJsonToRdfResource(node, resource, metadataModel);
 
-    StringWriter writer = new StringWriter();
-    metadataModel.write(writer, FileUtils.langNTriple);
-
-    RequestEntity request = RequestEntity.put(URI.create(destination.toString() + "/fcr:metadata"))
-        .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+    RequestEntity request = RequestEntity.put(URI.create(destination.toString() +  "/fcr:metadata"))
+//        .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
         .header("Prefer", "handling=lenient; received=\"minimal\"")
-        .contentType(new MediaType("application", "n-triples", StandardCharsets.UTF_8))
-        .body(writer.toString());
+        .contentType(new MediaType("application", "ld+json", StandardCharsets.UTF_8))
+        .body(node.toString());
     ResponseEntity<String> response = restTemplate.exchange(request, String.class);
 
     log.info("Saved metadata " + response);
@@ -224,6 +218,23 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   public ArkId addCompoundObjectToShelf(ArkId urlArkId, MultipartFile zip) {
     int totalSize = 0;
     int entries = 0;
+
+    Map<String, JsonNode> metadataToAdd = new TreeMap<>(
+        new Comparator<String>() {
+          @Override
+          public int compare(String s1, String s2) {
+            if (s1.length() < s2.length()) {
+              return -1;
+            } else if (s1.length() > s2.length()) {
+              return 1;
+            } else {
+              return s1.compareTo(s2);
+            }
+          }
+        }
+    );
+
+    Map<String, byte[]> binariesToAdd = new HashMap<>();
 
     String transactionId = createTransaction();
 
@@ -254,9 +265,9 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
               // chop off the "/metadata.json" off the end of rdf metadata
               dir = StringUtils.substringBeforeLast(dir, "/");
               JsonNode node = new ObjectMapper().readTree(zipContents);
-              saveMetadata(transactionId + "/" + dir, node);
+              metadataToAdd.put(transactionId + "/" + dir, node);
             } else {
-              saveBinary(transactionId + "/" + dir, zipContents);
+              binariesToAdd.put(transactionId + "/" + dir, zipContents);
             }
 
             // Prevent zip bombs from using all available resources
@@ -274,12 +285,22 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
           }
         }
       }
+      Stack<Map.Entry<String, JsonNode>> reversedMetadata = new Stack<>();
+      metadataToAdd.forEach((String key, JsonNode node ) -> {
+        createContainer(URI.create(storagePath + key));
+        reversedMetadata.push(new SimpleEntry<>(key, node));
+      });
+      binariesToAdd.forEach((url, bytes) -> saveBinary(url, bytes));
+      for(int i = reversedMetadata.size(); i > 0; i--) {
+        Map.Entry<String, JsonNode> metadataEntry = reversedMetadata.pop();
+        saveMetadata(metadataEntry.getKey(), metadataEntry.getValue());
+      }
       commitTransaction(transactionId);
       return arkId;
 
     } catch (HttpClientErrorException hcee) {
       rollbackTransaction(transactionId);
-      throw new IllegalStateException("Cannot overwrite existing knowledge object in fedora");
+      throw new IllegalStateException("Error writing to fedora " + hcee.getResponseBodyAsString());
     } catch (IOException ex) {
       rollbackTransaction(transactionId);
       log.warn("Cannot load zip into fedora " + ex.getMessage());
@@ -338,21 +359,6 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       descendants.addAll(children);
     }
     return descendants;
-  }
-
-  private void serializeJsonToRdfResource(JsonNode json, Resource resource, Model metadataModel) {
-    json.fields().forEachRemaining(element -> {
-      if (element.getValue().isObject()) {
-        serializeJsonToRdfResource(element.getValue(), resource, metadataModel);
-      } else if (element.getValue().isArray()) {
-        element.getValue().elements().forEachRemaining(
-            arrayElement -> serializeJsonToRdfResource(arrayElement, resource, metadataModel));
-      } else {
-        resource.addLiteral(
-            metadataModel.createProperty(KGRID_NAMESPACE + element.getKey()),
-            element.getValue().asText());
-      }
-    });
   }
 
   @Override
