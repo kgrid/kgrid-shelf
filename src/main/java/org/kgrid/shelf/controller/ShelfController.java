@@ -184,9 +184,9 @@ public class ShelfController {
 
     log.info("getting ko resource " + naan + "/" + name + "/" + version + childPath);
 
-    if(!childPath.startsWith(KnowledgeObject.MODEL_DIR_NAME)) {
-        throw new IllegalArgumentException("Cannot get files outside of the model directory");
-    }
+//    if(!childPath.startsWith(KnowledgeObject.MODEL_DIR_NAME)) {
+//        throw new IllegalArgumentException("Cannot get files outside of the model directory");
+//    }
 
     byte[] binary = shelf.getBinaryOrMetadata(arkId, version, childPath);
     if(binary != null) {

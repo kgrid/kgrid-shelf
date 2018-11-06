@@ -39,7 +39,7 @@ public class FedoraCDOStoreTest {
 
     try {
 
-      String filename = "/hello-world.zip";
+      String filename = "/hello-world-jsonld.zip";
       URL zipStream = FilesystemCDOStoreTest.class.getResource(filename);
       byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
       MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
@@ -55,7 +55,7 @@ public class FedoraCDOStoreTest {
   @Test
   public void findKO() throws Exception {
 
-    assertEquals("Hello, World",fedoraCDOStore.getMetadata(
+    assertEquals("Implementation 0.0.1 of Hello World",fedoraCDOStore.getMetadata(
         "hello-world/v0.0.1").get("title").asText());
 
   }
@@ -63,7 +63,7 @@ public class FedoraCDOStoreTest {
   @Test
   public void exportKOZip() throws Exception {
 
-    File helloWorldFile = temporaryFolder.newFile("hello-world.zip");
+    File helloWorldFile = temporaryFolder.newFile("hello-world-jsonld.zip");
     OutputStream output = new FileOutputStream(helloWorldFile);
     fedoraCDOStore.getCompoundObjectFromShelf("hello-world",false,output);
     output.close();
@@ -74,14 +74,14 @@ public class FedoraCDOStoreTest {
     public void findBinary() {
 
      assertNotNull(
-         fedoraCDOStore.getBinary("hello-world/v0.0.1/model/resource/welcome.js"));
+         fedoraCDOStore.getBinary("hello-world/v0.0.1/welcome.js"));
 
    }
   @Test
   public void findChildren()  {
 
-    assertEquals(2,
-        fedoraCDOStore.getChildren("hello-world/v0.0.1/model").size());
+    assertEquals(3,
+        fedoraCDOStore.getChildren("hello-world/v0.0.1").size());
   }
 
   @AfterClass

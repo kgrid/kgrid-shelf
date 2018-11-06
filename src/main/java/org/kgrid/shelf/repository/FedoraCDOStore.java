@@ -142,12 +142,16 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public boolean isMetadata(String relativePath) {
-    ObjectNode json = getRdfJson(URI.create(storagePath + relativePath));
-    if(json.has("@type") && json.get("@type").isArray()) {
-      ArrayNode types = (ArrayNode) json.get("@type");
-      return types.toString().contains("ldp:RDFSource");
-    } else {
-      log.warn("RDF at " + relativePath + " has no types");
+    try {
+      ObjectNode json = getRdfJson(URI.create(storagePath + relativePath));
+      if(json.has("@type") && json.get("@type").isArray()) {
+        ArrayNode types = (ArrayNode) json.get("@type");
+        return types.toString().contains("ldp:RDFSource");
+      } else {
+        log.warn("RDF at " + relativePath + " has no types");
+      }
+    } catch (Exception ex ) {
+      return false;
     }
     return false;
   }
