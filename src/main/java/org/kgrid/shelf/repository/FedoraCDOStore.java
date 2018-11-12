@@ -32,6 +32,8 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.CompoundDigitalObject;
+import org.kgrid.shelf.domain.KOIOKnowledgeObject;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -53,6 +55,7 @@ import org.springframework.web.multipart.MultipartFile;
 public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private String userName;
+
 
   private String password;
 
@@ -80,6 +83,40 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
+  @Override
+  public void createContainer(String relativePath) {
+
+    URI destination = URI.create(storagePath + relativePath);
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+    RestTemplate restTemplate = new RestTemplate(
+        new HttpComponentsClientHttpRequestFactory(instance));
+
+    RequestEntity request = RequestEntity.put(URI.create(destination.toString()))
+        .header("Prefer", "handling=lenient; received=\"minimal\"")
+        .contentType(new MediaType("application", "ld+json", StandardCharsets.UTF_8))
+        .body("{}");
+    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+
+  }
+
+  @Override
+  public void save(CompoundDigitalObject cdo) {
+
+    cdo.getContainers().forEach( (path, container) -> {
+      createContainer(path);
+    });
+
+    cdo.getBinaryResources().forEach( (name, bytes)-> {
+      saveBinary(name, bytes);
+    });
+
+    cdo.getContainers().forEach((path, container)  -> {
+      saveMetadata(path, container );
+    });
+
+
+  }
   @Override
   public List<String> getChildren(String relativePath) {
     final String EXPANDED_CONTAINS = "http://www.w3.org/ns/ldp#contains";
@@ -182,6 +219,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       relativePath = StringUtils.substringBeforeLast(relativePath, "/");
     }
     URI destination = URI.create(storagePath + relativePath);
+
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
     RestTemplate restTemplate = new RestTemplate(
@@ -189,8 +227,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
     log.info("Sending jsonLD node to the store at url " + node.toString());
 
-
-    RequestEntity request = RequestEntity.put(URI.create(destination.toString() +  "/fcr:metadata"))
+    RequestEntity request = RequestEntity.put(URI.create(destination.toString()))
 //        .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
         .header("Prefer", "handling=lenient; received=\"minimal\"")
         .contentType(new MediaType("application", "ld+json", StandardCharsets.UTF_8))
@@ -379,7 +416,10 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
     if (response.getStatusCode() == HttpStatus.GONE
         || response.getStatusCode() == HttpStatus.NO_CONTENT) {
-      log.info("Fedora resource " + relativePath + " deleted.");
+
+      ResponseEntity<String> tombstoneResponse = restTemplate.exchange(destination+"/fcr:tombstone", HttpMethod.DELETE,
+          authenticationHeader(), String.class);
+
     } else {
       log.error(
           "Unable to delete fedora resource " + relativePath + " due to " + response.getBody());
@@ -461,7 +501,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     HttpHeaders headers = new HttpHeaders();
     headers
         .add("Accept", "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#compacted\"");
-    headers.add("Prefer", "return=\"representation\";");
+    headers.add("Prefer", "return=\"representation\";include=\"http://fedora.info/definitions/v4/repository#EmbedResources \"");
     headers.putAll(authenticationHeader().getHeaders());
 
     HttpEntity<String> entity = new HttpEntity<>("", headers);

@@ -5,6 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
@@ -39,11 +40,12 @@ public class FedoraCDOStoreTest {
 
     try {
 
-      String filename = "/hello-world-jsonld.zip";
+      String filename = "/fixtures/hello-world-jsonld.zip";
       URL zipStream = FilesystemCDOStoreTest.class.getResource(filename);
       byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
       MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
-      ArkId arkId = fedoraCDOStore.addCompoundObjectToShelf(new ArkId("hello-world"), koZip);
+      ZipFileProcessor zipFileProcessor = new ZipFileProcessor();
+      zipFileProcessor.createCompoundDigitalObject("hello-world", koZip.getInputStream(),fedoraCDOStore);
 
     } catch (Exception exception) {
       assertFalse(exception.getMessage(), true);
@@ -55,8 +57,10 @@ public class FedoraCDOStoreTest {
   @Test
   public void findKO() throws Exception {
 
-    assertEquals("Implementation 0.0.1 of Hello World",fedoraCDOStore.getMetadata(
-        "hello-world/v0.0.1").get("title").asText());
+    ObjectNode koNode = fedoraCDOStore.getMetadata("hello-world");
+
+    assertEquals(3,koNode.get("@graph").size());
+    assertNotNull(koNode.get("@context"));
 
   }
 
@@ -87,18 +91,9 @@ public class FedoraCDOStoreTest {
   @AfterClass
   public static void deleteKO() throws Exception {
 
-    fedoraCDOStore.removeFile("hello-world");
+    //fedoraCDOStore.removeFile("hello-world");
 
-    File helloWorldFile = temporaryFolder.newFile("delete.zip");
-    OutputStream output = new FileOutputStream(helloWorldFile);
-    try {
-      fedoraCDOStore.getCompoundObjectFromShelf("hello-world", false, output);
-      assertFalse("Should throw 410 exception ", true);
-    } catch (HttpClientErrorException e) {
-      assertTrue("Should throw 410 exception ", true);
-    } finally {
-      output.close();
-    }
+
   }
 
 

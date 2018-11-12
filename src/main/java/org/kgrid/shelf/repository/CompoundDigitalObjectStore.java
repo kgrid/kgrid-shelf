@@ -6,6 +6,8 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.CompoundDigitalObject;
+import org.kgrid.shelf.domain.KOIOKnowledgeObject;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface CompoundDigitalObjectStore {
@@ -20,6 +22,8 @@ public interface CompoundDigitalObjectStore {
 
   byte[] getBinary(String relativeLocation);
 
+  void createContainer(String relativeDestination);
+  void save(CompoundDigitalObject cdo);
   void saveMetadata(String relativeDestination, JsonNode metadata);
 
   void saveBinary(String relativeDestination, byte[] data);

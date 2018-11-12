@@ -29,6 +29,8 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.CompoundDigitalObject;
+import org.kgrid.shelf.domain.KOIOKnowledgeObject;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -128,6 +130,32 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       throw new IllegalArgumentException(
           "Cannot read metadata file at path " + shelf.resolve(metadataFile.getAbsolutePath()), ioEx);
     }
+  }
+
+  @Override
+  public void createContainer(String relativeDestination) {
+    Path basePath = Paths.get(localStorageURI);
+    Path containerPath = basePath.resolve(relativeDestination);
+    if (!containerPath.toFile().exists()) {
+      containerPath.toFile().mkdirs();
+    }
+
+  }
+  @Override
+  public void save(CompoundDigitalObject cdo) {
+
+    cdo.getContainers().forEach( (path, container) -> {
+      createContainer(path);
+    });
+
+    cdo.getBinaryResources().forEach( (name, bytes)-> {
+      saveBinary(name, bytes);
+    });
+
+    Path metadataPath = Paths
+        .get(cdo.getIdentifier(), KnowledgeObject.METADATA_FILENAME);
+    saveMetadata( metadataPath.toString(), cdo.getMetadata() );
+
   }
 
   @Override
