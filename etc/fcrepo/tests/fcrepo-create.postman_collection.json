@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "dc55f252-f8a9-49b0-b853-e02c47dcb77a",
+		"_postman_id": "50ec8037-6275-40ba-bb94-9f70ff3a558c",
 		"name": "fcrepo-create",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
 	},
@@ -195,7 +195,7 @@
 						"exec": [
 							"",
 							"const deleteTombstone = {",
-							"  url:  pm.variables.get(\"fcrepo-base-url\")+'/hello/world/fcr:tombstone',",
+							"  url:  pm.variables.get(\"fcrepo-base-url\")+'/hello-world/fcr:tombstone',",
 							"  method: 'DELETE'",
 							"};",
 							"",
@@ -219,13 +219,12 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{fcrepo-base-url}}/hello/world",
+					"raw": "{{fcrepo-base-url}}/hello-world",
 					"host": [
 						"{{fcrepo-base-url}}"
 					],
 					"path": [
-						"hello",
-						"world"
+						"hello-world"
 					]
 				},
 				"description": "Deletes Hello World.  Two steps, one to delete the resource and than delete the tombstone."
@@ -293,13 +292,12 @@
 					"raw": "{}"
 				},
 				"url": {
-					"raw": "{{fcrepo-url}}/hello/world",
+					"raw": "{{fcrepo-url}}/hello-world",
 					"host": [
 						"{{fcrepo-url}}"
 					],
 					"path": [
-						"hello",
-						"world"
+						"hello-world"
 					]
 				}
 			},
@@ -424,7 +422,7 @@
 							"});",
 							"",
 							"const getRequest={",
-							"  url: pm.variables.get(\"fcrepo-url\")+'/hello/world/v0.0.1',",
+							"  url: pm.variables.get(\"fcrepo-url\")+'/hello-world/v0.0.1',",
 							"  method: 'GET',",
 							"  header: {",
 							"      \"Prefer\":\"return=minimal\",",
@@ -481,13 +479,12 @@
 					"raw": "{}"
 				},
 				"url": {
-					"raw": "{{fcrepo-url}}/hello/world/v0.0.1",
+					"raw": "{{fcrepo-url}}/hello-world/v0.0.1",
 					"host": [
 						"{{fcrepo-url}}"
 					],
 					"path": [
-						"hello",
-						"world",
+						"hello-world",
 						"v0.0.1"
 					]
 				}
@@ -658,13 +655,12 @@
 					"file": {}
 				},
 				"url": {
-					"raw": "{{fcrepo-url}}/hello/world/v0.0.1/service-specification.yaml",
+					"raw": "{{fcrepo-url}}/hello-world/v0.0.1/service-specification.yaml",
 					"host": [
 						"{{fcrepo-url}}"
 					],
 					"path": [
-						"hello",
-						"world",
+						"hello-world",
 						"v0.0.1",
 						"service-specification.yaml"
 					]
@@ -835,13 +831,12 @@
 					"file": {}
 				},
 				"url": {
-					"raw": "{{fcrepo-url}}/hello/world/v0.0.1/deployment-specification.yaml",
+					"raw": "{{fcrepo-url}}/hello-world/v0.0.1/deployment-specification.yaml",
 					"host": [
 						"{{fcrepo-url}}"
 					],
 					"path": [
-						"hello",
-						"world",
+						"hello-world",
 						"v0.0.1",
 						"deployment-specification.yaml"
 					]
@@ -1012,13 +1007,12 @@
 					"file": {}
 				},
 				"url": {
-					"raw": "{{fcrepo-url}}/hello/world/v0.0.1/welcome.js",
+					"raw": "{{fcrepo-url}}/hello-world/v0.0.1/welcome.js",
 					"host": [
 						"{{fcrepo-url}}"
 					],
 					"path": [
-						"hello",
-						"world",
+						"hello-world",
 						"v0.0.1",
 						"welcome.js"
 					]
@@ -1145,7 +1139,7 @@
 							"});",
 							"",
 							"const getRequest={",
-							"  url: pm.variables.get(\"fcrepo-url\")+'/hello/world/v0.0.1',",
+							"  url: pm.variables.get(\"fcrepo-url\")+'/hello-world/v0.0.1',",
 							"  method: 'GET',",
 							"  header: {",
 							"      \"Prefer\":\"return=minimal\",",
@@ -1202,13 +1196,12 @@
 					"raw": "{\n    \"@context\" : [\"http://kgrid.org/koio/contexts/implementation.jsonld\" ],\n    \"@graph\": [\n        {\n            \"@id\": \"v0.0.1\",\n            \"@type\":\"koio:Implementation\",\n            \"dc:identifier\":\"v0.0.1\",\n            \"dc:title\": \"Implementation 0.0.1 of Hello Workd\",\n\t\t\t\"hasServiceSpecification\":\"v0.0.1/service-specification.yaml\",\n\t\t\t\"hasDeploymentSpecification\":\"v0.0.1/deployment-specification.yaml\",\n\t\t\t\"hasPayload\":\"v0.0.1/welcome.js\"\n         }\n    ]\n}\n"
 				},
 				"url": {
-					"raw": "{{fcrepo-url}}/hello/world/v0.0.1",
+					"raw": "{{fcrepo-url}}/hello-world/v0.0.1",
 					"host": [
 						"{{fcrepo-url}}"
 					],
 					"path": [
-						"hello",
-						"world",
+						"hello-world",
 						"v0.0.1"
 					]
 				}
@@ -1334,7 +1327,7 @@
 							"});",
 							"",
 							"const getRequest={",
-							"  url: pm.variables.get(\"fcrepo-url\")+'/hello/world/v0.0.1',",
+							"  url: pm.variables.get(\"fcrepo-url\")+'/hello-world/v0.0.1',",
 							"  method: 'GET',",
 							"  header: {",
 							"      \"Prefer\":\"return=minimal\",",
@@ -1391,13 +1384,12 @@
 					"raw": "{\n    \"@context\" : [\"http://kgrid.org/koio/contexts/implementation.jsonld\" ],\n    \"@graph\": [\n        {\n            \"@id\": \"v0.0.2\",\n            \"@type\":\"koio:Implementation\",\n            \"dc:identifier\":\"v0.0.2\",\n            \"dc:title\": \"Implementation 0.0.2 of Hello Workd\",\n\t\t\t\"hasServiceSpecification\":\"v0.0.1/service-specification.yaml\",\n\t\t\t\"hasDeploymentSpecification\":\"v0.0.1/deployment-specification.yaml\",\n\t\t\t\"koio:hasPayload\":{\"@id\":\"v0.0.1/welcome.js\"}\n         }\n    ]\n}\n"
 				},
 				"url": {
-					"raw": "{{fcrepo-url}}/hello/world/v0.0.2",
+					"raw": "{{fcrepo-url}}/hello-world/v0.0.2",
 					"host": [
 						"{{fcrepo-url}}"
 					],
 					"path": [
-						"hello",
-						"world",
+						"hello-world",
 						"v0.0.2"
 					]
 				}
@@ -1560,16 +1552,15 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ],\n    \"@graph\": [\n        {\n            \"@id\": \"../hello/world\",\n            \"@type\":\"koio:KnowledgeObject\",\n            \"dc:identifer\":\"ark:/hello/world\",\n            \"dc:title\":\"Hello  World Title\",\n            \"koio:contributors\": \"Kgrid Team\",\n            \"dc:description\": \"Test Hello World \", \n            \"koio:keywords\": \"test hello world\",\n             \"hasImplementation\":[\n                  \"../hello/world/v0.0.1\",\n                  \"../hello/world/v0.0.2\"\n             ]\n        }\n    ]\n}\n           "
+					"raw": "{\n    \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ],\n    \"@graph\": [\n        {\n            \"@id\": \"hello-world\",\n            \"@type\":\"koio:KnowledgeObject\",\n            \"dc:identifer\":\"ark:/hello-world\",\n            \"dc:title\":\"Hello  World Title\",\n            \"koio:contributors\": \"Kgrid Team\",\n            \"dc:description\": \"Test Hello World \", \n            \"koio:keywords\": [\"test\", \"hello\", \"world\"],\n             \"hasImplementation\":[\n                  \"../hello/world/v0.0.1\",\n                  \"../hello/world/v0.0.2\"\n             ]\n        }\n    ]\n}\n           "
 				},
 				"url": {
-					"raw": "{{fcrepo-url}}/hello/world",
+					"raw": "{{fcrepo-url}}/hello-world",
 					"host": [
 						"{{fcrepo-url}}"
 					],
 					"path": [
-						"hello",
-						"world"
+						"hello-world"
 					]
 				}
 			},
@@ -1776,13 +1767,12 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{fcrepo-url}}/hello/world",
+					"raw": "{{fcrepo-url}}/hello-world",
 					"host": [
 						"{{fcrepo-url}}"
 					],
 					"path": [
-						"hello",
-						"world"
+						"hello-world"
 					]
 				}
 			},
