@@ -27,7 +27,9 @@ import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.CompoundDigitalObject;
 import org.kgrid.shelf.domain.KOIOKnowledgeObject;
@@ -132,31 +134,6 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
-  @Override
-  public void createContainer(String relativeDestination) {
-    Path basePath = Paths.get(localStorageURI);
-    Path containerPath = basePath.resolve(relativeDestination);
-    if (!containerPath.toFile().exists()) {
-      containerPath.toFile().mkdirs();
-    }
-
-  }
-  @Override
-  public void save(CompoundDigitalObject cdo) {
-
-    cdo.getContainers().forEach( (path, container) -> {
-      createContainer(path);
-    });
-
-    cdo.getBinaryResources().forEach( (name, bytes)-> {
-      saveBinary(name, bytes);
-    });
-
-    Path metadataPath = Paths
-        .get(cdo.getIdentifier(), KnowledgeObject.METADATA_FILENAME);
-    saveMetadata( metadataPath.toString(), cdo.getMetadata() );
-
-  }
 
   @Override
   public byte[] getBinary(String relativeFilePath) {
@@ -307,5 +284,78 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
           }
         });
     zs.close();
+  }
+
+  @Override
+  public void createContainer(String relativeDestination) {
+    Path basePath = Paths.get(localStorageURI);
+    Path containerPath = basePath.resolve(relativeDestination);
+    if (!containerPath.toFile().exists()) {
+      containerPath.toFile().mkdirs();
+    }
+
+  }
+  @Override
+  public void save(CompoundDigitalObject cdo) {
+
+    cdo.getContainers().forEach( (path, container) -> {
+      createContainer(path);
+    });
+
+    cdo.getBinaryResources().forEach( (name, bytes)-> {
+      saveBinary(name, bytes);
+    });
+
+    cdo.getContainers().forEach( (path, container) -> {
+      saveMetadata(Paths.get(
+          path, KnowledgeObject.METADATA_FILENAME).toString(), container);
+    });
+
+  }
+
+  @Override
+  public CompoundDigitalObject find(String cdoIdentifier) {
+
+    JsonNode metaDate = getMetadata(cdoIdentifier);
+    CompoundDigitalObject compoundDigitalObject = new CompoundDigitalObject(cdoIdentifier);
+   // compoundDigitalObject.setMetadata(metaDate);
+
+    Path path = Paths.get(getAbsoluteLocation(cdoIdentifier));
+
+    List<Path> binaryPaths;
+    try {
+      binaryPaths = Files.walk(path,  2, FOLLOW_LINKS)
+          .filter(Files::isRegularFile)
+          .filter(p -> !p.getFileName().endsWith("metadata.json"))
+          .map(Path::toAbsolutePath)
+          .collect(Collectors.toList());
+
+      binaryPaths.forEach( filePath ->{
+        try {
+          compoundDigitalObject.getBinaryResources().put(
+              path.relativize(filePath).toString(),
+              Files.readAllBytes(filePath));
+        } catch (IOException e) {
+          log.error("Cannot add binary to cod " + filePath + " " + e);
+        }
+
+      });
+
+    } catch (IOException ioEx) {
+      log.error("Cannot read children at location " + path + " " + ioEx);
+    }
+
+    return compoundDigitalObject;
+  }
+
+  @Override
+  public void delete(String cdoIdentifier) throws ShelfException {
+    Path path = Paths.get(localStorageURI.toString(), cdoIdentifier);
+    try {
+      FileUtils.deleteDirectory(new File(path.toString()));
+    } catch (IOException e) {
+      throw new ShelfException("Could not delete cdo " + cdoIdentifier, e);
+    }
+
   }
 }

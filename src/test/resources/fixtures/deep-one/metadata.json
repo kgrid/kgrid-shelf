@@ -1,0 +1,24 @@
+{
+  "@context": {
+    "koio": "http://kgrid.org/koio#",
+    "dc": "http://purl.org/dc/elements/1.1/",
+    "title": {
+      "@id": "http://purl.org/dc/elements/1.1/title"
+    },
+    "description": {
+      "@id": "http://purl.org/dc/elements/1.1/description"
+    }
+  },
+  "@graph": [
+    {
+      "@id": "hello-world",
+      "@type": "koio:KnowledgeObject",
+      "title": "Hello World Title",
+      "description": "Test Hello World",
+      "hasImplementation":[
+        "deep-one/one",
+        "hello-world/two"
+      ]
+    }
+  ]
+}

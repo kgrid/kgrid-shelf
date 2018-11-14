@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.node.TextNode;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.FileSystems;
@@ -167,4 +168,15 @@ public class FilesystemCDOStoreTest {
   }
 
 
+  @Test
+  public void find() {
+
+    String filename = "/fixtures/hello-world-jsonld.zip";
+    InputStream zipStream = ZipFIleProcessorFileStoreTest.class.getResourceAsStream(filename);
+
+    ZipFileProcessor zipFIleProcessor = new ZipFileProcessor();
+    zipFIleProcessor.importCompoundDigitalObject("hello-world",zipStream, koStore);
+
+    koStore.find("hello-world");
+  }
 }

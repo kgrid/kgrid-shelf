@@ -31,7 +31,7 @@ public class ZipFIleProcessorFedoraStoreTest {
     InputStream zipStream = ZipFIleProcessorFedoraStoreTest.class.getResourceAsStream(filename);
 
     ZipFileProcessor zipFIleProcessor = new ZipFileProcessor();
-    zipFIleProcessor.createCompoundDigitalObject("hello-world",zipStream, cdoStore);
+    zipFIleProcessor.importCompoundDigitalObject("hello-world",zipStream, cdoStore);
 
     ObjectNode objectNode = cdoStore.getMetadata("hello-world");
     return new KOIOKnowledgeObject(objectNode);

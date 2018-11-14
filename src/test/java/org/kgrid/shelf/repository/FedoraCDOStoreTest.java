@@ -13,15 +13,12 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
-import org.kgrid.shelf.domain.ArkId;
 import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.client.HttpClientErrorException;
 
 @Category(FedoraIntegrationTest.class)
 public class FedoraCDOStoreTest {
@@ -45,7 +42,7 @@ public class FedoraCDOStoreTest {
       byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
       MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
       ZipFileProcessor zipFileProcessor = new ZipFileProcessor();
-      zipFileProcessor.createCompoundDigitalObject("hello-world", koZip.getInputStream(),fedoraCDOStore);
+      zipFileProcessor.importCompoundDigitalObject("hello-world", koZip.getInputStream(),fedoraCDOStore);
 
     } catch (Exception exception) {
       assertFalse(exception.getMessage(), true);

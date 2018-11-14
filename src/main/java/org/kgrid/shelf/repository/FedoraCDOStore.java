@@ -13,6 +13,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.InputMismatchException;
@@ -31,6 +32,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.CompoundDigitalObject;
 import org.kgrid.shelf.domain.KOIOKnowledgeObject;
@@ -83,40 +85,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
-  @Override
-  public void createContainer(String relativePath) {
 
-    URI destination = URI.create(storagePath + relativePath);
-    HttpClient instance = HttpClientBuilder.create()
-        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
-    RestTemplate restTemplate = new RestTemplate(
-        new HttpComponentsClientHttpRequestFactory(instance));
-
-    RequestEntity request = RequestEntity.put(URI.create(destination.toString()))
-        .header("Prefer", "handling=lenient; received=\"minimal\"")
-        .contentType(new MediaType("application", "ld+json", StandardCharsets.UTF_8))
-        .body("{}");
-    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
-
-  }
-
-  @Override
-  public void save(CompoundDigitalObject cdo) {
-
-    cdo.getContainers().forEach( (path, container) -> {
-      createContainer(path);
-    });
-
-    cdo.getBinaryResources().forEach( (name, bytes)-> {
-      saveBinary(name, bytes);
-    });
-
-    cdo.getContainers().forEach((path, container)  -> {
-      saveMetadata(path, container );
-    });
-
-
-  }
   @Override
   public List<String> getChildren(String relativePath) {
     final String EXPANDED_CONTAINS = "http://www.w3.org/ns/ldp#contains";
@@ -551,5 +520,49 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     header.set("Authorization", authHeader);
     return new HttpEntity<>(header);
   }
+  @Override
+  public void createContainer(String relativePath) {
 
+    URI destination = URI.create(storagePath + relativePath);
+    HttpClient instance = HttpClientBuilder.create()
+        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+    RestTemplate restTemplate = new RestTemplate(
+        new HttpComponentsClientHttpRequestFactory(instance));
+
+    RequestEntity request = RequestEntity.put(URI.create(destination.toString()))
+        .header("Prefer", "handling=lenient; received=\"minimal\"")
+        .contentType(new MediaType("application", "ld+json", StandardCharsets.UTF_8))
+        .body("{}");
+    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+
+  }
+
+  @Override
+  public void save(CompoundDigitalObject cdo) {
+
+    cdo.getContainers().forEach( (path, container) -> {
+      createContainer(path);
+    });
+
+    cdo.getBinaryResources().forEach( (name, bytes)-> {
+      saveBinary(name, bytes);
+    });
+
+    Map<String, JsonNode> reverseOrderContainers = new TreeMap(Collections.reverseOrder());
+    reverseOrderContainers.putAll(cdo.getContainers());
+    reverseOrderContainers.forEach((path, container)  -> {
+      saveMetadata(path, container );
+    });
+
+
+  }
+  @Override
+  public CompoundDigitalObject find(String cdoIdentifier) {
+    return null;
+  }
+
+  @Override
+  public void delete(String cdoIdentifier) throws ShelfException {
+
+  }
 }
