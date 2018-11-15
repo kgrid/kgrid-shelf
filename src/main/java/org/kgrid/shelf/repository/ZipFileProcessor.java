@@ -7,10 +7,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import org.apache.commons.io.IOUtils;
 import org.kgrid.shelf.domain.CompoundDigitalObject;
+import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
 import org.zeroturnaround.zip.ByteSource;
 import org.zeroturnaround.zip.ZipEntrySource;
@@ -50,7 +52,6 @@ public class ZipFileProcessor {
   /**
    *
    * @param identifier
-
    * @param cdoStore
    * @return
    * @throws IOException
@@ -60,6 +61,14 @@ public class ZipFileProcessor {
 
     CompoundDigitalObject cdo = cdoStore.find(identifier);
     List<ZipEntrySource> entries = new ArrayList();
+    cdo.getContainers().forEach( (path, jsonNode) ->{
+          try {
+            entries.add(new ByteSource( Paths.get(
+                path, KnowledgeObject.METADATA_FILENAME).toString(), jsonNode.binaryValue()));
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
+    });
     entries.add( new ByteSource("metadata.json", cdoStore.getMetadata(identifier).toString().getBytes()) );
     cdo.getBinaryResources().forEach( (path, bytes) ->{
       entries.add(new ByteSource(path, bytes));
