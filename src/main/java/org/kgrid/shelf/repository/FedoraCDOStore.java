@@ -558,6 +558,9 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
   @Override
   public CompoundDigitalObject find(String cdoIdentifier) {
+
+    List<String> descendants = getAllFedoraDescendants(cdoIdentifier, 25);
+    descendants.add(cdoIdentifier); // Add top-level metadata
     return null;
   }
 

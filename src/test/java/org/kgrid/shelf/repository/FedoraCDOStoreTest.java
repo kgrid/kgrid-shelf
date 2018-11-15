@@ -12,12 +12,14 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.List;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
+import org.kgrid.shelf.domain.CompoundDigitalObject;
 import org.springframework.mock.web.MockMultipartFile;
 
 @Category(FedoraIntegrationTest.class)
@@ -81,8 +83,12 @@ public class FedoraCDOStoreTest {
   @Test
   public void findChildren()  {
 
+    List<String> paths = fedoraCDOStore.getChildren("hello-world/");
+
     assertEquals(3,
         fedoraCDOStore.getChildren("hello-world/v0.0.1").size());
+
+
   }
 
   @AfterClass
