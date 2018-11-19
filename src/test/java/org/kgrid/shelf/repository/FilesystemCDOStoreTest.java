@@ -172,10 +172,10 @@ public class FilesystemCDOStoreTest {
   public void find() {
 
     String filename = "/fixtures/hello-world-jsonld.zip";
-    InputStream zipStream = ZipFIleProcessorTest.class.getResourceAsStream(filename);
+    InputStream zipStream = FilesystemCDOStoreTest.class.getResourceAsStream(filename);
 
-    ZipFileProcessor zipFIleProcessor = new ZipFileProcessor();
-    zipFIleProcessor.importCompoundDigitalObject("hello-world",zipStream, koStore);
+    ZipImportService zipFIleProcessor = new ZipImportService();
+    zipFIleProcessor.importCompoundDigitalObject(new ArkId("hello", "world"),zipStream, koStore);
 
     koStore.find("hello-world");
   }

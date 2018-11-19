@@ -19,6 +19,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
+import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.CompoundDigitalObject;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -43,8 +44,8 @@ public class FedoraCDOStoreTest {
       URL zipStream = FilesystemCDOStoreTest.class.getResource(filename);
       byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
       MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
-      ZipFileProcessor zipFileProcessor = new ZipFileProcessor();
-      zipFileProcessor.importCompoundDigitalObject("hello-world", koZip.getInputStream(),fedoraCDOStore);
+      ZipImportService zipFileProcessor = new ZipImportService();
+      zipFileProcessor.importCompoundDigitalObject(new ArkId("hello","world"), koZip.getInputStream(),fedoraCDOStore);
 
     } catch (Exception exception) {
       assertFalse(exception.getMessage(), true);
