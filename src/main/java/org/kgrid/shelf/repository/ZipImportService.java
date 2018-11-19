@@ -40,19 +40,23 @@ public class ZipImportService {
 
     ZipUtil.iterate(zipFileStream, (inputStream, zipEntry ) -> {
 
-      if (zipEntry.getName().endsWith("metadata.json")) {
+      if( !zipEntry.getName().contains("__MACOSX")) {
 
-        StringWriter writer = new StringWriter();
-        IOUtils.copy(inputStream, writer, StandardCharsets.UTF_8);
+        if (zipEntry.getName().endsWith("metadata.json")) {
 
-        containerResources.put( zipEntry.getName().substring(0,
-            zipEntry.getName().indexOf("metadata.json")-1),
-            new ObjectMapper().readTree(writer.toString()) );
+          StringWriter writer = new StringWriter();
+          IOUtils.copy(inputStream, writer, StandardCharsets.UTF_8);
 
-      } else if (!zipEntry.isDirectory() &&
-          !zipEntry.getName().endsWith("metadata.json")) {
+          containerResources.put(zipEntry.getName().substring(0,
+              zipEntry.getName().indexOf("metadata.json") - 1),
+              new ObjectMapper().readTree(writer.toString()));
 
-        binaryResources.put(zipEntry.getName(), IOUtils.toByteArray(inputStream));
+        } else if (!zipEntry.isDirectory() &&
+            !zipEntry.getName().endsWith("metadata.json")) {
+
+          binaryResources.put(zipEntry.getName(), IOUtils.toByteArray(inputStream));
+        }
+
       }
 
     });

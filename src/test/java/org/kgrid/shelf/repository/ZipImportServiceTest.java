@@ -84,5 +84,26 @@ public class ZipImportServiceTest {
 
   }
 
+  @Test
+  public void testImportMixedFormatKnowledgeObject() throws IOException {
+
+    InputStream zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-koio.zip");
+
+    service.importCompoundDigitalObject(new ArkId("hello", "koio"), zipStream, compoundDigitalObjectStore);
+
+    List<Path> filesPaths;
+    filesPaths = Files.walk(Paths.get(
+        temporaryFolder.getRoot().toPath().toString(),"hello-koio"),  2, FOLLOW_LINKS)
+        .filter(Files::isRegularFile)
+        .map(Path::toAbsolutePath)
+        .collect(Collectors.toList());
+
+    filesPaths.forEach(file ->{
+      System.out.println(file.toAbsolutePath().toString());
+    });
+    assertEquals(5,filesPaths.size());
+
+
+  }
 
 }
