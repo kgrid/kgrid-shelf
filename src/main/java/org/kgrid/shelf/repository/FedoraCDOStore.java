@@ -50,6 +50,7 @@ import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -493,8 +494,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       }
       return (ObjectNode) node;
 
-    } catch (HttpClientErrorException | IOException ex) {
-      throw new IllegalArgumentException("Cannot find object at URI " + objectURI, ex);
+    } catch (HttpClientErrorException | ResourceAccessException | IOException ex) {
+      throw new ShelfException("Cannot find metadata at URI " + objectURI, ex);
     }
   }
 

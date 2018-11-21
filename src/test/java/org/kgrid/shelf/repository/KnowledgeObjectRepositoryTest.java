@@ -23,7 +23,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {KnowledgeObjectRepository.class, CompoundDigitalObjectStoreFactory.class, FilesystemCDOStore.class})
+@ContextConfiguration(classes = {KnowledgeObjectRepository.class, CompoundDigitalObjectStoreFactory.class, FilesystemCDOStore.class, ZipImportService.class})
 public class KnowledgeObjectRepositoryTest {
 
 
@@ -33,22 +33,25 @@ public class KnowledgeObjectRepositoryTest {
   KnowledgeObjectRepository repository;
   CompoundDigitalObjectStore compoundDigitalObjectStore;
 
-  private ArkId arkId = new ArkId("ark:/99999/fk45m6gq9t");
+  @Autowired
+  ZipImportService zipImportService;
+
+  private ArkId arkId = new ArkId("ark:/hello/world");
 
   @Before
   public void setUp() throws Exception {
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
     compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
-    repository = new KnowledgeObjectRepository(compoundDigitalObjectStore);
-    URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/99999-fk45m6gq9t.zip");
+    repository = new KnowledgeObjectRepository(compoundDigitalObjectStore, zipImportService);
+    URL zipStream = FilesystemCDOStoreTest.class.getResource("/hello-world-jsonld.zip");
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
-    MockMultipartFile koZip = new MockMultipartFile("ko", "99999-fk45m6gq9t.zip", "application/zip", zippedKO);
-    repository.save(new ArkId("99999-fk45m6gq9t"), koZip);
+    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-jsonld.zip", "application/zip", zippedKO);
+    repository.save(new ArkId("hello-world"), koZip);
   }
 
   @After
   public void clearShelf() throws Exception {
-    repository.delete(new ArkId("ark:/99999/fk45m6gq9t"));
+    repository.delete(new ArkId("ark:/hello/world"));
   }
 
   @Test
@@ -64,22 +67,15 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void getCorrectMetadata() throws Exception {
     KnowledgeObject ko = repository.findByArkIdAndVersion(arkId, "v0.0.1");
-    assertTrue(ko.getMetadata().has("arkId"));
-    String resource = ko.getModelMetadata().get("resource").asText();
-    assertEquals("resource/content.js", resource);
-  }
-
-  @Test
-  public void getCorrectModelMetadata() throws Exception {
-    ObjectNode modelMetadata = repository.getMetadataAtPath(arkId, "v0.0.1", KnowledgeObject.MODEL_DIR_NAME);
-    assertTrue(modelMetadata.has("resource"));
+    assertTrue(ko.getMetadata().findValue("dc:identifier").asText().equals("v0.0.1"));
+    String resource = ko.getMetadata().findValue("hasPayload").asText();
+    assertEquals("v0.0.1/welcome.js", resource);
   }
 
   @Test
   public void listAllObjects() {
     Map<ArkId, Map<String, ObjectNode>>  objects = repository.findAll();
-    assertEquals(1, objects.size());
-    assertEquals("v0.0.1", objects.get(arkId).get("v0.0.1").get("version").asText());
+    assertEquals("v0.0.1", objects.get(arkId).get("v0.0.1").findValue("@id").asText());
   }
 
   @Test

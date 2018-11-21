@@ -22,11 +22,13 @@ import org.springframework.web.multipart.MultipartFile;
 public class KnowledgeObjectRepository {
 
   private CompoundDigitalObjectStore dataStore;
+  private ZipImportService zipImportService;
   private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
 
   @Autowired
-  KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore) {
+  KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore, ZipImportService zis) {
     this.dataStore = compoundDigitalObjectStore;
+    this.zipImportService = zis;
   }
 
   public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
@@ -107,7 +109,12 @@ public class KnowledgeObjectRepository {
   }
 
   public ArkId save(ArkId arkId, MultipartFile zippedKO) {
-    return dataStore.addCompoundObjectToShelf(arkId, zippedKO);
+    try {
+      zipImportService.importCompoundDigitalObject(arkId, zippedKO.getInputStream(), dataStore);
+    } catch (IOException e) {
+      log.warn("Cannot load full zip file for ark id " + arkId);
+    }
+    return arkId;
   }
 
   public void putZipFileIntoOutputStream(ArkId arkId, OutputStream outputStream)
