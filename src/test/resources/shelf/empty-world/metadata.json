@@ -1,0 +1,10 @@
+{
+  "@id": "empty-world",
+  "@type":"koio:KnowledgeObject",
+  "identifier":"ark:/empty/world",
+  "title":"Empty World Title",
+  "contributors": "Kgrid Team",
+  "description": "Test Empty World ",
+  "keywords": "test empty world",
+  "@context" : ["http://kgrid.org/koio/contexts/knowledgeobject.jsonld" ]
+}
