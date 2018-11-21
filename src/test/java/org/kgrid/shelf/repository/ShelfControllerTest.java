@@ -58,28 +58,26 @@ public class ShelfControllerTest {
     @Test
     public void addZippedKO() throws Exception {
 
-        MockMultipartFile file = new MockMultipartFile("ko", "99999-fk45m6gq9t.zip",
-            "application/zip", new ClassPathResource("/99999-fk45m6gq9t.zip").getInputStream());
+        MockMultipartFile file = new MockMultipartFile("ko", "hello-world-jsonld.zip",
+            "application/zip", new ClassPathResource("/hello-world-jsonld.zip").getInputStream());
 
-        mockMvc.perform(putWithFileUpload("/99999/fk45m6gq9t").file(file))
+        mockMvc.perform(putWithFileUpload("/hello/world").file(file))
             .andExpect(status().isCreated());
 
     }
 
     @Test
     public void findAllMetadata() throws Exception {
-        this.mockMvc.perform(get("/99999/fk45m6gq9t"))
+        this.mockMvc.perform(get("/hello/world"))
             .andExpect(status().isOk())
             .andExpect(content().contentType("application/json;charset=UTF-8"));
     }
 
     @Test
     public void findVersionMetadata() throws Exception {
-        this.mockMvc.perform(get("/99999/fk45m6gq9t/default"))
+        this.mockMvc.perform(get("/hello/world/v0.0.1"))
             .andExpect(status().isOk())
-            .andExpect(content().contentType("application/json;charset=UTF-8"))
-            .andExpect(jsonPath("$..*", hasSize(24)))
-            .andExpect(jsonPath("$..model..*", hasSize(7)));
+            .andExpect(content().contentType("application/json;charset=UTF-8"));
     }
 
     @Test
@@ -92,14 +90,6 @@ public class ShelfControllerTest {
     public void versionMetadataNotFound() throws Exception {
         this.mockMvc.perform(get("/99999/fk45m6gq9t/XXXXX"))
             .andExpect(status().isNotFound());
-    }
-
-    @Test
-    public void parseSemanticVersions () throws Exception {
-
-           mockMvc.perform(get("/99999/fk45m6gq9t/v0.0.1"))
-            .andExpect(status().isOk());
-
     }
 
 }

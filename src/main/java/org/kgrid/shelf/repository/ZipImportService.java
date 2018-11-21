@@ -12,6 +12,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.IOUtils;
+import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
@@ -65,7 +66,9 @@ public class ZipImportService {
 
     JsonNode koMetaData = containerResources.get(
         arkId.getAsSimpleArk());
-
+    if(koMetaData == null) {
+      throw new ShelfException("Cannot load ko " + arkId + " it is missing top-level metadata");
+    }
     ArrayNode arrayNode = (ArrayNode) getImplementationIDs( koMetaData );
 
     arrayNode.forEach( jsonNode ->{
@@ -93,9 +96,15 @@ public class ZipImportService {
 
   public List<String> getImplementationBinaryPaths(JsonNode node){
     List<String> binaryNodes = new ArrayList<>();
-    binaryNodes.add(node.findValue(DEPLOYMENT_SPEC_TERM).asText());
-    binaryNodes.add(node.findValue(PAYLOAD_TERM).asText());
-    binaryNodes.add(node.findValue(SERVICE_SPEC_TERM).asText());
+    if(node.findValue(DEPLOYMENT_SPEC_TERM) != null) {
+      binaryNodes.add(node.findValue(DEPLOYMENT_SPEC_TERM).asText());
+    }
+    if(node.findValue(PAYLOAD_TERM) != null) {
+      binaryNodes.add(node.findValue(PAYLOAD_TERM).asText());
+    }
+    if(node.findValue(SERVICE_SPEC_TERM) != null) {
+      binaryNodes.add(node.findValue(SERVICE_SPEC_TERM).asText());
+    }
     return binaryNodes;
   }
 

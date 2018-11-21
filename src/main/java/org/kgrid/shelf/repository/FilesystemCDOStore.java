@@ -77,7 +77,6 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     return children;
   }
 
-  // TODO: this method breaks on windows, says directory does not exist. Fix it.
   @Override
   public String getAbsoluteLocation(String relativeFilePath) {
     Path shelf = Paths.get(localStorageURI);
@@ -316,7 +315,6 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   @Override
   public CompoundDigitalObject find(String cdoIdentifier) {
 
-    JsonNode metaDate = getMetadata(cdoIdentifier);
     CompoundDigitalObject compoundDigitalObject = new CompoundDigitalObject(cdoIdentifier);
    // compoundDigitalObject.setMetadata(metaDate);
 

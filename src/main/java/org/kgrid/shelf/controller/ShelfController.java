@@ -11,6 +11,7 @@ import java.util.stream.Collectors;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
+import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
@@ -289,6 +290,14 @@ public class ShelfController {
 
   @ExceptionHandler(NoSuchFieldException.class)
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NoSuchFieldException e,
+      WebRequest request) {
+
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
+        HttpStatus.NOT_FOUND);
+  }
+
+  @ExceptionHandler(ShelfException.class)
+  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(ShelfException e,
       WebRequest request) {
 
     return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
