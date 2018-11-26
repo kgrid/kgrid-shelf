@@ -54,7 +54,7 @@ public class ZipImportService {
         } else if (!zipEntry.isDirectory() &&
             !zipEntry.getName().endsWith("metadata.json")) {
 
-          binaryResources.put(zipEntry.getName(), IOUtils.toByteArray(inputStream));
+          binaryResources.put(Paths.get(zipEntry.getName()).toString(), IOUtils.toByteArray(inputStream));
         }
 
       }
