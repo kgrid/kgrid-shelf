@@ -21,7 +21,7 @@ public class UriHandlingTest {
     Path originalPath = Files.createTempFile(null, null);
 
     // Create property with absolute path, typical URI ("filesystem:file:///...")
-    String property = "filesystem:file:///" + originalPath.toAbsolutePath();
+    String property = "filesystem:" + originalPath.toAbsolutePath().toUri();
 
     // create file system uri get passed to CdoStore; remove "fileSystem:" scheme
     URI uri = URI.create(property);
@@ -42,7 +42,7 @@ public class UriHandlingTest {
 
     // Create property with relative path, leave out slashes ("filesystem:file:...")
     Path relativePath = Paths.get("").toAbsolutePath().relativize(originalPath);
-    String property = "filesystem:file:///" + relativePath.toString();
+    String property = "filesystem:" + relativePath.toUri();
 
     // file system uri get passed to CdoStore; remove "fileSystem:" scheme
     URI uri = URI.create(property);
@@ -64,7 +64,7 @@ public class UriHandlingTest {
 
     // Create property with relative path, leave out slashes ("filesystem:file:...")
     Path relativePath = Paths.get("").toAbsolutePath().relativize(originalPath);
-    String property = "filesystem:" + relativePath.toString();
+    String property = "filesystem:" + relativePath.toUri();
 
     // create file system uri to pass to CdoStore, but first remove "fileSystem:" scheme
     URI uri = URI.create(property);
