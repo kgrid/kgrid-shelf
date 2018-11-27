@@ -52,7 +52,7 @@ public class FedoraZipImportServiceTest {
     assertEquals("should have 2 implementations", 2,
         metadata.findValue(IMPLEMENTATIONS_TERM).size());
 
-    metadata = compoundDigitalObjectStore.getMetadata( Paths.get(new ArkId("hello", "world").getAsSimpleArk(), "v0.0.1").toString() );
+    metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getAsSimpleArk()+"/"+ "v0.0.1" );
 
     assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/welcome.js",
         metadata.findValue(PAYLOAD_TERM).asText());
@@ -103,15 +103,15 @@ public class FedoraZipImportServiceTest {
         metadata.findValue(IMPLEMENTATIONS_TERM).asText());
 
 
-    metadata = compoundDigitalObjectStore.getMetadata( Paths.get(new ArkId("hello", "world").getAsSimpleArk(), "v0.0.1").toString() );
+    metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "koio").getAsSimpleArk()+"/"+ "koio" );
 
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/welcome.js",
+    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-koio/koio/welcome.js",
         metadata.findValue(PAYLOAD_TERM).asText());
 
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/service-specification.yaml",
+    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-koio/koio/service-specification.yaml",
         metadata.findValue(SERVICE_SPEC_TERM).asText());
 
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/deployment-specification.yaml",
+    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-koio/koio/deployment-specification.yaml",
         metadata.findValue(DEPLOYMENT_SPEC_TERM).asText());
 
 

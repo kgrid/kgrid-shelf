@@ -168,8 +168,8 @@
                      <status>200</status>
                    </http>
                    <time>1000000</time>
-                   <kill>10000</kill>
-                   <shutdown>5000</shutdown>
+                   <kill>1000000</kill>
+                   <shutdown>1000000</shutdown>
                  </wait>
                </run>
              </image>

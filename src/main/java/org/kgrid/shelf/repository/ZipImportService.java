@@ -47,14 +47,16 @@ public class ZipImportService {
           StringWriter writer = new StringWriter();
           IOUtils.copy(inputStream, writer, StandardCharsets.UTF_8);
 
-          containerResources.put(zipEntry.getName().substring(0,
-              zipEntry.getName().indexOf("metadata.json") - 1),
+          containerResources.put(Paths.get(
+                  zipEntry.getName().substring(0,
+              zipEntry.getName().indexOf("metadata.json") - 1)).toString(),
               new ObjectMapper().readTree(writer.toString()));
 
         } else if (!zipEntry.isDirectory() &&
             !zipEntry.getName().endsWith("metadata.json")) {
 
-          binaryResources.put(Paths.get(zipEntry.getName()).toString(), IOUtils.toByteArray(inputStream));
+          binaryResources.put(Paths.get(zipEntry.getName()).toString(),
+                  IOUtils.toByteArray(inputStream));
         }
 
       }
@@ -71,24 +73,23 @@ public class ZipImportService {
     arrayNode.forEach( jsonNode ->{
 
       String path = jsonNode.asText();
-      JsonNode metadata = containerResources.get(path);
+      JsonNode metadata = containerResources.get(Paths.get(path).toString());
 
       cdoStore.createContainer( path);
 
       List<String> binaryPaths = getImplementationBinaryPaths(metadata);
 
       binaryPaths.forEach( (binaryPath) -> {
-        cdoStore.saveBinary( Paths.get( arkId.getAsSimpleArk(), binaryPath).toString(),
-            binaryResources.get(Paths.get( arkId.getAsSimpleArk(), binaryPath).toString()));
+        cdoStore.saveBinary( arkId.getAsSimpleArk() + "/" + binaryPath,
+            binaryResources.get( Paths.get(arkId.getAsSimpleArk(), binaryPath).toString()));
       });
 
-      cdoStore.saveMetadata(Paths.get(path,
-          KnowledgeObject.METADATA_FILENAME).toString(), metadata);
+      cdoStore.saveMetadata(path +"/"+ KnowledgeObject.METADATA_FILENAME, metadata);
 
     });
 
-    cdoStore.saveMetadata(Paths.get(arkId.getAsSimpleArk(),
-        KnowledgeObject.METADATA_FILENAME).toString(), koMetaData);
+    cdoStore.saveMetadata(arkId.getAsSimpleArk()+ "/"+
+        KnowledgeObject.METADATA_FILENAME, koMetaData);
   }
 
   public List<String> getImplementationBinaryPaths(JsonNode node){
