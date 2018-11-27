@@ -13,10 +13,8 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
-import org.junit.AfterClass;
-import org.junit.BeforeClass;
-import org.junit.ClassRule;
-import org.junit.Test;
+
+import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.domain.ArkId;
@@ -26,17 +24,17 @@ import org.springframework.mock.web.MockMultipartFile;
 @Category(FedoraIntegrationTest.class)
 public class FedoraCDOStoreTest {
 
-  static FedoraCDOStore fedoraCDOStore =  new FedoraCDOStore("fedora:http://localhost:8080/fcrepo/rest/");
+  FedoraCDOStore fedoraCDOStore =  new FedoraCDOStore("fedora:http://localhost:8080/fcrepo/rest/");
 
     //The Folder will be created before each test method and (recursively) deleted after each test method.
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
-  @BeforeClass
+  @Before
   /**
   ** Load hello world into fedora instance.  W
    */
-  public static void loadFedora() {
+  public void loadFedora() {
 
     try {
 

@@ -159,7 +159,6 @@
                  <ports>
                    <port>8080:8080</port>
                  </ports>
-                 <log />
                  <namingStrategy>alias</namingStrategy>
                  <wait>
                    <http>

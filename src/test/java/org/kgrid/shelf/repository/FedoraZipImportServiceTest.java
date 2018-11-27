@@ -35,7 +35,7 @@ public class FedoraZipImportServiceTest {
 
   ZipImportService service = new ZipImportService();
 
-  static FedoraCDOStore compoundDigitalObjectStore =  new FedoraCDOStore("fedora:http://localhost:8080/fcrepo/rest/");
+   FedoraCDOStore compoundDigitalObjectStore =  new FedoraCDOStore("fedora:http://localhost:8080/fcrepo/rest/");
 
 
   @Test
