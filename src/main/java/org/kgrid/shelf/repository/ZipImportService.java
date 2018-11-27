@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
@@ -38,30 +39,8 @@ public class ZipImportService {
     Map<String, JsonNode> containerResources = new HashMap<>();
     Map<String, byte[]> binaryResources = new HashMap<>();
 
-    ZipUtil.iterate(zipFileStream, (inputStream, zipEntry ) -> {
-
-      if( !zipEntry.getName().contains("__MACOSX")) {
-
-        if (zipEntry.getName().endsWith("metadata.json")) {
-
-          StringWriter writer = new StringWriter();
-          IOUtils.copy(inputStream, writer, StandardCharsets.UTF_8);
-
-          containerResources.put(Paths.get(
-                  zipEntry.getName().substring(0,
-              zipEntry.getName().indexOf("metadata.json") - 1)).toString(),
-              new ObjectMapper().readTree(writer.toString()));
-
-        } else if (!zipEntry.isDirectory() &&
-            !zipEntry.getName().endsWith("metadata.json")) {
-
-          binaryResources.put(Paths.get(zipEntry.getName()).toString(),
-                  IOUtils.toByteArray(inputStream));
-        }
-
-      }
-
-    });
+    log.info("loading zip file for " + arkId.getAsSimpleArk());
+    captureZipEntries(zipFileStream, containerResources, binaryResources);
 
     cdoStore.createContainer( arkId.getAsSimpleArk() );
 
@@ -69,6 +48,66 @@ public class ZipImportService {
         arkId.getAsSimpleArk());
 
     ArrayNode arrayNode = (ArrayNode) getImplementationIDs( koMetaData );
+
+    importImplementations(arkId, cdoStore, containerResources, binaryResources, arrayNode);
+
+    cdoStore.saveMetadata(arkId.getAsSimpleArk()+ "/"+
+        KnowledgeObject.METADATA_FILENAME, koMetaData);
+
+  }
+
+  /**
+   * Captures the Zip Entries loading a collection of metadata and collection of
+   * binaries
+   *
+   * @param zipFileStream
+   * @param containerResources
+   * @param binaryResources
+   */
+  protected void captureZipEntries(InputStream zipFileStream,
+      Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources) {
+
+    log.info("processing zipEntries");
+
+    ZipUtil.iterate(zipFileStream, (inputStream, zipEntry ) -> {
+
+      if( !zipEntry.getName().contains("__MACOSX")) {
+
+        if (zipEntry.getName().endsWith(KnowledgeObject.METADATA_FILENAME)) {
+
+          StringWriter writer = new StringWriter();
+          IOUtils.copy(inputStream, writer, StandardCharsets.UTF_8);
+
+          containerResources.put( FilenameUtils.normalize(
+              zipEntry.getName().substring(0,
+                  zipEntry.getName().indexOf(KnowledgeObject.METADATA_FILENAME) - 1)),
+              new ObjectMapper().readTree(writer.toString()));
+
+        } else if (!zipEntry.isDirectory() &&
+            !zipEntry.getName().endsWith(KnowledgeObject.METADATA_FILENAME)) {
+
+          binaryResources.put(FilenameUtils.normalize(zipEntry.getName()),
+              IOUtils.toByteArray(inputStream));
+        }
+
+      }
+
+    });
+  }
+
+  /**
+   * Imports the KO Implementations loading the metadata and binaries
+   *
+   * @param arkId
+   * @param cdoStore
+   * @param containerResources
+   * @param binaryResources
+   * @param arrayNode
+   */
+
+  protected void importImplementations(ArkId arkId, CompoundDigitalObjectStore cdoStore,
+      Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources,
+      ArrayNode arrayNode) {
 
     arrayNode.forEach( jsonNode ->{
 
@@ -88,10 +127,15 @@ public class ZipImportService {
 
     });
 
-    cdoStore.saveMetadata(arkId.getAsSimpleArk()+ "/"+
-        KnowledgeObject.METADATA_FILENAME, koMetaData);
   }
 
+  /**
+   * Give a JsonNode this will look for the KOIO defined
+   * Implementation binaries for deployment, service and payload
+   *
+   * @param node
+   * @return
+   */
   public List<String> getImplementationBinaryPaths(JsonNode node){
     List<String> binaryNodes = new ArrayList<>();
     binaryNodes.add(node.findValue(DEPLOYMENT_SPEC_TERM).asText());

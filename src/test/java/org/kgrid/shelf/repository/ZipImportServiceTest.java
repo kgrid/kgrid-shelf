@@ -3,22 +3,21 @@ package org.kgrid.shelf.repository;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static org.junit.Assert.*;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KOIOKnowledgeObject;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.zeroturnaround.zip.commons.FileUtils;
 
 public class ZipImportServiceTest {
 
