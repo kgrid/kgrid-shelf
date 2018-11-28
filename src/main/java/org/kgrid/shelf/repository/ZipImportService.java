@@ -53,6 +53,7 @@ public class ZipImportService {
 
     cdoStore.saveMetadata(koMetaData, arkId.getAsSimpleArk(),
         KnowledgeObject.METADATA_FILENAME);
+    cdoStore.saveMetadata(koMetaData, arkId.getAsSimpleArk(), KnowledgeObject.METADATA_FILENAME);
 
   }
 
