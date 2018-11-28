@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
-import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
@@ -52,8 +51,8 @@ public class ZipImportService {
 
     importImplementations(arkId, cdoStore, containerResources, binaryResources, arrayNode);
 
-    cdoStore.saveMetadata(arkId.getAsSimpleArk()+ "/"+
-        KnowledgeObject.METADATA_FILENAME, koMetaData);
+    cdoStore.saveMetadata(koMetaData, arkId.getAsSimpleArk(),
+        KnowledgeObject.METADATA_FILENAME);
 
   }
 
@@ -96,12 +95,6 @@ public class ZipImportService {
     });
   }
 
-    JsonNode koMetaData = containerResources.get(
-        arkId.getAsSimpleArk());
-    if(koMetaData == null) {
-      throw new ShelfException("Cannot load ko " + arkId + " it is missing top-level metadata");
-    }
-    ArrayNode arrayNode = (ArrayNode) getImplementationIDs( koMetaData );
   /**
    * Imports the KO Implementations loading the metadata and binaries
    *
@@ -119,24 +112,21 @@ public class ZipImportService {
     arrayNode.forEach( jsonNode ->{
 
       String path = jsonNode.asText();
-      JsonNode metadata = containerResources.get(path);
+      JsonNode metadata = containerResources.get(Paths.get(path).toString());
 
       cdoStore.createContainer( path);
 
       List<String> binaryPaths = getImplementationBinaryPaths(metadata);
 
       binaryPaths.forEach( (binaryPath) -> {
-        cdoStore.saveBinary( Paths.get( arkId.getAsSimpleArk(), binaryPath).toString(),
-            binaryResources.get(Paths.get( arkId.getAsSimpleArk(), binaryPath).toString()));
+        cdoStore.saveBinary(binaryResources.get( Paths.get(arkId.getAsSimpleArk(), binaryPath).toString()),
+            arkId.getAsSimpleArk(), binaryPath);
       });
 
-      cdoStore.saveMetadata(Paths.get(path,
-          KnowledgeObject.METADATA_FILENAME).toString(), metadata);
+      cdoStore.saveMetadata(metadata, path,  KnowledgeObject.METADATA_FILENAME);
 
     });
 
-    cdoStore.saveMetadata(Paths.get(arkId.getAsSimpleArk(),
-        KnowledgeObject.METADATA_FILENAME).toString(), koMetaData);
   }
 
   /**
@@ -148,13 +138,13 @@ public class ZipImportService {
    */
   public List<String> getImplementationBinaryPaths(JsonNode node){
     List<String> binaryNodes = new ArrayList<>();
-    if(node.findValue(DEPLOYMENT_SPEC_TERM) != null) {
+    if (node.has(DEPLOYMENT_SPEC_TERM)) {
       binaryNodes.add(node.findValue(DEPLOYMENT_SPEC_TERM).asText());
     }
-    if(node.findValue(PAYLOAD_TERM) != null) {
+    if (node.has(PAYLOAD_TERM)) {
       binaryNodes.add(node.findValue(PAYLOAD_TERM).asText());
     }
-    if(node.findValue(SERVICE_SPEC_TERM) != null) {
+    if (node.has(SERVICE_SPEC_TERM)) {
       binaryNodes.add(node.findValue(SERVICE_SPEC_TERM).asText());
     }
     return binaryNodes;

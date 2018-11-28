@@ -32,7 +32,7 @@ public class ZipExportServiceTest {
 
     String connectionURL = "filesystem:" + temporaryFolder.getRoot().toURI();
     compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
-    Path shelf = Paths.get(compoundDigitalObjectStore.getAbsoluteLocation(null));
+    Path shelf = Paths.get(compoundDigitalObjectStore.getAbsoluteLocation(""));
 
     Path helloWorld = Paths.get("src/test/resources/shelf/hello-world");
     Path emptyWorld = Paths.get("src/test/resources/shelf/empty-world");
