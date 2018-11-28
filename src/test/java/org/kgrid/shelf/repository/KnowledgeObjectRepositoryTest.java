@@ -23,7 +23,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 
 @RunWith(SpringRunner.class)
-@ContextConfiguration(classes = {KnowledgeObjectRepository.class, CompoundDigitalObjectStoreFactory.class, FilesystemCDOStore.class, ZipImportService.class})
+@ContextConfiguration(classes = {KnowledgeObjectRepository.class, CompoundDigitalObjectStoreFactory.class, FilesystemCDOStore.class, ZipImportService.class, ZipExportService.class})
 public class KnowledgeObjectRepositoryTest {
 
 
@@ -36,13 +36,16 @@ public class KnowledgeObjectRepositoryTest {
   @Autowired
   ZipImportService zipImportService;
 
+  @Autowired
+  ZipExportService zipExportService;
+
   private ArkId arkId = new ArkId("ark:/hello/world");
 
   @Before
   public void setUp() throws Exception {
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
     compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
-    repository = new KnowledgeObjectRepository(compoundDigitalObjectStore, zipImportService);
+    repository = new KnowledgeObjectRepository(compoundDigitalObjectStore, zipImportService, zipExportService);
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/hello-world-jsonld.zip");
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-jsonld.zip", "application/zip", zippedKO);

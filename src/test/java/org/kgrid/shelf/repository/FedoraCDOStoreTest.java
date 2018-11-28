@@ -6,9 +6,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -18,21 +15,20 @@ import org.junit.*;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.CompoundDigitalObject;
 import org.springframework.mock.web.MockMultipartFile;
 
 @Category(FedoraIntegrationTest.class)
 public class FedoraCDOStoreTest {
 
-  FedoraCDOStore fedoraCDOStore =  new FedoraCDOStore("fedora:http://localhost:8080/fcrepo/rest/");
+  FedoraCDOStore fedoraCDOStore = new FedoraCDOStore("fedora:http://localhost:8080/fcrepo/rest/");
 
-    //The Folder will be created before each test method and (recursively) deleted after each test method.
+  //The Folder will be created before each test method and (recursively) deleted after each test method.
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Before
   /**
-  ** Load hello world into fedora instance.  W
+   ** Load hello world into fedora instance.  W
    */
   public void loadFedora() {
 
@@ -43,7 +39,9 @@ public class FedoraCDOStoreTest {
       byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
       MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
       ZipImportService zipFileProcessor = new ZipImportService();
-      zipFileProcessor.importCompoundDigitalObject(new ArkId("hello","world"), koZip.getInputStream(),fedoraCDOStore);
+      zipFileProcessor
+          .importCompoundDigitalObject(new ArkId("hello", "world"), koZip.getInputStream(),
+              fedoraCDOStore);
 
     } catch (Exception exception) {
       assertFalse(exception.getMessage(), true);
@@ -57,30 +55,21 @@ public class FedoraCDOStoreTest {
 
     ObjectNode koNode = fedoraCDOStore.getMetadata("hello-world");
 
-    assertEquals(3,koNode.get("@graph").size());
+    assertEquals(3, koNode.get("@graph").size());
     assertNotNull(koNode.get("@context"));
 
   }
 
   @Test
-  public void exportKOZip() throws Exception {
+  public void findBinary() {
 
-    File helloWorldFile = temporaryFolder.newFile("hello-world-jsonld.zip");
-    OutputStream output = new FileOutputStream(helloWorldFile);
-    fedoraCDOStore.getCompoundObjectFromShelf("hello-world",false,output);
-    output.close();
+    assertNotNull(
+        fedoraCDOStore.getBinary("hello-world/v0.0.1/welcome.js"));
 
   }
 
-   @Test
-    public void findBinary() {
-
-     assertNotNull(
-         fedoraCDOStore.getBinary("hello-world/v0.0.1/welcome.js"));
-
-   }
   @Test
-  public void findChildren()  {
+  public void findChildren() {
 
     List<String> paths = fedoraCDOStore.getChildren("hello-world/");
 
@@ -94,7 +83,6 @@ public class FedoraCDOStoreTest {
   public static void deleteKO() throws Exception {
 
     //fedoraCDOStore.removeFile("hello-world");
-
 
   }
 

@@ -35,6 +35,7 @@ import org.springframework.mock.web.MockMultipartFile;
 public class FilesystemCDOStoreTest {
 
   private CompoundDigitalObjectStore koStore;
+  private ZipImportService zis;
   private ArkId arkId;
 
   @Rule
@@ -45,15 +46,16 @@ public class FilesystemCDOStoreTest {
   public void setUp() throws Exception {
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
     koStore = new FilesystemCDOStore(connectionURL);
-    Path shelf = Paths.get(koStore.getAbsoluteLocation(null));
+    zis = new ZipImportService();
+    Path shelf = Paths.get(koStore.getAbsoluteLocation(""));
     if(Files.isDirectory(shelf)) {
       nukeTestShelf(shelf);
     }
     Files.createDirectory(shelf);
-
+    arkId = new ArkId("hello", "world");
     // Add zip file to our test shelf:
-    this.arkId = addFixtureToShelf("99999-fk45m6gq9t.zip");
-
+    InputStream zipStream = FilesystemCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
+    zis.importCompoundDigitalObject(arkId, zipStream, koStore);
   }
 
   @After
@@ -77,16 +79,9 @@ public class FilesystemCDOStoreTest {
         });
   }
 
-  private ArkId addFixtureToShelf(String filename) throws Exception {
-    URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/" + filename);
-    byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
-    MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
-    return koStore.addCompoundObjectToShelf(new ArkId("99999-fk45m6gq9t"), koZip);
-  }
-
   @Test
   public void getObjectsOnShelf() throws Exception {
-    List<ArkId> shelfIds = koStore.getChildren(null).stream().map(name -> {try {return new ArkId(StringUtils.substringAfterLast(name, FileSystems.getDefault().getSeparator()));} catch (IllegalArgumentException e) {e.printStackTrace(); return null;}}).filter(
+    List<ArkId> shelfIds = koStore.getChildren("").stream().map(name -> {try {return new ArkId(StringUtils.substringAfterLast(name, FileSystems.getDefault().getSeparator()));} catch (IllegalArgumentException e) {e.printStackTrace(); return null;}}).filter(
         Objects::nonNull).collect(Collectors.toList());
     List<ArkId> expectedIds = Collections.singletonList(arkId);
 
@@ -96,8 +91,8 @@ public class FilesystemCDOStoreTest {
   @Test
   public void getVersions() throws Exception {
     List<String> expectedVersions = new ArrayList<>();
-    expectedVersions.add("default");
     expectedVersions.add("v0.0.1");
+    expectedVersions.add("v0.0.2");
     List<String> versions = koStore.getChildren(arkId.getAsSimpleArk()).stream().map(child -> StringUtils
         .substringAfterLast(child, FileSystems.getDefault().getSeparator())).collect(Collectors.toList());
     versions.sort(Comparator.naturalOrder());
@@ -109,9 +104,9 @@ public class FilesystemCDOStoreTest {
 
     KnowledgeObject ko = new KnowledgeObject(arkId, "v0.0.1");
     ObjectNode metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
-    assertEquals("Stent Thrombosis Risk Calculator", metadata.get("title").asText());
+    assertEquals("Implementation 0.0.1 of Hello World", metadata.get("title").asText());
     metadata.replace("title", new TextNode("TEST"));
-    koStore.saveMetadata(ko.baseMetadataLocation().toString(), metadata);
+    koStore.saveMetadata(metadata, ko.baseMetadataLocation().toString());
     metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
     assertEquals("TEST", metadata.get("title").asText());
   }
@@ -121,7 +116,6 @@ public class FilesystemCDOStoreTest {
       KnowledgeObject ko = new KnowledgeObject(arkId, "v0.0.1");
 
       JsonNode metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
-    JsonNode modelMetadata = koStore.getMetadata(ko.modelMetadataLocation().toString());
     ko.setMetadata((ObjectNode)metadata);
 //    ko.setModelMetadata((ObjectNode)modelMetadata);
 //    Path resourceLocation = ko.resourceLocation();
@@ -134,37 +128,6 @@ public class FilesystemCDOStoreTest {
 //    resource = koStore.getBinary(resourceLocation);
 
 //    assertEquals(data, new String(resource, Charset.defaultCharset()));
-  }
-
-
-  /**
-   * Testing the ablity to add KO to shelf via zip file, get that KO off the shelf in the form of
-   * a zip and using the downloaded zip add it again.  KO Round Trip
-   *
-   * @throws Exception
-   */
-  @Test
-  public void koRoundTrip() throws Exception {
-
-    //Add hello-world to shelf
-    URL zipStream = FilesystemCDOStoreTest.class.getResource("/hello-world.zip");
-    byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
-    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world.zip", "application/zip", zippedKO);
-    koStore.addCompoundObjectToShelf(new ArkId("hello-world"), koZip);
-
-    //Get hello-world from shelf
-    File helloWorldFile = folder.newFile("hello-world.zip");
-    OutputStream output = new FileOutputStream(helloWorldFile);
-    koStore.getCompoundObjectFromShelf("hello-world",false,output);
-    output.close();
-
-    //Add KO back to shelf based on downloaded version
-    zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
-    koZip = new MockMultipartFile("ko", "hello-world.zip", "application/zip", zippedKO);
-    koStore.addCompoundObjectToShelf(new ArkId("hello-world"), koZip);
-
-    //Make sure metadata is correct
-    assertEquals("Hello, World", koStore.getMetadata("hello-world/v0.0.1").get("title").asText());
   }
 
 

@@ -5,40 +5,35 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.List;
-import java.util.SplittableRandom;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.CompoundDigitalObject;
-import org.kgrid.shelf.domain.KOIOKnowledgeObject;
 import org.springframework.web.multipart.MultipartFile;
 
 public interface CompoundDigitalObjectStore {
 
-  List<String> getChildren(String relativeLocation);
+  List<String> getChildren(String... relativeLocationParts);
 
-  boolean isMetadata(String relativeLocation);
+  boolean isMetadata(String... relativeLocationParts);
 
-  String getAbsoluteLocation(String relativeLocation);
+  String getAbsoluteLocation(String... relativeLocationParts);
 
-  ObjectNode getMetadata(String relativeLocation);
+  ObjectNode getMetadata(String... relativeLocationParts);
 
-  byte[] getBinary(String relativeLocation);
+  byte[] getBinary(String... relativeLocationParts);
 
-  void createContainer(String relativeDestination);
+  void createContainer(String... relativeLocationParts);
 
-  void saveMetadata(String relativeDestination, JsonNode metadata);
+  void saveMetadata(JsonNode metadata, String... relativeLocationParts);
 
-  void saveBinary(String relativeDestination, byte[] data);
+  void saveBinary(byte[] data, String... relativeLocationParts);
 
-  ArkId addCompoundObjectToShelf(ArkId arkId, MultipartFile zip);
-
-  void getCompoundObjectFromShelf(String relativeDestination, boolean isVersion,
-      OutputStream outputStream) throws IOException;
-
-  void removeFile(String relativeLocation) throws IOException;
+  void removeFile(String... relativeLocationParts) throws IOException;
 
   void save(CompoundDigitalObject cdo);
+
   CompoundDigitalObject find(String cdoIdentifier);
+
   void delete(String cdoIdentifier) throws ShelfException;
 
 }
