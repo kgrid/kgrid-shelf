@@ -23,12 +23,15 @@ public class KnowledgeObjectRepository {
 
   private CompoundDigitalObjectStore dataStore;
   private ZipImportService zipImportService;
+  private ZipExportService zipExportService;
   private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
 
   @Autowired
-  KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore, ZipImportService zis) {
+  KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore, ZipImportService zis,
+      ZipExportService zes) {
     this.dataStore = compoundDigitalObjectStore;
     this.zipImportService = zis;
+    this.zipExportService = zes;
   }
 
   public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
@@ -48,7 +51,7 @@ public class KnowledgeObjectRepository {
   }
 
   public ObjectNode getMetadataAtPath(ArkId arkId, String version, String path) {
-    return dataStore.getMetadata(Paths.get(arkId.getAsSimpleArk(), version, path).toString());
+    return dataStore.getMetadata(arkId.getAsSimpleArk(), version, path);
   }
 
   public Map<String, ObjectNode> findByPath(Path koPath) {
@@ -89,7 +92,7 @@ public class KnowledgeObjectRepository {
     Map<ArkId, Map<String, ObjectNode>> knowledgeObjects = new HashMap<>();
 
     //Load KO objects and skip any KOs with exceptions like missing metadata
-    for (String path : dataStore.getChildren(null)) {
+    for (String path : dataStore.getChildren("")) {
       try {
         ArkId arkId;
         if(path.contains("/")) {
@@ -117,16 +120,8 @@ public class KnowledgeObjectRepository {
     return arkId;
   }
 
-  public void putZipFileIntoOutputStream(ArkId arkId, OutputStream outputStream)
-      throws IOException {
-    Path relativeDestination = Paths.get(arkId.getAsSimpleArk());
-    dataStore.getCompoundObjectFromShelf(relativeDestination.toString(), false, outputStream);
-  }
-
-  public void findByArkIdAndVersion(ArkId arkId, String version, OutputStream outputStream)
-      throws IOException {
-    Path relativeDestination = Paths.get(arkId.getAsSimpleArk(), version);
-    dataStore.getCompoundObjectFromShelf(relativeDestination.toString(), true, outputStream);
+  public void putZipFileIntoOutputStream(ArkId arkId, OutputStream outputStream) throws IOException {
+    outputStream.write(zipExportService.exportCompoundDigitalObject(arkId, dataStore).toByteArray());
   }
 
   public ObjectNode editMetadata(ArkId arkId, String version, String path, String metadata) {
@@ -140,7 +135,7 @@ public class KnowledgeObjectRepository {
     try {
       JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
 
-      dataStore.saveMetadata(metadataPath.toString(), jsonMetadata);
+      dataStore.saveMetadata(jsonMetadata, metadataPath.toString());
 
     } catch (IOException e) {
       log.error("Cannot edit metadata at " + metadataPath + " " + e);

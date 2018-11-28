@@ -126,28 +126,6 @@ public class ShelfController {
     }
   }
 
-  @GetMapping(path = "/{naan}/{name}/{version}", produces = "application/zip")
-  public void getZippedKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name,
-      @PathVariable String version, HttpServletResponse response) {
-
-    log.info("get ko zip for " + naan + "/" + name + "/" + version);
-
-    ArkId arkId = new ArkId(naan, name);
-    response.addHeader("Content-Disposition",
-        "attachment; filename=\"" + naan + "-" + name + "-" + version + ".zip\"");
-    try {
-      shelf.findByArkIdAndVersion(arkId, version, response.getOutputStream());
-    } catch (IOException ex) {
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    } finally {
-      try {
-        response.getOutputStream().close();
-      } catch (IOException e) {
-        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-      }
-    }
-  }
-
   @GetMapping(path = "/{naan}/{name}/{version}/service")
   public Object getServiceDescription(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version) throws NoSuchFileException, NoSuchFieldException {

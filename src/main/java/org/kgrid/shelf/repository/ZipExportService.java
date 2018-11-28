@@ -9,10 +9,12 @@ import java.util.ArrayList;
 import java.util.List;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
+import org.springframework.stereotype.Service;
 import org.zeroturnaround.zip.ByteSource;
 import org.zeroturnaround.zip.ZipEntrySource;
 import org.zeroturnaround.zip.ZipUtil;
 
+@Service
 public class ZipExportService {
 
   public static final String IMPLEMENTATIONS_TERM = "hasImplementation";

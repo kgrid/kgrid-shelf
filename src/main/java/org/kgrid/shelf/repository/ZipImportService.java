@@ -51,8 +51,7 @@ public class ZipImportService {
 
     importImplementations(arkId, cdoStore, containerResources, binaryResources, arrayNode);
 
-    cdoStore.saveMetadata(arkId.getAsSimpleArk()+ "/"+
-        KnowledgeObject.METADATA_FILENAME, koMetaData);
+    cdoStore.saveMetadata(koMetaData, arkId.getAsSimpleArk(), KnowledgeObject.METADATA_FILENAME);
 
   }
 
@@ -119,11 +118,10 @@ public class ZipImportService {
       List<String> binaryPaths = getImplementationBinaryPaths(metadata);
 
       binaryPaths.forEach( (binaryPath) -> {
-        cdoStore.saveBinary( arkId.getAsSimpleArk() + "/" + binaryPath,
-            binaryResources.get( Paths.get(arkId.getAsSimpleArk(), binaryPath).toString()));
+        cdoStore.saveBinary(binaryResources.get( Paths.get(arkId.getAsSimpleArk(), binaryPath).toString()), arkId.getAsSimpleArk(), binaryPath);
       });
 
-      cdoStore.saveMetadata(path +"/"+ KnowledgeObject.METADATA_FILENAME, metadata);
+      cdoStore.saveMetadata(metadata, path, KnowledgeObject.METADATA_FILENAME);
 
     });
 
@@ -138,9 +136,15 @@ public class ZipImportService {
    */
   public List<String> getImplementationBinaryPaths(JsonNode node){
     List<String> binaryNodes = new ArrayList<>();
-    binaryNodes.add(node.findValue(DEPLOYMENT_SPEC_TERM).asText());
-    binaryNodes.add(node.findValue(PAYLOAD_TERM).asText());
-    binaryNodes.add(node.findValue(SERVICE_SPEC_TERM).asText());
+    if(node.findValue(DEPLOYMENT_SPEC_TERM) != null) {
+      binaryNodes.add(node.findValue(DEPLOYMENT_SPEC_TERM).asText());
+    }
+    if(node.findValue(PAYLOAD_TERM) != null) {
+      binaryNodes.add(node.findValue(PAYLOAD_TERM).asText());
+    }
+    if(node.findValue(SERVICE_SPEC_TERM) != null) {
+      binaryNodes.add(node.findValue(SERVICE_SPEC_TERM).asText());
+    }
     return binaryNodes;
   }
 

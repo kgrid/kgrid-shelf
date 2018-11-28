@@ -18,6 +18,7 @@ import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
+import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.springframework.beans.factory.annotation.Autowired;
 
@@ -82,7 +83,7 @@ public class FedoraZipImportServiceTest {
       metadata = compoundDigitalObjectStore.getMetadata(
           Paths.get(new ArkId("hello", "world").getAsSimpleArk(), "v0.0.3").toString());
       assertTrue("Should throw exception", false);
-    } catch (IllegalArgumentException e){
+    } catch (ShelfException e){
       assertTrue("Should not find v.0.0.3 because not defined in meatadata, not found will throw exception", true);
 
     }
