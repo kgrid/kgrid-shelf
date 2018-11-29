@@ -7,34 +7,19 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
 import java.net.URI;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
-import java.util.AbstractMap.SimpleEntry;
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.InputMismatchException;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
-import java.util.Stack;
-import java.util.TreeMap;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.kgrid.shelf.ShelfException;
-import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.CompoundDigitalObject;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +36,6 @@ import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.multipart.MultipartFile;
 
 @Qualifier("fedora")
 public class FedoraCDOStore implements CompoundDigitalObjectStore {
@@ -395,33 +379,6 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
         .body("{}");
     ResponseEntity<String> response = restTemplate.exchange(request, String.class);
 
-  }
-
-  @Override
-  public void save(CompoundDigitalObject cdo) {
-
-    cdo.getContainers().forEach( (path, container) -> {
-      createContainer(path);
-    });
-
-    cdo.getBinaryResources().forEach( (name, bytes)-> {
-      saveBinary(bytes, name);
-    });
-
-    Map<String, JsonNode> reverseOrderContainers = new TreeMap(Collections.reverseOrder());
-    reverseOrderContainers.putAll(cdo.getContainers());
-    reverseOrderContainers.forEach((path, container)  -> {
-      saveMetadata(container, path);
-    });
-
-
-  }
-  @Override
-  public CompoundDigitalObject find(String cdoIdentifier) {
-
-    List<String> descendants = getAllFedoraDescendants(cdoIdentifier, 25);
-    descendants.add(cdoIdentifier); // Add top-level metadata
-    return null;
   }
 
   @Override

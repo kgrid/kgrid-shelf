@@ -1,17 +1,12 @@
 package org.kgrid.shelf.repository;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.URL;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,7 +25,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
-import org.springframework.mock.web.MockMultipartFile;
 
 public class FilesystemCDOStoreTest {
 
@@ -131,15 +125,4 @@ public class FilesystemCDOStoreTest {
   }
 
 
-  @Test
-  public void find() {
-
-    String filename = "/fixtures/hello-world-jsonld.zip";
-    InputStream zipStream = FilesystemCDOStoreTest.class.getResourceAsStream(filename);
-
-    ZipImportService zipFIleProcessor = new ZipImportService();
-    zipFIleProcessor.importCompoundDigitalObject(new ArkId("hello", "world"),zipStream, koStore);
-
-    koStore.find("hello-world");
-  }
 }

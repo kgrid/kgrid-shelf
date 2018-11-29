@@ -3,12 +3,8 @@ package org.kgrid.shelf.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.List;
 import org.kgrid.shelf.ShelfException;
-import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.CompoundDigitalObject;
-import org.springframework.web.multipart.MultipartFile;
 
 public interface CompoundDigitalObjectStore {
 
@@ -29,10 +25,6 @@ public interface CompoundDigitalObjectStore {
   void saveBinary(byte[] data, String... relativeLocationParts);
 
   void removeFile(String... relativeLocationParts) throws IOException;
-
-  void save(CompoundDigitalObject cdo);
-
-  CompoundDigitalObject find(String cdoIdentifier);
 
   void delete(String cdoIdentifier) throws ShelfException;
 
