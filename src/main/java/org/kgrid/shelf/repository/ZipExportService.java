@@ -4,12 +4,16 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.commons.io.FilenameUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.zeroturnaround.zip.ByteSource;
 import org.zeroturnaround.zip.ZipEntrySource;
 import org.zeroturnaround.zip.ZipUtil;
@@ -31,8 +35,8 @@ public class ZipExportService {
 
     //Get KO and add to export zip entries
     ObjectNode koMetaData = cdoStore.getMetadata(arkId.getAsSimpleArk());
-    entries.add(new ByteSource(Paths.get(
-        arkId.getAsSimpleArk(), METADATA_FILENAME).toString(),
+    entries.add(new ByteSource(FilenameUtils.normalize(Paths.get(
+        arkId.getAsSimpleArk(), METADATA_FILENAME).toString(), true),
         koMetaData.toString().getBytes()));
 
     //Get KO Implementations
@@ -43,8 +47,7 @@ public class ZipExportService {
       //Get and add KO Implementation metadat export zip entries
       JsonNode implementationNode = cdoStore.getMetadata(
           Paths.get(jsonNode.asText()).toString());
-      entries.add(new ByteSource(Paths.get(jsonNode.asText() , METADATA_FILENAME).toString(),
-          implementationNode.toString().getBytes()));
+      entries.add(new ByteSource(FilenameUtils.normalize(Paths.get(jsonNode.asText(), METADATA_FILENAME).toString(),true),implementationNode.toString().getBytes()));
 
       //Add Implementation binary files to export zip entries
       List<String> binaryNodes = new ArrayList<>();
@@ -60,8 +63,7 @@ public class ZipExportService {
       binaryNodes.forEach( (binaryPath) -> {
         byte[] bytes = cdoStore.getBinary(
             Paths.get( arkId.getAsSimpleArk(), binaryPath).toString());
-        entries.add(new ByteSource(
-            Paths.get( arkId.getAsSimpleArk(), binaryPath).toString(), bytes));
+        entries.add(new ByteSource(FilenameUtils.normalize(Paths.get(arkId.getAsSimpleArk(), binaryPath).toString(),true), bytes));
       });
     });
 
