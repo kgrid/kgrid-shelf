@@ -7,25 +7,36 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
+import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.CompoundDigitalObject;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.multipart.MultipartFile;
 
 @Qualifier("filesystem")
 public class FilesystemCDOStore implements CompoundDigitalObjectStore {
@@ -50,7 +61,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     Path path = Paths.get(localStorageURI.getPath(), filePathParts);
     List<String> children = new ArrayList<>();
     try {
-      children = Files.walk(path,  1, FOLLOW_LINKS)
+      children = Files.walk(path, 1, FOLLOW_LINKS)
           .filter(Files::isDirectory)
           .map(Object::toString)
           .collect(Collectors.toList());
@@ -77,7 +88,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public boolean isMetadata(String... relativePathParts) {
-    return relativePathParts[relativePathParts.length-1].endsWith(KnowledgeObject.METADATA_FILENAME);
+    return relativePathParts[relativePathParts.length - 1]
+        .endsWith(KnowledgeObject.METADATA_FILENAME);
   }
 
   @Override
@@ -102,10 +114,10 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       return ((ObjectNode) koMetadata);
     } catch (IOException ioEx) {
       throw new IllegalArgumentException(
-          "Cannot read metadata file at path " + metadataPath.resolve(metadataFile.getAbsolutePath()), ioEx);
+          "Cannot read metadata file at path " + metadataPath
+              .resolve(metadataFile.getAbsolutePath()), ioEx);
     }
   }
-
 
   @Override
   public byte[] getBinary(String... relativePathParts) {
@@ -179,6 +191,57 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       containerPath.toFile().mkdirs();
     }
 
+  }
+
+  @Override
+  public void save(CompoundDigitalObject cdo) {
+
+    cdo.getContainers().forEach((path, container) -> {
+      createContainer(path);
+    });
+
+    cdo.getBinaryResources().forEach((name, bytes) -> {
+      saveBinary(bytes, name);
+    });
+
+    cdo.getContainers().forEach((path, container) -> {
+      saveMetadata(container, path, KnowledgeObject.METADATA_FILENAME);
+    });
+
+  }
+
+  @Override
+  public CompoundDigitalObject find(String cdoIdentifier) {
+
+    CompoundDigitalObject compoundDigitalObject = new CompoundDigitalObject(cdoIdentifier);
+    // compoundDigitalObject.setMetadata(metaDate);
+
+    Path path = Paths.get(getAbsoluteLocation(cdoIdentifier));
+
+    List<Path> binaryPaths;
+    try {
+      binaryPaths = Files.walk(path, 2, FOLLOW_LINKS)
+          .filter(Files::isRegularFile)
+          .filter(p -> !p.getFileName().endsWith("metadata.json"))
+          .map(Path::toAbsolutePath)
+          .collect(Collectors.toList());
+
+      binaryPaths.forEach(filePath -> {
+        try {
+          compoundDigitalObject.getBinaryResources().put(
+              path.relativize(filePath).toString(),
+              Files.readAllBytes(filePath));
+        } catch (IOException e) {
+          log.error("Cannot add binary to cod " + filePath + " " + e);
+        }
+
+      });
+
+    } catch (IOException ioEx) {
+      log.error("Cannot read children at location " + path + " " + ioEx);
+    }
+
+    return compoundDigitalObject;
   }
 
   @Override

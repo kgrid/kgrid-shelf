@@ -37,14 +37,8 @@ public class KnowledgeObjectRepository {
   public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
     KnowledgeObject ko = new KnowledgeObject(arkId, version);
     ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation().toString());
-    try {
-      JsonNode modelMetadataNode = dataStore.getMetadata(ko.modelMetadataLocation().toString());
-      metadataNode.set(KnowledgeObject.MODEL_DIR_NAME, modelMetadataNode);
-    } catch (IllegalArgumentException | NullPointerException ex) {
-      log.warn("Cannot find model metadata for ko " + arkId + "/" + version);
-    }
     ko.setMetadata(metadataNode);
-    if(!ko.hasTitle()) {
+    if(!metadataNode.has("title")) {
       log.warn("Metadata for ko " + arkId + "/" + version + " is missing a title");
     }
     return ko;
@@ -52,14 +46,6 @@ public class KnowledgeObjectRepository {
 
   public ObjectNode getMetadataAtPath(ArkId arkId, String version, String path) {
     return dataStore.getMetadata(arkId.getAsSimpleArk(), version, path);
-  }
-
-  public Map<String, ObjectNode> findByPath(Path koPath) {
-    Map<String, ObjectNode> versions = new HashMap<>();
-    ArkId arkId = new ArkId(koPath.getParent().getFileName().toString());
-    String version = koPath.getFileName().toString();
-    versions.put(version, findByArkIdAndVersion(arkId, version).getMetadata());
-    return versions;
   }
 
   public Map<String, ObjectNode> findByArkId(ArkId arkId) {
@@ -127,8 +113,7 @@ public class KnowledgeObjectRepository {
   public ObjectNode editMetadata(ArkId arkId, String version, String path, String metadata) {
     Path metadataPath;
     if (path != null && !"".equals(path)) {
-      metadataPath = Paths
-          .get(arkId.getAsSimpleArk(), version, path, KnowledgeObject.METADATA_FILENAME);
+      metadataPath = Paths.get(arkId.getAsSimpleArk(), version, path, KnowledgeObject.METADATA_FILENAME);
     } else {
       metadataPath = Paths.get(arkId.getAsSimpleArk(), version, KnowledgeObject.METADATA_FILENAME);
     }
