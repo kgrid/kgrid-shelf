@@ -52,6 +52,12 @@ public class FilesystemCDOStoreTest {
     zis.importCompoundDigitalObject(arkId, zipStream, koStore);
   }
 
+  @Test
+  public void testURIPathWindows(){
+    String connectionURL = "filesystem:" + folder.getRoot().toURI();
+    koStore = new FilesystemCDOStore(connectionURL);
+    koStore.getAbsoluteLocation("");
+  }
   @After
   public void deleteKO() throws Exception {
     (koStore).removeFile(this.arkId.getAsSimpleArk());

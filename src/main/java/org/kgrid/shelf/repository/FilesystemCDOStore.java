@@ -47,7 +47,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public List<String> getChildren(String... filePathParts) {
-    Path path = Paths.get(localStorageURI.getPath(), filePathParts);
+    Path path = Paths.get(Paths.get(localStorageURI).toString(), filePathParts);
     List<String> children = new ArrayList<>();
     try {
       children = Files.walk(path,  1, FOLLOW_LINKS)
@@ -69,7 +69,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
           "Filesystem shelf location '" + shelf.toAbsolutePath() + "' is not a valid directory."
               + " Make sure the property kgrid.shelf.cdostore.url is set correctly.");
     }
-    if (relativePathParts == null || relativePathParts.length == 0) {
+    if (relativePathParts == null || relativePathParts.length == 1) {
       return shelf.toString();
     }
     return Paths.get(localStorageURI.getPath(), relativePathParts).toString();
@@ -82,7 +82,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public ObjectNode getMetadata(String... relativePathParts) {
-    Path metadataPath = Paths.get(localStorageURI.getPath(), relativePathParts);
+    Path metadataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     File metadataFile = metadataPath.toFile();
     if (metadataFile.isDirectory()) {
       metadataFile = metadataPath.resolve(KnowledgeObject.METADATA_FILENAME)
@@ -109,7 +109,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public byte[] getBinary(String... relativePathParts) {
-    Path binaryPath = Paths.get(localStorageURI.getPath(), relativePathParts);
+    Path binaryPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     byte[] bytes = null;
     try {
       bytes = Files.readAllBytes(binaryPath);
@@ -121,7 +121,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public void saveMetadata(JsonNode metadata, String... relativePathParts) {
-    Path metadataPath = Paths.get(localStorageURI.getPath(), relativePathParts);
+    Path metadataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     File metadataFile = metadataPath.toFile();
     try {
       ObjectWriter writer = new ObjectMapper().writer().with(SerializationFeature.INDENT_OUTPUT);
@@ -133,7 +133,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public void saveBinary(byte[] output, String... relativePathParts) {
-    Path dataPath = Paths.get(localStorageURI.getPath(), relativePathParts);
+    Path dataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     File dataFile = dataPath.toFile();
     try (FileOutputStream fos = new FileOutputStream(dataFile)) {
       fos.write(output);
@@ -145,7 +145,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   // rm -rf repository/arkId ** dangerous! **
   @Override
   public void removeFile(String... relativePathParts) throws IOException {
-    Path ko = Paths.get(localStorageURI.getPath(), relativePathParts);
+    Path ko = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
 
     Files.walk(ko)
         .sorted(Comparator
@@ -174,7 +174,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public void createContainer(String... relativePathParts) {
-    Path containerPath = Paths.get(localStorageURI.getPath(), relativePathParts);
+    Path containerPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     if (!containerPath.toFile().exists()) {
       containerPath.toFile().mkdirs();
     }
