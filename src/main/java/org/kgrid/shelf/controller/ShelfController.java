@@ -114,7 +114,7 @@ public class ShelfController {
     response.addHeader("Content-Disposition",
         "attachment; filename=\"" + naan + "-" + name + "-complete.zip\"");
     try {
-      shelf.putZipFileIntoOutputStream(arkId, response.getOutputStream());
+      shelf.extractZip(arkId, response.getOutputStream());
     } catch (IOException ex) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     } finally {
@@ -176,22 +176,22 @@ public class ShelfController {
   }
 
   @PutMapping(path = "/{naan}/{name}")
-  public ResponseEntity<Map <String, String>> addKOZipFolder(@PathVariable String naan, @PathVariable String name,
+  public ResponseEntity<Map <String, String>> importKO(@PathVariable String naan, @PathVariable String name,
       @RequestParam("ko") MultipartFile zippedKo) {
 
-    Map<String, String> result = addKOZipFolder(naan, name, null, zippedKo).getBody();
+    Map<String, String> result = importKO(naan, name, null, zippedKo).getBody();
 
     return new ResponseEntity<>(result, HttpStatus.CREATED);
   }
 
   @PutMapping(path = "/{naan}/{name}/{version}")
-  public ResponseEntity<Map<String, String>> addKOZipFolder(@PathVariable String naan, @PathVariable String name,
+  public ResponseEntity<Map<String, String>> importKO(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
 
     log.info("add ko " + naan + "/" + name + (version==null?"":"/" + version) + " zip file " +zippedKo.getOriginalFilename());
 
     ArkId pathArk = new ArkId(naan, name);
-    ArkId arkId = shelf.save(pathArk, zippedKo);
+    ArkId arkId = shelf.importZip(pathArk, zippedKo);
 
     Map<String, String> response = new HashMap<>();
     response.put("Added", arkId.toString());

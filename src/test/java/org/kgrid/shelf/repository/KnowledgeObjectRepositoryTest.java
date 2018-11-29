@@ -46,15 +46,23 @@ public class KnowledgeObjectRepositoryTest {
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
     compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
     repository = new KnowledgeObjectRepository(compoundDigitalObjectStore, zipImportService, zipExportService);
-    URL zipStream = FilesystemCDOStoreTest.class.getResource("/hello-world-jsonld.zip");
+    URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/hello-world-jsonld.zip");
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+
     MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-jsonld.zip", "application/zip", zippedKO);
-    repository.save(new ArkId("hello-world"), koZip);
+    repository.importZip(new ArkId("hello-world"), koZip);
+    assertNotNull(repository.findByArkIdAndVersion(new ArkId("hello-world"), "v0.0.1"));
   }
 
   @After
   public void clearShelf() throws Exception {
     repository.delete(new ArkId("ark:/hello/world"));
+    try {
+      Map<String, ObjectNode> map = repository.findByArkId(new ArkId("hello-world"));
+      assertTrue("Should have deleted hell0-world", false);
+    }catch (IllegalArgumentException e){
+      assertTrue(true);
+    }
   }
 
   @Test
@@ -64,13 +72,17 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getAllKOVersions() throws Exception {
-    assertNotNull(repository.findByArkId(arkId));
+
+    Map<String, ObjectNode> map = repository.findByArkId(arkId);
+    assertNotNull(map);
   }
+
+
 
   @Test
   public void getCorrectMetadata() throws Exception {
     KnowledgeObject ko = repository.findByArkIdAndVersion(arkId, "v0.0.1");
-    assertTrue(ko.getMetadata().findValue("dc:identifier").asText().equals("v0.0.1"));
+    assertTrue(ko.getMetadata().findValue("identifier").asText().equals("v0.0.1"));
     String resource = ko.getMetadata().findValue("hasPayload").asText();
     assertEquals("v0.0.1/welcome.js", resource);
   }
