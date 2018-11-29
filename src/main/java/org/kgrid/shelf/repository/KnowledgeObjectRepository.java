@@ -44,6 +44,8 @@ public class KnowledgeObjectRepository {
     return ko;
   }
 
+
+
   public ObjectNode getMetadataAtPath(ArkId arkId, String version, String path) {
     return dataStore.getMetadata(arkId.getAsSimpleArk(), version, path);
   }
@@ -97,7 +99,13 @@ public class KnowledgeObjectRepository {
     return knowledgeObjects;
   }
 
-  public ArkId save(ArkId arkId, MultipartFile zippedKO) {
+  /**
+   * Import ZIP file of a KO into self
+   * @param arkId
+   * @param zippedKO
+   * @return
+   */
+  public ArkId importZip(ArkId arkId, MultipartFile zippedKO) {
     try {
       zipImportService.importCompoundDigitalObject(arkId, zippedKO.getInputStream(), dataStore);
     } catch (IOException e) {
@@ -106,7 +114,13 @@ public class KnowledgeObjectRepository {
     return arkId;
   }
 
-  public void putZipFileIntoOutputStream(ArkId arkId, OutputStream outputStream) throws IOException {
+  /**
+   * Extract ZIP file of the KO
+   * @param arkId
+   * @param outputStream
+   * @throws IOException
+   */
+  public void extractZip(ArkId arkId, OutputStream outputStream) throws IOException {
     outputStream.write(zipExportService.exportCompoundDigitalObject(arkId, dataStore).toByteArray());
   }
 
