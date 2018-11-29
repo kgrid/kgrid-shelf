@@ -27,10 +27,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
-import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.CompoundDigitalObject;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -191,57 +188,6 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       containerPath.toFile().mkdirs();
     }
 
-  }
-
-  @Override
-  public void save(CompoundDigitalObject cdo) {
-
-    cdo.getContainers().forEach((path, container) -> {
-      createContainer(path);
-    });
-
-    cdo.getBinaryResources().forEach((name, bytes) -> {
-      saveBinary(bytes, name);
-    });
-
-    cdo.getContainers().forEach((path, container) -> {
-      saveMetadata(container, path, KnowledgeObject.METADATA_FILENAME);
-    });
-
-  }
-
-  @Override
-  public CompoundDigitalObject find(String cdoIdentifier) {
-
-    CompoundDigitalObject compoundDigitalObject = new CompoundDigitalObject(cdoIdentifier);
-    // compoundDigitalObject.setMetadata(metaDate);
-
-    Path path = Paths.get(getAbsoluteLocation(cdoIdentifier));
-
-    List<Path> binaryPaths;
-    try {
-      binaryPaths = Files.walk(path, 2, FOLLOW_LINKS)
-          .filter(Files::isRegularFile)
-          .filter(p -> !p.getFileName().endsWith("metadata.json"))
-          .map(Path::toAbsolutePath)
-          .collect(Collectors.toList());
-
-      binaryPaths.forEach(filePath -> {
-        try {
-          compoundDigitalObject.getBinaryResources().put(
-              path.relativize(filePath).toString(),
-              Files.readAllBytes(filePath));
-        } catch (IOException e) {
-          log.error("Cannot add binary to cod " + filePath + " " + e);
-        }
-
-      });
-
-    } catch (IOException ioEx) {
-      log.error("Cannot read children at location " + path + " " + ioEx);
-    }
-
-    return compoundDigitalObject;
   }
 
   @Override

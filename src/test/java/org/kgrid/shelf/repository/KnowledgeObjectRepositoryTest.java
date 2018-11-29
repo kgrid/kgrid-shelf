@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.net.URL;
 import java.nio.file.Files;
@@ -58,7 +59,7 @@ public class KnowledgeObjectRepositoryTest {
   public void clearShelf() throws Exception {
     repository.delete(new ArkId("ark:/hello/world"));
     try {
-      Map<String, ObjectNode> map = repository.findByArkId(new ArkId("hello-world"));
+      JsonNode metadata = repository.findByArkId(new ArkId("hello-world"));
       assertTrue("Should have deleted hell0-world", false);
     }catch (IllegalArgumentException e){
       assertTrue(true);
@@ -71,9 +72,9 @@ public class KnowledgeObjectRepositoryTest {
   }
 
   @Test
-  public void getAllKOVersions() throws Exception {
+  public void getTopLevelMetadata() throws Exception {
 
-    Map<String, ObjectNode> map = repository.findByArkId(arkId);
+    JsonNode map = repository.findByArkId(arkId);
     assertNotNull(map);
   }
 
@@ -89,8 +90,8 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void listAllObjects() {
-    Map<ArkId, Map<String, ObjectNode>>  objects = repository.findAll();
-    assertEquals("v0.0.1", objects.get(arkId).get("v0.0.1").findValue("@id").asText());
+    Map<ArkId, JsonNode>  objects = repository.findAll();
+    assertEquals("hello-world", objects.get(arkId).get("@id").asText());
   }
 
   @Test

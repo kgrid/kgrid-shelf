@@ -1,5 +1,6 @@
 package org.kgrid.shelf.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
@@ -65,7 +66,7 @@ public class ShelfController {
   }
 
   @GetMapping(path = "/{naan}/{name}")
-  public ResponseEntity<Map> getKnowledgeObjectVersion(@PathVariable String naan,
+  public ResponseEntity<JsonNode> getKnowledgeObjectVersion(@PathVariable String naan,
       @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer,
       RequestEntity request) {
 
@@ -76,16 +77,9 @@ public class ShelfController {
       throw new IllegalArgumentException("Cannot connect to fcrepo at the same address as the shelf. Make sure shelf and fcrepo configuration is correct.");
     }
     ArkId arkId = new ArkId(naan, name);
-    Map results;
-    // Display only a list of versions if prefer header is "return=minimal" otherwise return full metadata for each version
-    if (prefer != null && prefer.matches(".*return\\s*=\\s*minimal.*")) {
-      results = shelf.findByArkId(arkId).keySet().stream().collect(
-          Collectors.toMap(version -> version, version -> request.getUrl() + "/" + version));
-    } else {
-      results = shelf.findByArkId(arkId);
-    }
+    JsonNode results = shelf.findByArkId(arkId);
 
-    if (results.isEmpty()) {
+    if (results == null || results.size() == 0) {
       throw new IllegalArgumentException("Object not found with id " + naan + "-" + name);
     }
 
@@ -162,10 +156,6 @@ public class ShelfController {
     String childPath = StringUtils.substringAfterLast(requestURI, basePath);
 
     log.info("getting ko resource " + naan + "/" + name + "/" + version + childPath);
-
-//    if(!childPath.startsWith(KnowledgeObject.MODEL_DIR_NAME)) {
-//        throw new IllegalArgumentException("Cannot get files outside of the model directory");
-//    }
 
     byte[] binary = shelf.getBinaryOrMetadata(arkId, version, childPath);
     if(binary != null) {

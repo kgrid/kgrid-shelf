@@ -8,7 +8,6 @@ import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.domain.ArkId;
@@ -46,38 +45,16 @@ public class KnowledgeObjectRepository {
 
 
 
-  public ObjectNode getMetadataAtPath(ArkId arkId, String version, String path) {
+  public JsonNode getMetadataAtPath(ArkId arkId, String version, String path) {
     return dataStore.getMetadata(arkId.getAsSimpleArk(), version, path);
   }
 
-  public Map<String, ObjectNode> findByArkId(ArkId arkId) {
-    Map<String, ObjectNode> versionMap = new HashMap<>();
-
-    List<String> versions = dataStore.getChildren(arkId.getAsSimpleArk());
-
-    for (String versionPath : versions) {
-      String version = null;
-      try {
-        if(versionPath.contains("/")) {
-          version = StringUtils.substringAfterLast(versionPath, "/");
-        } else if (versionPath.contains("\\")) {
-          version = StringUtils.substringAfterLast(versionPath, "\\");
-        } else {
-          log.warn("Version path is invalid: " + versionPath);
-        }
-        versionMap.put(version, findByArkIdAndVersion(arkId, version).getMetadata());
-      } catch (Exception exception){
-       log.warn( "Can't load KO " + arkId + "/" + version + " " + exception.getMessage());
-      }
-    }
-    if(versionMap.isEmpty()) {
-      throw new IllegalArgumentException("Knowledge object with ark id " + arkId + " has no valid versions");
-    }
-    return versionMap;
+  public JsonNode findByArkId(ArkId arkId) {
+    return dataStore.getMetadata(arkId.getAsSimpleArk());
   }
 
-  public Map<ArkId, Map<String, ObjectNode>> findAll() {
-    Map<ArkId, Map<String, ObjectNode>> knowledgeObjects = new HashMap<>();
+  public Map<ArkId, JsonNode> findAll() {
+    Map<ArkId, JsonNode> knowledgeObjects = new HashMap<>();
 
     //Load KO objects and skip any KOs with exceptions like missing metadata
     for (String path : dataStore.getChildren("")) {
