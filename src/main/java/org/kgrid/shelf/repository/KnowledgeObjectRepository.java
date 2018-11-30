@@ -33,24 +33,20 @@ public class KnowledgeObjectRepository {
     this.zipExportService = zes;
   }
 
-  public KnowledgeObject findByArkIdAndVersion(ArkId arkId, String version) {
-    KnowledgeObject ko = new KnowledgeObject(arkId, version);
-    ObjectNode metadataNode = dataStore.getMetadata(ko.baseMetadataLocation().toString());
-    ko.setMetadata(metadataNode);
+  public JsonNode getMetadataAtPath(ArkId arkId, String path) {
+    return dataStore.getMetadata(arkId.getDashArk(), arkId.getImplementation(), path);
+  }
+
+  public JsonNode findKnowledgeObjectMetadata(ArkId arkId) {
+    return dataStore.getMetadata(arkId.getDashArk());
+  }
+
+  public JsonNode findImplementationMetadata(ArkId arkId) {
+    ObjectNode metadataNode = dataStore.getMetadata(arkId.getDashArk(), arkId.getImplementation(), KnowledgeObject.METADATA_FILENAME);
     if(!metadataNode.has("title")) {
-      log.warn("Metadata for ko " + arkId + "/" + version + " is missing a title");
+      log.warn("Metadata for ko " + arkId.getSlashArkImplementation() + " is missing a title");
     }
-    return ko;
-  }
-
-
-
-  public JsonNode getMetadataAtPath(ArkId arkId, String version, String path) {
-    return dataStore.getMetadata(arkId.getAsSimpleArk(), version, path);
-  }
-
-  public JsonNode findByArkId(ArkId arkId) {
-    return dataStore.getMetadata(arkId.getAsSimpleArk());
+    return metadataNode;
   }
 
   public Map<ArkId, JsonNode> findAll() {
@@ -68,7 +64,7 @@ public class KnowledgeObjectRepository {
         else {
           arkId = new ArkId(path);
         }
-        knowledgeObjects.put(arkId, findByArkId(arkId));
+        knowledgeObjects.put(arkId, findKnowledgeObjectMetadata(arkId));
       } catch (Exception illegalArgument) {
         log.warn("Unable to load KO " + illegalArgument.getMessage());
       }
@@ -101,12 +97,12 @@ public class KnowledgeObjectRepository {
     outputStream.write(zipExportService.exportCompoundDigitalObject(arkId, dataStore).toByteArray());
   }
 
-  public ObjectNode editMetadata(ArkId arkId, String version, String path, String metadata) {
+  public ObjectNode editMetadata(ArkId arkId, String path, String metadata) {
     Path metadataPath;
     if (path != null && !"".equals(path)) {
-      metadataPath = Paths.get(arkId.getAsSimpleArk(), version, path, KnowledgeObject.METADATA_FILENAME);
+      metadataPath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), path, KnowledgeObject.METADATA_FILENAME);
     } else {
-      metadataPath = Paths.get(arkId.getAsSimpleArk(), version, KnowledgeObject.METADATA_FILENAME);
+      metadataPath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), KnowledgeObject.METADATA_FILENAME);
     }
     try {
       JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
@@ -120,13 +116,12 @@ public class KnowledgeObjectRepository {
   }
 
   public void delete(ArkId arkId) throws IOException {
-    dataStore.removeFile(Paths.get(arkId.getAsSimpleArk()).toString());
+    if(arkId.getImplementation() != null) {
+      dataStore.removeFile(arkId.getDashArk(), arkId.getImplementation());
+    } else {
+      dataStore.removeFile(arkId.getDashArk());
+    }
     log.info("Deleted ko with ark id " + arkId);
-  }
-
-  public void delete(ArkId arkId, String version) throws IOException {
-    dataStore.removeFile(Paths.get(arkId.getAsSimpleArk(), version).toString());
-    log.info("Deleted ko with ark id " + arkId + " and version " + version);
   }
 
   public String getConnection() {
@@ -134,8 +129,8 @@ public class KnowledgeObjectRepository {
     return this.dataStore.getAbsoluteLocation("");
   }
 
-  public byte[] getBinaryOrMetadata(ArkId arkId, String version, String childPath) {
-    String filepath = Paths.get(arkId.getAsSimpleArk(), version, childPath).toString();
+  public byte[] getBinaryOrMetadata(ArkId arkId, String childPath) {
+    String filepath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), childPath).toString();
     if(this.dataStore.isMetadata(filepath)) {
 
       return this.dataStore.getMetadata(filepath).toString().getBytes();

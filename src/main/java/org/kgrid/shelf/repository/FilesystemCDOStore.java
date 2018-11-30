@@ -132,6 +132,9 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   public void saveMetadata(JsonNode metadata, String... relativePathParts) {
     Path metadataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     File metadataFile = metadataPath.toFile();
+    if(metadataFile.isDirectory()){
+      metadataFile = metadataPath.resolve(KnowledgeObject.METADATA_FILENAME).toFile();
+    }
     try {
       ObjectWriter writer = new ObjectMapper().writer().with(SerializationFeature.INDENT_OUTPUT);
       writer.writeValue(metadataFile, metadata);

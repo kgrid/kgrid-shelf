@@ -21,10 +21,7 @@ import org.zeroturnaround.zip.ZipUtil;
 
 @Service
 public class ZipImportService {
-  public static final String IMPLEMENTATIONS_TERM = "hasImplementation";
-  public static final String SERVICE_SPEC_TERM = "hasServiceSpecification";
-  public static final String DEPLOYMENT_SPEC_TERM = "hasDeploymentSpecification";
-  public static final String PAYLOAD_TERM = "hasPayload";
+
   private final org.slf4j.Logger log = LoggerFactory.getLogger(ZipImportService.class);
 
   /**
@@ -39,21 +36,21 @@ public class ZipImportService {
     Map<String, JsonNode> containerResources = new HashMap<>();
     Map<String, byte[]> binaryResources = new HashMap<>();
 
-    log.info("loading zip file for " + arkId.getAsSimpleArk());
+    log.info("loading zip file for " + arkId.getDashArk());
     captureZipEntries(zipFileStream, containerResources, binaryResources);
 
-    cdoStore.createContainer( arkId.getAsSimpleArk() );
+    cdoStore.createContainer( arkId.getDashArk() );
 
     JsonNode koMetaData = containerResources.get(
-        arkId.getAsSimpleArk());
+        arkId.getDashArk());
 
     ArrayNode arrayNode = (ArrayNode) getImplementationIDs( koMetaData );
 
     importImplementations(arkId, cdoStore, containerResources, binaryResources, arrayNode);
 
-    cdoStore.saveMetadata(koMetaData, arkId.getAsSimpleArk(),
+    cdoStore.saveMetadata(koMetaData, arkId.getDashArk(),
         KnowledgeObject.METADATA_FILENAME);
-    cdoStore.saveMetadata(koMetaData, arkId.getAsSimpleArk(), KnowledgeObject.METADATA_FILENAME);
+    cdoStore.saveMetadata(koMetaData, arkId.getDashArk(), KnowledgeObject.METADATA_FILENAME);
 
   }
 
@@ -120,8 +117,8 @@ public class ZipImportService {
       List<String> binaryPaths = getImplementationBinaryPaths(metadata);
 
       binaryPaths.forEach( (binaryPath) -> {
-        cdoStore.saveBinary(binaryResources.get( Paths.get(arkId.getAsSimpleArk(), binaryPath).toString()),
-            arkId.getAsSimpleArk(), binaryPath);
+        cdoStore.saveBinary(binaryResources.get( Paths.get(arkId.getDashArk(), binaryPath).toString()),
+            arkId.getDashArk(), binaryPath);
       });
 
       cdoStore.saveMetadata(metadata, path,  KnowledgeObject.METADATA_FILENAME);
@@ -139,20 +136,20 @@ public class ZipImportService {
    */
   public List<String> getImplementationBinaryPaths(JsonNode node){
     List<String> binaryNodes = new ArrayList<>();
-    if (node.has(DEPLOYMENT_SPEC_TERM)) {
-      binaryNodes.add(node.findValue(DEPLOYMENT_SPEC_TERM).asText());
+    if (node.has(KnowledgeObject.DEPLOYMENT_SPEC_TERM)) {
+      binaryNodes.add(node.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText());
     }
-    if (node.has(PAYLOAD_TERM)) {
-      binaryNodes.add(node.findValue(PAYLOAD_TERM).asText());
+    if (node.has(KnowledgeObject.PAYLOAD_TERM)) {
+      binaryNodes.add(node.findValue(KnowledgeObject.PAYLOAD_TERM).asText());
     }
-    if (node.has(SERVICE_SPEC_TERM)) {
-      binaryNodes.add(node.findValue(SERVICE_SPEC_TERM).asText());
+    if (node.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
+      binaryNodes.add(node.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText());
     }
     return binaryNodes;
   }
 
   public  JsonNode getImplementationIDs(JsonNode node){
-    return node.findValue(IMPLEMENTATIONS_TERM);
+    return node.findValue(KnowledgeObject.IMPLEMENTATIONS_TERM);
   }
 
 }

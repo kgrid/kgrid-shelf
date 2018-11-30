@@ -1,26 +1,18 @@
 package org.kgrid.shelf.repository;
 
-import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
-import java.util.stream.Collectors;
-import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
-import org.springframework.beans.factory.annotation.Autowired;
 
 
 @Category(FedoraIntegrationTest.class)
@@ -46,14 +38,14 @@ public class FedoraZipImportServiceTest {
 
     service.importCompoundDigitalObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
 
-    ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getAsSimpleArk() );
+    ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk() );
 
     assertNotNull(metadata);
 
     assertEquals("should have 2 implementations", 2,
         metadata.findValue(IMPLEMENTATIONS_TERM).size());
 
-    metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getAsSimpleArk()+"/"+ "v0.0.1" );
+    metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk()+"/"+ "v0.0.1" );
 
     assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/welcome.js",
         metadata.findValue(PAYLOAD_TERM).asText());
@@ -74,14 +66,14 @@ public class FedoraZipImportServiceTest {
 
     service.importCompoundDigitalObject(new ArkId("hello", "usa"), zipStream, compoundDigitalObjectStore);
 
-    ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "usa").getAsSimpleArk() );
+    ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "usa").getDashArk() );
 
     assertEquals("should have 2 implementations", 2,
         metadata.findValue(IMPLEMENTATIONS_TERM).size());
 
     try {
       metadata = compoundDigitalObjectStore.getMetadata(
-          Paths.get(new ArkId("hello", "world").getAsSimpleArk(), "v0.0.3").toString());
+          Paths.get(new ArkId("hello", "world").getDashArk(), "v0.0.3").toString());
       assertTrue("Should throw exception", false);
     } catch (ShelfException e){
       assertTrue("Should not find v.0.0.3 because not defined in meatadata, not found will throw exception", true);
@@ -98,13 +90,13 @@ public class FedoraZipImportServiceTest {
     service.importCompoundDigitalObject(new ArkId("hello", "koio"), zipStream, compoundDigitalObjectStore);
 
 
-    ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "koio").getAsSimpleArk() );
+    ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "koio").getDashArk() );
 
     assertEquals("should have 1 implementations", "http://localhost:8080/fcrepo/rest/hello-koio/koio",
         metadata.findValue(IMPLEMENTATIONS_TERM).asText());
 
 
-    metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "koio").getAsSimpleArk()+"/"+ "koio" );
+    metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "koio").getDashArk()+"/"+ "koio" );
 
     assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-koio/koio/welcome.js",
         metadata.findValue(PAYLOAD_TERM).asText());

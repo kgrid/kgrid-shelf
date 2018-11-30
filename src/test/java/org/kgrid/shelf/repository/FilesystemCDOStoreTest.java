@@ -24,7 +24,6 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObject;
 
 public class FilesystemCDOStoreTest {
 
@@ -60,7 +59,7 @@ public class FilesystemCDOStoreTest {
   }
   @After
   public void deleteKO() throws Exception {
-    (koStore).removeFile(this.arkId.getAsSimpleArk());
+    koStore.removeFile(this.arkId.getDashArk());
     Path shelf = Paths.get(koStore.getAbsoluteLocation(null));
     if(Files.isDirectory(shelf)) {
       nukeTestShelf(shelf);
@@ -89,34 +88,33 @@ public class FilesystemCDOStoreTest {
   }
 
   @Test
-  public void getVersions() throws Exception {
-    List<String> expectedVersions = new ArrayList<>();
-    expectedVersions.add("v0.0.1");
-    expectedVersions.add("v0.0.2");
-    List<String> versions = koStore.getChildren(arkId.getAsSimpleArk()).stream().map(child -> StringUtils
+  public void getImplementations() throws Exception {
+    List<String> expectedImplementations = new ArrayList<>();
+    expectedImplementations.add("v0.0.1");
+    expectedImplementations.add("v0.0.2");
+    List<String> implementations = koStore.getChildren(arkId.getDashArk()).stream().map(child -> StringUtils
         .substringAfterLast(child, FileSystems.getDefault().getSeparator())).collect(Collectors.toList());
-    versions.sort(Comparator.naturalOrder());
-    assertEquals(expectedVersions, versions);
+    implementations.sort(Comparator.naturalOrder());
+    assertEquals(expectedImplementations, implementations);
   }
 
   @Test
-  public void getBaseMetadata() throws Exception {
+  public void getImplementationMetadata() throws Exception {
 
-    KnowledgeObject ko = new KnowledgeObject(arkId, "v0.0.1");
-    ObjectNode metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
+    ObjectNode metadata = koStore.getMetadata(arkId.getDashArk(), "v0.0.1");
     assertEquals("Implementation 0.0.1 of Hello World", metadata.get("title").asText());
     metadata.replace("title", new TextNode("TEST"));
-    koStore.saveMetadata(metadata, ko.baseMetadataLocation().toString());
-    metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
+    koStore.saveMetadata(metadata, arkId.getDashArk(), "v0.0.1");
+    metadata = koStore.getMetadata(arkId.getDashArk(), "v0.0.1");
     assertEquals("TEST", metadata.get("title").asText());
   }
 
+
+  // TODO: Redo this test PLZKTHX
   @Test
   public void getResource() throws Exception {
-      KnowledgeObject ko = new KnowledgeObject(arkId, "v0.0.1");
 
-      JsonNode metadata = koStore.getMetadata(ko.baseMetadataLocation().toString());
-    ko.setMetadata((ObjectNode)metadata);
+      JsonNode metadata = koStore.getMetadata(arkId.getDashArk(), "v0.0.1");
 //    ko.setModelMetadata((ObjectNode)modelMetadata);
 //    Path resourceLocation = ko.resourceLocation();
 //    byte[] resource = koStore.getBinary(resourceLocation);

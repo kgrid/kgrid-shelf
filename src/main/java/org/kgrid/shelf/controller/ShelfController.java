@@ -1,7 +1,6 @@
 package org.kgrid.shelf.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.nio.file.NoSuchFileException;
 import java.util.Date;
@@ -14,7 +13,6 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObject;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,7 +56,7 @@ public class ShelfController {
     log.info("getting all kos");
     if (prefer != null && prefer.matches(".*return\\s*=\\s*minimal.*")) {
       return shelf.findAll().keySet().stream()
-          .collect(Collectors.toMap(ArkId::toString, key -> request.getUrl() + key.getNaanName()));
+          .collect(Collectors.toMap(ArkId::toString, key -> request.getUrl() + key.getSlashArk()));
     }
     Map koMap = shelf.findAll();
     log.info("found " + koMap.size() + " kos");
@@ -66,7 +64,7 @@ public class ShelfController {
   }
 
   @GetMapping(path = "/{naan}/{name}")
-  public ResponseEntity<JsonNode> getKnowledgeObjectVersion(@PathVariable String naan,
+  public ResponseEntity<JsonNode> getKnowledgeObject(@PathVariable String naan,
       @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer,
       RequestEntity request) {
 
@@ -77,7 +75,7 @@ public class ShelfController {
       throw new IllegalArgumentException("Cannot connect to fcrepo at the same address as the shelf. Make sure shelf and fcrepo configuration is correct.");
     }
     ArkId arkId = new ArkId(naan, name);
-    JsonNode results = shelf.findByArkId(arkId);
+    JsonNode results = shelf.findKnowledgeObjectMetadata(arkId);
 
     if (results == null || results.size() == 0) {
       throw new IllegalArgumentException("Object not found with id " + naan + "-" + name);
@@ -86,20 +84,19 @@ public class ShelfController {
     return new ResponseEntity<>(results, HttpStatus.OK);
   }
 
-  @GetMapping(path = "/{naan}/{name}/{version}")
-  public ObjectNode getKnowledgeObject(@PathVariable String naan, @PathVariable String name,
-      @PathVariable String version, RequestEntity request, HttpServletRequest httpServletRequest) {
+  @GetMapping(path = "/{naan}/{name}/{implementation}")
+  public JsonNode getKnowledgeObjectImplementation(@PathVariable String naan, @PathVariable String name,
+      @PathVariable String implementation, RequestEntity request, HttpServletRequest httpServletRequest) {
 
-    log.info("getting ko " + naan + "/" + name + "/" + version + " Look at this "+ request.getUrl()  );
+    log.info("getting ko " + naan + "/" + name + "/" + implementation + " Look at this "+ request.getUrl()  );
 
-    ArkId arkId = new ArkId(naan, name);
-    KnowledgeObject ko = shelf.findByArkIdAndVersion(arkId, version);
-    kod.ifPresent(decorator -> decorator.decorate(ko, httpServletRequest));
-    return ko.getMetadata();
+    ArkId arkId = new ArkId(naan, name, implementation);
+
+    return shelf.findImplementationMetadata(arkId);
   }
 
   @GetMapping(path = "/{naan}/{name}", produces = "application/zip")
-  public void getZippedKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name,
+  public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name,
       HttpServletResponse response) {
 
     log.info("get ko zip for " + naan + "/" + name );
@@ -120,22 +117,22 @@ public class ShelfController {
     }
   }
 
-  @GetMapping(path = "/{naan}/{name}/{version}/service")
+  @GetMapping(path = "/{naan}/{name}/{implementation}/service")
   public Object getServiceDescription(@PathVariable String naan, @PathVariable String name,
-      @PathVariable String version) throws NoSuchFileException, NoSuchFieldException {
+      @PathVariable String implementation) throws NoSuchFileException, NoSuchFieldException {
 
-    log.info("getting ko service  " + naan + "/" + name + "/" + version );
+    log.info("getting ko service  " + naan + "/" + name + "/" + implementation );
 
-    ArkId arkId = new ArkId(naan, name);
+    ArkId arkId = new ArkId(naan, name, implementation);
 
-    ObjectNode metadata = shelf.findByArkIdAndVersion(arkId, version).getMetadata();
+    JsonNode metadata = shelf.findImplementationMetadata(arkId);
     String childPath;
     if(metadata.has("service")) {
       childPath = metadata.get("service").asText();
     } else {
       throw new NoSuchFieldException("Object has no service description location specified in metadata.");
     }
-    byte[] binary = shelf.getBinaryOrMetadata(arkId, version, childPath);
+    byte[] binary = shelf.getBinaryOrMetadata(arkId, childPath);
     if(binary != null) {
       return binary;
     } else {
@@ -143,21 +140,21 @@ public class ShelfController {
     }
   }
 
-  @GetMapping(path = "/{naan}/{name}/{version}/**", produces = MediaType.ALL_VALUE)
+  @GetMapping(path = "/{naan}/{name}/{implementation}/**", produces = MediaType.ALL_VALUE)
   public Object getBinary(@PathVariable String naan, @PathVariable String name,
-      @PathVariable String version, HttpServletRequest request) throws NoSuchFileException {
+      @PathVariable String implementation, HttpServletRequest request) throws NoSuchFileException {
 
-    log.info("getting ko resource " + naan + "/" + name + "/" + version );
+    log.info("getting ko resource " + naan + "/" + name + "/" + implementation );
 
-    ArkId arkId = new ArkId(naan, name);
+    ArkId arkId = new ArkId(naan, name, implementation);
 
     String requestURI = request.getRequestURI();
-    String basePath = StringUtils.join(naan, "/", name, "/", version, "/");
+    String basePath = StringUtils.join(naan, "/", name, "/", implementation, "/");
     String childPath = StringUtils.substringAfterLast(requestURI, basePath);
 
-    log.info("getting ko resource " + naan + "/" + name + "/" + version + childPath);
+    log.info("getting ko resource " + naan + "/" + name + "/" + implementation + childPath);
 
-    byte[] binary = shelf.getBinaryOrMetadata(arkId, version, childPath);
+    byte[] binary = shelf.getBinaryOrMetadata(arkId, childPath);
     if(binary != null) {
       return binary;
     } else {
@@ -174,11 +171,11 @@ public class ShelfController {
     return new ResponseEntity<>(result, HttpStatus.CREATED);
   }
 
-  @PutMapping(path = "/{naan}/{name}/{version}")
+  @PutMapping(path = "/{naan}/{name}/{implementation}")
   public ResponseEntity<Map<String, String>> importKO(@PathVariable String naan, @PathVariable String name,
-      @PathVariable String version, @RequestParam("ko") MultipartFile zippedKo) {
+      @PathVariable String implementation, @RequestParam("ko") MultipartFile zippedKo) {
 
-    log.info("add ko " + naan + "/" + name + (version==null?"":"/" + version) + " zip file " +zippedKo.getOriginalFilename());
+    log.info("add ko " + naan + "/" + name + (implementation==null?"":"/" + implementation) + " zip file " +zippedKo.getOriginalFilename());
 
     ArkId pathArk = new ArkId(naan, name);
     ArkId arkId = shelf.importZip(pathArk, zippedKo);
@@ -190,12 +187,12 @@ public class ShelfController {
 
   }
 
-  @PutMapping(path = "/{naan}/{name}/{version}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<ObjectNode> editMetadata(@PathVariable String naan,
-      @PathVariable String name, @PathVariable String version, @RequestBody String data) {
-    ArkId arkId = new ArkId(naan, name);
-    shelf.editMetadata(arkId, version, null, data);
-    return new ResponseEntity<>(shelf.findByArkIdAndVersion(arkId, version).getMetadata(),
+  @PutMapping(path = "/{naan}/{name}/{implementation}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<JsonNode> editMetadata(@PathVariable String naan,
+      @PathVariable String name, @PathVariable String implementation, @RequestBody String data) {
+    ArkId arkId = new ArkId(naan, name, implementation);
+    shelf.editMetadata(arkId, null, data);
+    return new ResponseEntity<>(shelf.findImplementationMetadata(arkId),
         HttpStatus.OK);
   }
 
@@ -211,12 +208,12 @@ public class ShelfController {
     }
   }
 
-  @DeleteMapping(path = "/{naan}/{name}/{version}")
+  @DeleteMapping(path = "/{naan}/{name}/{implementation}")
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan,
-      @PathVariable String name, @PathVariable String version) {
-    ArkId arkId = new ArkId(naan, name);
+      @PathVariable String name, @PathVariable String implementation) {
+    ArkId arkId = new ArkId(naan, name, implementation);
     try {
-      shelf.delete(arkId, version);
+      shelf.delete(arkId);
       return new ResponseEntity<>(HttpStatus.NO_CONTENT);
     } catch (IOException ex) {
       throw new IllegalArgumentException(ex);

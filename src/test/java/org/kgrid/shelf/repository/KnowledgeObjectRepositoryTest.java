@@ -40,7 +40,7 @@ public class KnowledgeObjectRepositoryTest {
   @Autowired
   ZipExportService zipExportService;
 
-  private ArkId arkId = new ArkId("ark:/hello/world");
+  private ArkId arkId = new ArkId("hello", "world", "v0.0.1");
 
   @Before
   public void setUp() throws Exception {
@@ -50,16 +50,16 @@ public class KnowledgeObjectRepositoryTest {
     URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/hello-world-jsonld.zip");
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
 
-    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-jsonld.zip", "application/zip", zippedKO);
-    repository.importZip(new ArkId("hello-world"), koZip);
-    assertNotNull(repository.findByArkIdAndVersion(new ArkId("hello-world"), "v0.0.1"));
+    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-jsonld.zip", "application/zip", zippedKO);;
+    repository.importZip(arkId, koZip);
+    assertNotNull(repository.findImplementationMetadata(arkId));
   }
 
   @After
   public void clearShelf() throws Exception {
     repository.delete(new ArkId("ark:/hello/world"));
     try {
-      JsonNode metadata = repository.findByArkId(new ArkId("hello-world"));
+      JsonNode metadata = repository.findKnowledgeObjectMetadata(new ArkId("hello-world"));
       assertTrue("Should have deleted hell0-world", false);
     }catch (IllegalArgumentException e){
       assertTrue(true);
@@ -68,13 +68,13 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getKnowledgeObject() throws Exception {
-    assertNotNull(repository.findByArkIdAndVersion(arkId, "v0.0.1"));
+    assertNotNull(repository.findImplementationMetadata(arkId));
   }
 
   @Test
   public void getTopLevelMetadata() throws Exception {
 
-    JsonNode map = repository.findByArkId(arkId);
+    JsonNode map = repository.findKnowledgeObjectMetadata(arkId);
     assertNotNull(map);
   }
 
@@ -82,9 +82,9 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getCorrectMetadata() throws Exception {
-    KnowledgeObject ko = repository.findByArkIdAndVersion(arkId, "v0.0.1");
-    assertTrue(ko.getMetadata().findValue("identifier").asText().equals("v0.0.1"));
-    String resource = ko.getMetadata().findValue("hasPayload").asText();
+    JsonNode koMeatadata = repository.findImplementationMetadata(arkId);
+    assertTrue(koMeatadata.findValue("identifier").asText().equals("v0.0.1"));
+    String resource = koMeatadata.findValue("hasPayload").asText();
     assertEquals("v0.0.1/welcome.js", resource);
   }
 
@@ -97,7 +97,7 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void testEditMainMetadata() {
     String testdata = "{\"test\":\"data\"}";
-    ObjectNode metadata = repository.editMetadata(arkId, "v0.0.1", null, testdata);
+    ObjectNode metadata = repository.editMetadata(arkId, null, testdata);
     assertEquals("data", metadata.get("test").asText());
   }
 

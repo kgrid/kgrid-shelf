@@ -74,7 +74,7 @@ public class ShelfControllerTest {
     }
 
     @Test
-    public void findVersionMetadata() throws Exception {
+    public void findImplementationMetadata() throws Exception {
         this.mockMvc.perform(get("/hello/world/v0.0.1"))
             .andExpect(status().isOk())
             .andExpect(content().contentType("application/json;charset=UTF-8"));
@@ -87,7 +87,7 @@ public class ShelfControllerTest {
     }
 
     @Test
-    public void versionMetadataNotFound() throws Exception {
+    public void implementationMetadataNotFound() throws Exception {
         this.mockMvc.perform(get("/99999/fk45m6gq9t/XXXXX"))
             .andExpect(status().isNotFound());
     }

@@ -15,28 +15,20 @@ public class KnowledgeObject {
   private ObjectNode metadata;
   private ArkId arkId;
 
-  private final Path basePath;
-  private final Path versionPath;
-
   public static final String METADATA_FILENAME = "metadata.json";
+  public static final String IMPLEMENTATIONS_TERM = "hasImplementation";
+  public static final String SERVICE_SPEC_TERM = "hasServiceSpecification";
+  public static final String DEPLOYMENT_SPEC_TERM = "hasDeploymentSpecification";
+  public static final String PAYLOAD_TERM = "hasPayload";
 
-  public KnowledgeObject(ArkId arkId, String version) {
+
+  public KnowledgeObject(ArkId arkId) {
     this.arkId = arkId;
-    basePath = Paths.get(arkId.getAsSimpleArk());
-    versionPath = basePath.resolve(version);
-  }
-
-  public Path baseMetadataLocation() {
-    return versionPath.resolve(METADATA_FILENAME);
   }
 
   @JsonIgnore
   public ArkId getArkId() {
     return arkId;
-  }
-
-  public String version() {
-    return versionPath.getFileName().toString();
   }
 
   public void setMetadata(ObjectNode metadata) {

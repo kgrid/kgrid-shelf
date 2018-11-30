@@ -1,18 +1,17 @@
 package org.kgrid.shelf.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
 
 public class ArkId {
 
-  public static final String ARK_FORMAT = "ark:/%s/%s";
+  private static final String ARK_FORMAT = "ark:/%s/%s";
   private String arkId;
   private String naan;
   private String name;
-  private String version;
+  private String implementation;
 
   public ArkId(String path) {
     setArkId(path);
@@ -24,10 +23,10 @@ public class ArkId {
     this.arkId = String.format("ark:/%s", naan + "/" + name);
   }
 
-  public ArkId(String naan, String name, String version) {
+  public ArkId(String naan, String name, String implementation) {
     this.naan = naan;
     this.name = name;
-    this.version = version;
+    this.implementation = implementation;
     this.arkId = String.format("ark:/%s", naan + "/" + name);
   }
 
@@ -35,28 +34,28 @@ public class ArkId {
 
   }
 
-  @JsonIgnore
-  public String getAsSimpleArk() {
-     return naan + "-" + name;
-  }
-
-  public String getAsFullArk() {
+  public String getFullArk() {
     return arkId;
   }
 
   @JsonIgnore
-  public String getAsSimpleArkAndVersion() {
-    return naan + "-" + name + "/" + version;
+  public String getDashArk() {
+     return naan + "-" + name;
   }
 
   @JsonIgnore
-  public String getNaanName() {
+  public String getDashArkImplementation() {
+    return naan + "-" + name + "/" + implementation;
+  }
+
+  @JsonIgnore
+  public String getSlashArk() {
     return naan + "/" + name;
   }
 
   @JsonIgnore
-  public String getNaanNameVersion() {
-    return StringUtils.join(naan, "/", name, "/", version);
+  public String getSlashArkImplementation() {
+    return StringUtils.join(naan, "/", name, "/", implementation);
   }
 
   @Override
@@ -99,37 +98,37 @@ public class ArkId {
 
   @Override
   public String toString() {
-    return getAsFullArk();
+    return getFullArk();
   }
 
-  String getNaan() {
+  public String getNaan() {
     return naan;
   }
 
-  String getName() {
+  public String getName() {
     return name;
   }
 
-  String getVersion() {
-    return version;
+  public String getImplementation() {
+    return implementation;
   }
 
   /*
-   * Can create an ark id with optional version from the following formats:
+   * Can create an ark id with optional implementation from the following formats:
    * ark:/naan/name
    * ark:/naan-name
-   * ark:/naan/name/version
-   * ark:/naan-name/version
+   * ark:/naan/name/implementation
+   * ark:/naan-name/implementation
    */
   public void setArkId(String path) {
     String arkIdRegex = "ark:/(\\w+)/(\\w+)";
     Matcher arkIdMatcher = Pattern.compile(arkIdRegex).matcher(path);
     String arkDirectoryRegex = "(\\w+)-(\\w+)";
     Matcher arkDirectoryMatcher = Pattern.compile(arkDirectoryRegex).matcher(path);
-    String arkIdVersionRegex = "ark:/(\\w+)/(\\w+)/([a-zA-Z0-9._\\-]+)";
-    Matcher arkIdVersionMatcher = Pattern.compile(arkIdVersionRegex).matcher(path);
-    String arkDirectoryVersionRegex = "(\\w+)-(\\w+)/([a-zA-Z0-9._\\-]+)";
-    Matcher arkDirectoryVersionMatcher = Pattern.compile(arkDirectoryVersionRegex).matcher(path);
+    String arkIdImplementationRegex = "ark:/(\\w+)/(\\w+)/([a-zA-Z0-9._\\-]+)";
+    Matcher arkIdImplementationMatcher = Pattern.compile(arkIdImplementationRegex).matcher(path);
+    String arkDirectoryImplementationRegex = "(\\w+)-(\\w+)/([a-zA-Z0-9._\\-]+)";
+    Matcher arkDirectoryImplementationMatcher = Pattern.compile(arkDirectoryImplementationRegex).matcher(path);
     if (arkIdMatcher.matches()) {
       this.naan = arkIdMatcher.group(1);
       this.name = arkIdMatcher.group(2);
@@ -138,15 +137,15 @@ public class ArkId {
       this.naan = arkDirectoryMatcher.group(1);
       this.name = arkDirectoryMatcher.group(2);
       this.arkId = String.format(ARK_FORMAT, naan, name);
-    } else if (arkIdVersionMatcher.matches()) {
-      this.naan = arkIdVersionMatcher.group(1);
-      this.name = arkIdVersionMatcher.group(2);
-      this.version = arkIdVersionMatcher.group(3);
+    } else if (arkIdImplementationMatcher.matches()) {
+      this.naan = arkIdImplementationMatcher.group(1);
+      this.name = arkIdImplementationMatcher.group(2);
+      this.implementation = arkIdImplementationMatcher.group(3);
       this.arkId = String.format(ARK_FORMAT, naan, name);
-    } else if(arkDirectoryVersionMatcher.matches()) {
-      this.naan = arkIdVersionMatcher.group(1);
-      this.name = arkIdVersionMatcher.group(2);
-      this.version = arkIdVersionMatcher.group(3);
+    } else if(arkDirectoryImplementationMatcher.matches()) {
+      this.naan = arkIdImplementationMatcher.group(1);
+      this.name = arkIdImplementationMatcher.group(2);
+      this.implementation = arkIdImplementationMatcher.group(3);
       this.arkId = String.format(ARK_FORMAT, naan, name);
     } else {
       throw new IllegalArgumentException("Cannot create ark id from " + path);
