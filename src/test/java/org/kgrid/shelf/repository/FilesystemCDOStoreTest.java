@@ -52,6 +52,11 @@ public class FilesystemCDOStoreTest {
   }
 
   @Test
+  public void testGetMetaData(){
+    ObjectNode koNode = koStore.getMetadata("hello-world");
+    assertEquals("Hello  World Title", koNode.findValue("title").textValue());
+  }
+  @Test
   public void testURIPathWindows(){
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
     koStore = new FilesystemCDOStore(connectionURL);

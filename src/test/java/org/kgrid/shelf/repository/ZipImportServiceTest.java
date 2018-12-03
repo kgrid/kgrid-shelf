@@ -42,7 +42,7 @@ public class ZipImportServiceTest {
   @Test
   public void testImportKnowledgeObject() throws IOException {
 
-    InputStream zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
+    InputStream zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
 
     service.importCompoundDigitalObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
 
@@ -56,7 +56,7 @@ public class ZipImportServiceTest {
     filesPaths.forEach(file ->{
       System.out.println(file.toAbsolutePath().toString());
     });
-    assertEquals(9,filesPaths.size());
+    assertEquals(5,filesPaths.size());
 
   }
 
@@ -105,27 +105,5 @@ public class ZipImportServiceTest {
 
   }
 
-  @Test
-  public void testWindowsZipKnowledgeObject() throws IOException {
-
-    InputStream zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/windows-export.zip");
-
-
-    service.importCompoundDigitalObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
-
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-            temporaryFolder.getRoot().toPath().toString(),"hello-world"),  2, FOLLOW_LINKS)
-            .filter(Files::isRegularFile)
-            .map(Path::toAbsolutePath)
-            .collect(Collectors.toList());
-
-    filesPaths.forEach(file ->{
-      System.out.println(file.toAbsolutePath().toString());
-    });
-    assertEquals(9,filesPaths.size());
-
-
-  }
 
 }

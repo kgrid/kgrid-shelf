@@ -33,6 +33,7 @@ import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
@@ -314,7 +315,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     HttpHeaders headers = new HttpHeaders();
     headers
         .add("Accept", "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#compacted\"");
-    headers.add("Prefer", "return=\"representation\";include=\"http://fedora.info/definitions/v4/repository#EmbedResources \"");
+    headers.add("Prefer", "return=\"minimal\";include=\"http://fedora.info/definitions/v4/repository#EmbedResources \"");
     headers.putAll(authenticationHeader().getHeaders());
 
     HttpEntity<String> entity = new HttpEntity<>("", headers);
@@ -387,6 +388,12 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   private String pathBuilder(String... relativePathParts) {
+
+    //Handle absolute paths
+    if (ResourceUtils.isUrl( relativePathParts[0] ) && relativePathParts.length==1) {
+      return relativePathParts[0];
+    }
+
     StringBuilder relativePath = new StringBuilder(storagePath);
     for (String part : relativePathParts) {
       if(!relativePath.toString().endsWith("/")) {

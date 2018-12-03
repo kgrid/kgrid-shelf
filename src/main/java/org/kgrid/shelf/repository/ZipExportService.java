@@ -3,6 +3,7 @@ package org.kgrid.shelf.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
+import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
@@ -12,6 +13,7 @@ import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.zeroturnaround.zip.ByteSource;
 import org.zeroturnaround.zip.ZipEntrySource;
 import org.zeroturnaround.zip.ZipUtil;
@@ -28,8 +30,9 @@ public class ZipExportService {
 
     //Get KO and add to export zip entries
     ObjectNode koMetaData = cdoStore.getMetadata(arkId.getDashArk());
-    entries.add(new ByteSource(FilenameUtils.normalize(Paths.get(
-        arkId.getDashArk(), KnowledgeObject.METADATA_FILENAME).toString(), true),
+    entries.add(new ByteSource(
+        FilenameUtils.normalize(
+            Paths.get(arkId.getDashArk(), KnowledgeObject.METADATA_FILENAME).toString(), true),
         koMetaData.toString().getBytes()));
 
     //Get KO Implementations
@@ -37,10 +40,27 @@ public class ZipExportService {
 
     implementations.forEach( jsonNode ->{
 
+      String path = ResourceUtils.isUrl(jsonNode.asText())?
+          jsonNode.asText():Paths.get(jsonNode.asText()).toString();
+
       //Get and add KO Implementation metadat export zip entries
-      JsonNode implementationNode = cdoStore.getMetadata(
-          Paths.get(jsonNode.asText()).toString());
-      entries.add(new ByteSource(FilenameUtils.normalize(Paths.get(jsonNode.asText(), KnowledgeObject.METADATA_FILENAME).toString(),true),implementationNode.toString().getBytes()));
+      JsonNode implementationNode = cdoStore.getMetadata(path);
+
+      try {
+        //handle absolute URIs with relative
+        String fileName = ResourceUtils.isUrl(path) ?
+            Paths.get(ResourceUtils.toURI(path).getPath().substring(
+                ResourceUtils.toURI(path).getPath().indexOf(arkId.getDashArk())),
+                KnowledgeObject.METADATA_FILENAME).toString() :
+            FilenameUtils.normalize(
+                Paths.get(jsonNode.asText(), KnowledgeObject.METADATA_FILENAME).toString(), true);
+
+        entries.add(new ByteSource(fileName, implementationNode.toString().getBytes()));
+
+      } catch (URISyntaxException ex){
+        throw new ShelfException("Issue creating file name for extract " + jsonNode.asText(), ex);
+      }
+
 
       //Add Implementation binary files to export zip entries
       List<String> binaryNodes = new ArrayList<>();
@@ -54,9 +74,25 @@ public class ZipExportService {
           binaryNodes.add(implementationNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText());
       }
       binaryNodes.forEach( (binaryPath) -> {
-        byte[] bytes = cdoStore.getBinary(
-            Paths.get( arkId.getDashArk(), binaryPath).toString());
-        entries.add(new ByteSource(FilenameUtils.normalize(Paths.get(arkId.getDashArk(), binaryPath).toString(),true), bytes));
+
+        try {
+
+          String uriPath = ResourceUtils.isUrl(binaryPath)?
+              binaryPath:Paths.get( arkId.getDashArk(), binaryPath).toString();
+
+          byte[] bytes = cdoStore.getBinary(uriPath);
+
+          String fileName = ResourceUtils.isUrl(binaryPath)?
+            Paths.get(ResourceUtils.toURI(binaryPath).getPath().substring(
+                ResourceUtils.toURI(binaryPath).getPath().indexOf(arkId.getDashArk()))).toString():
+            FilenameUtils.normalize(Paths.get(arkId.getDashArk(), binaryPath).toString(), true);
+
+           entries.add(new ByteSource(fileName, bytes));
+
+        } catch (URISyntaxException ex){
+          throw new ShelfException("Issue creating file name for extract " + binaryPath, ex);
+        }
+
       });
     });
 

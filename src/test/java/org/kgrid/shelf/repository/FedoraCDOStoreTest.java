@@ -34,7 +34,7 @@ public class FedoraCDOStoreTest {
 
     try {
 
-      String filename = "/fixtures/hello-world-jsonld.zip";
+      String filename = "/fixtures/hello-world.zip";
       URL zipStream = FilesystemCDOStoreTest.class.getResource(filename);
       byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
       MockMultipartFile koZip = new MockMultipartFile("ko", filename, "application/zip", zippedKO);
@@ -55,8 +55,8 @@ public class FedoraCDOStoreTest {
 
     ObjectNode koNode = fedoraCDOStore.getMetadata("hello-world");
 
-    assertEquals(3, koNode.get("@graph").size());
-    assertNotNull(koNode.get("@context"));
+    assertEquals("Hello World Title", koNode.findValue("title").asText());
+
 
   }
 
@@ -64,20 +64,10 @@ public class FedoraCDOStoreTest {
   public void findBinary() {
 
     assertNotNull(
-        fedoraCDOStore.getBinary("hello-world/v0.0.1/welcome.js"));
-
+        fedoraCDOStore.getBinary("hello-world/koio.v1/welcome.js"));
   }
 
-  @Test
-  public void findChildren() {
 
-    List<String> paths = fedoraCDOStore.getChildren("hello-world/");
-
-    assertEquals(3,
-        fedoraCDOStore.getChildren("hello-world/v0.0.1").size());
-
-
-  }
 
   @AfterClass
   public static void deleteKO() throws Exception {
