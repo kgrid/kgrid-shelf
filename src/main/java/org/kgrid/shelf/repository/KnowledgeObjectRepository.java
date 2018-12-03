@@ -3,18 +3,22 @@ package org.kgrid.shelf.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
+import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
@@ -70,6 +74,59 @@ public class KnowledgeObjectRepository {
       }
     }
     return knowledgeObjects;
+  }
+
+  /**
+   * Find the Service Specification for the implementation
+   *
+   * @param arkId Ark ID for the implementation
+   * @param implementationNode implementation
+   * @return JsonNode service specification
+   */
+  public JsonNode findServiceSpecification(ArkId arkId, JsonNode implementationNode) {
+
+    String serviceSpecPath = implementationNode.findValue(
+        KnowledgeObject.SERVICE_SPEC_TERM).asText();
+
+    log.info("find service specification at " + serviceSpecPath);
+
+    String uriPath = ResourceUtils.isUrl(serviceSpecPath)?
+        serviceSpecPath:Paths.get( arkId.getDashArk(), serviceSpecPath).toString();
+
+    try {
+      YAMLMapper yamlMapper = new YAMLMapper();
+      JsonNode serviceSpecNode =  yamlMapper.readTree(dataStore.getBinary(uriPath));
+
+      return serviceSpecNode;
+
+    } catch (IOException exception){
+      throw new ShelfException("Could not parse service specification for " +
+          arkId.getDashArkImplementation(), exception);
+    }
+
+  }
+
+  /**
+   * Find the Service Specification for the implementation
+   *
+   * @param arkId Ark ID for the implementation
+   * @return JsonNode service specification
+   */
+  public JsonNode findServiceSpecification(ArkId arkId) {
+
+     return findServiceSpecification(arkId, findImplementationMetadata(arkId));
+
+  }
+
+  public JsonNode findPayload(ArkId arkId) {
+
+   throw new RuntimeException("not implemented yet");
+
+  }
+
+  public JsonNode findDeploymentSpecification(ArkId arkId) {
+
+    throw new RuntimeException("not implemented yet");
   }
 
   /**

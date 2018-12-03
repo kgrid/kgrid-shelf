@@ -13,6 +13,7 @@ public class ArkIdTest {
     assertEquals("hello", arkId.getNaan());
     assertEquals("world", arkId.getName());
     assertEquals("v1", arkId.getImplementation());
+    assertEquals("hello-world/v1", arkId.getDashArkImplementation());
 
     arkId = new ArkId("hello-world");
     assertEquals("hello", arkId.getNaan());

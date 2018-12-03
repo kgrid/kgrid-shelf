@@ -6,6 +6,8 @@ import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -109,4 +111,27 @@ public class KnowledgeObjectRepositoryTest {
   }
 
 
+  @Test
+  public void findServiceSpecification() throws IOException, URISyntaxException {
+
+    URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/hello-world.zip");
+    byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+
+    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-.zip", "application/zip", zippedKO);;
+    repository.importZip(arkId, koZip);
+
+    ArkId arkId = new ArkId("hello-world/koio.v1");
+    JsonNode serviceSpecNode = repository.findServiceSpecification(arkId);
+    assertEquals( "Hello, World", serviceSpecNode.path("info").path("title").asText());
+    assertEquals( "/welcome", serviceSpecNode.findValue("paths").fieldNames().next());
+
+  }
+
+  @Test
+  public void findPayloadUsing() {
+  }
+
+  @Test
+  public void findDeploymentSpecification() {
+  }
 }
