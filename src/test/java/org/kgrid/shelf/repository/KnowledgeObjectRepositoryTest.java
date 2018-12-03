@@ -53,6 +53,12 @@ public class KnowledgeObjectRepositoryTest {
     MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-jsonld.zip", "application/zip", zippedKO);;
     repository.importZip(arkId, koZip);
     assertNotNull(repository.findImplementationMetadata(arkId));
+
+    zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/hello-usa-jsonld.zip");
+    zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+    koZip = new MockMultipartFile("ko", "hello-world-jsonld.zip", "application/zip", zippedKO);;
+    repository.importZip(new ArkId("hello", "usa"), koZip);
+
   }
 
   @After
@@ -91,6 +97,7 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void listAllObjects() {
     Map<ArkId, JsonNode>  objects = repository.findAll();
+    assertEquals(2,objects.size());
     assertEquals("hello-world", objects.get(arkId).get("@id").asText());
   }
 

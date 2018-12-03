@@ -2,7 +2,6 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -32,7 +31,8 @@ public class ZipImportService {
    * @param zipFileStream zip in the form of a stream
    * @param cdoStore persistence layer
    */
-  public void importCompoundDigitalObject(ArkId arkId, InputStream zipFileStream,CompoundDigitalObjectStore cdoStore) {
+  public void importCompoundDigitalObject(ArkId arkId, InputStream zipFileStream,
+      CompoundDigitalObjectStore cdoStore) {
 
     Map<String, JsonNode> containerResources = new HashMap<>();
     Map<String, byte[]> binaryResources = new HashMap<>();
@@ -45,9 +45,21 @@ public class ZipImportService {
     JsonNode koMetaData = containerResources.get(
         arkId.getDashArk());
 
-    ArrayNode arrayNode = (ArrayNode) getImplementationIDs( koMetaData );
+    if(KnowledgeObject.getImplementationIDs( koMetaData ).isArray()){
 
-    importImplementations(arkId, cdoStore, containerResources, binaryResources, arrayNode);
+      JsonNode implementationNodes = KnowledgeObject.getImplementationIDs( koMetaData );
+      implementationNodes.forEach( jsonNode ->{
+
+        importImplementation(arkId, cdoStore, containerResources, binaryResources, jsonNode);
+
+      });
+
+    } else {
+
+      importImplementation(arkId, cdoStore, containerResources, binaryResources,
+          KnowledgeObject.getImplementationIDs( koMetaData ));
+
+    }
 
     cdoStore.saveMetadata(koMetaData, arkId.getDashArk(),
         KnowledgeObject.METADATA_FILENAME);
@@ -101,31 +113,24 @@ public class ZipImportService {
    * @param cdoStore persistence layer
    * @param containerResources metadata load from the zip
    * @param binaryResources binaries load based on the metadata in the zip
-   * @param arrayNode collection of implementations
+   * @param jsonNode implementation node
    */
-
-  protected void importImplementations(ArkId arkId, CompoundDigitalObjectStore cdoStore,
+  protected void importImplementation(ArkId arkId, CompoundDigitalObjectStore cdoStore,
       Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources,
-      ArrayNode arrayNode) {
+      JsonNode jsonNode) {
+    String path = jsonNode.asText();
+    JsonNode metadata = containerResources.get(Paths.get(path).toString());
 
-    arrayNode.forEach( jsonNode ->{
+    cdoStore.createContainer( path);
 
-      String path = jsonNode.asText();
-      JsonNode metadata = containerResources.get(Paths.get(path).toString());
+    List<String> binaryPaths = getImplementationBinaryPaths(metadata);
 
-      cdoStore.createContainer( path);
-
-      List<String> binaryPaths = getImplementationBinaryPaths(metadata);
-
-      binaryPaths.forEach( (binaryPath) -> {
-        cdoStore.saveBinary(binaryResources.get( Paths.get(arkId.getDashArk(), binaryPath).toString()),
-            arkId.getDashArk(), binaryPath);
-      });
-
-      cdoStore.saveMetadata(metadata, path,  KnowledgeObject.METADATA_FILENAME);
-
+    binaryPaths.forEach( (binaryPath) -> {
+      cdoStore.saveBinary(binaryResources.get( Paths.get(arkId.getDashArk(), binaryPath).toString()),
+          arkId.getDashArk(), binaryPath);
     });
 
+    cdoStore.saveMetadata(metadata, path,  KnowledgeObject.METADATA_FILENAME);
   }
 
   /**

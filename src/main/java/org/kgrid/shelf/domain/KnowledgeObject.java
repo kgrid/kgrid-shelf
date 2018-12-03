@@ -4,9 +4,8 @@ import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(Include.NON_NULL)
@@ -37,6 +36,10 @@ public class KnowledgeObject {
 
   public ObjectNode getMetadata() {
     return metadata;
+  }
+
+  public static JsonNode getImplementationIDs(JsonNode node){
+    return node.findValue(KnowledgeObject.IMPLEMENTATIONS_TERM);
   }
 
 }
