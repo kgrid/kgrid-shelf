@@ -28,8 +28,9 @@ public class ZipImportService {
    * Create KO object, must add Knowledge Object files, Knowledge Object properties and
    * Knowledge Object Implementation properties
    *
-   * @param zipFileStream
-   * @param cdoStore
+   * @param arkId ark id of the importing object
+   * @param zipFileStream zip in the form of a stream
+   * @param cdoStore persistence layer
    */
   public void importCompoundDigitalObject(ArkId arkId, InputStream zipFileStream,CompoundDigitalObjectStore cdoStore) {
 
@@ -58,9 +59,9 @@ public class ZipImportService {
    * Captures the Zip Entries loading a collection of metadata and collection of
    * binaries
    *
-   * @param zipFileStream
-   * @param containerResources
-   * @param binaryResources
+   * @param zipFileStream zip file in a stream
+   * @param containerResources collection of metadata files
+   * @param binaryResources collection of binary files
    */
   protected void captureZipEntries(InputStream zipFileStream,
       Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources) {
@@ -96,11 +97,11 @@ public class ZipImportService {
   /**
    * Imports the KO Implementations loading the metadata and binaries
    *
-   * @param arkId
-   * @param cdoStore
-   * @param containerResources
-   * @param binaryResources
-   * @param arrayNode
+   * @param arkId Ark Id of the object
+   * @param cdoStore persistence layer
+   * @param containerResources metadata load from the zip
+   * @param binaryResources binaries load based on the metadata in the zip
+   * @param arrayNode collection of implementations
    */
 
   protected void importImplementations(ArkId arkId, CompoundDigitalObjectStore cdoStore,
@@ -131,8 +132,8 @@ public class ZipImportService {
    * Give a JsonNode this will look for the KOIO defined
    * Implementation binaries for deployment, service and payload
    *
-   * @param node
-   * @return
+   * @param node implementation json node
+   * @return paths to the binaries that define service, deployment and payload
    */
   public List<String> getImplementationBinaryPaths(JsonNode node){
     List<String> binaryNodes = new ArrayList<>();

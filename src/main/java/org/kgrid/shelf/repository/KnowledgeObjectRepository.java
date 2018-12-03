@@ -74,9 +74,9 @@ public class KnowledgeObjectRepository {
 
   /**
    * Import ZIP file of a KO into self
-   * @param arkId
-   * @param zippedKO
-   * @return
+   * @param arkId ark id of object
+   * @param zippedKO zip file
+   * @return ark id of the import object
    */
   public ArkId importZip(ArkId arkId, MultipartFile zippedKO) {
     try {
@@ -89,9 +89,9 @@ public class KnowledgeObjectRepository {
 
   /**
    * Extract ZIP file of the KO
-   * @param arkId
-   * @param outputStream
-   * @throws IOException
+   * @param arkId ark id of the object
+   * @param outputStream zipped file in outputstream
+   * @throws IOException if the system can't extract the zip file to the filesystem
    */
   public void extractZip(ArkId arkId, OutputStream outputStream) throws IOException {
     outputStream.write(zipExportService.exportCompoundDigitalObject(arkId, dataStore).toByteArray());
