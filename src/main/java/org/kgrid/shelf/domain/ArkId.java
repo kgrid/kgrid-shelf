@@ -143,9 +143,9 @@ public class ArkId {
       this.implementation = arkIdImplementationMatcher.group(3);
       this.arkId = String.format(ARK_FORMAT, naan, name);
     } else if(arkDirectoryImplementationMatcher.matches()) {
-      this.naan = arkIdImplementationMatcher.group(1);
-      this.name = arkIdImplementationMatcher.group(2);
-      this.implementation = arkIdImplementationMatcher.group(3);
+      this.naan = arkDirectoryImplementationMatcher.group(1);
+      this.name = arkDirectoryImplementationMatcher.group(2);
+      this.implementation = arkDirectoryImplementationMatcher.group(3);
       this.arkId = String.format(ARK_FORMAT, naan, name);
     } else {
       throw new IllegalArgumentException("Cannot create ark id from " + path);
