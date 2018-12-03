@@ -10,7 +10,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
@@ -94,6 +93,7 @@ public class KnowledgeObjectRepository {
         serviceSpecPath:Paths.get( arkId.getDashArk(), serviceSpecPath).toString();
 
     try {
+
       YAMLMapper yamlMapper = new YAMLMapper();
       JsonNode serviceSpecNode =  yamlMapper.readTree(dataStore.getBinary(uriPath));
 
@@ -114,17 +114,24 @@ public class KnowledgeObjectRepository {
    */
   public JsonNode findServiceSpecification(ArkId arkId) {
 
-     return findServiceSpecification(arkId, findImplementationMetadata(arkId));
+    log.info("find service specification for  " + arkId.getDashArkImplementation());
+
+    return findServiceSpecification(arkId, findImplementationMetadata(arkId));
 
   }
 
   public JsonNode findPayload(ArkId arkId) {
+
+   log.info("find payload for  " + arkId.getDashArkImplementation());
 
    throw new RuntimeException("not implemented yet");
 
   }
 
   public JsonNode findDeploymentSpecification(ArkId arkId) {
+
+    log.info("find deployment specification for  " + arkId.getDashArkImplementation());
+
 
     throw new RuntimeException("not implemented yet");
   }
