@@ -7,25 +7,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
-import java.util.zip.ZipOutputStream;
 import org.apache.commons.io.FileUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.KnowledgeObject;
@@ -33,7 +26,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.multipart.MultipartFile;
 
 @Qualifier("filesystem")
 public class FilesystemCDOStore implements CompoundDigitalObjectStore {
@@ -109,10 +101,10 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       }
 
       return ((ObjectNode) koMetadata);
-    } catch (IOException ioEx) {
-      throw new IllegalArgumentException(
-          "Cannot read metadata file at path " + metadataPath
-              .resolve(metadataFile.getAbsolutePath()), ioEx);
+    } catch (Exception ioEx) {
+      log.error("Cannot read file at " + metadataPath + " " + ioEx);
+      throw new ShelfException(
+          "Cannot read metadata file at path " + metadataPath, ioEx);
     }
   }
 
@@ -124,6 +116,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       bytes = Files.readAllBytes(binaryPath);
     } catch (IOException ioEx) {
       log.error("Cannot read file at " + binaryPath + " " + ioEx);
+      throw new ShelfException("Could not find " + binaryPath,ioEx);
     }
     return bytes;
   }
