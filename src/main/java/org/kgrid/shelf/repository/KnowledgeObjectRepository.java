@@ -101,13 +101,16 @@ public class KnowledgeObjectRepository {
   }
 
   /**
-   *
+   * Find the deployment specification based on implementation ark id
+   * @param arkId implementation ark id
+   * @return JsonNode deployment specification
    */
   public JsonNode findDeploymentSpecification(ArkId arkId) {
 
     log.info("find deployment specification for  " + arkId.getDashArkImplementation());
 
-    throw new RuntimeException("not implemented yet");
+    return findDeploymentSpecification(arkId, findImplementationMetadata(arkId));
+
   }
 
   /**
@@ -144,19 +147,15 @@ public class KnowledgeObjectRepository {
     return dataStore.getMetadata(arkId.getDashArk());
   }
 
-  public JsonNode findPayload(ArkId arkId) {
 
-    log.info("find payload for  " + arkId.getDashArkImplementation());
+  public byte[] findPayload(ArkId arkId, String implementationPath) {
 
-    return null;
+    String payloadPath = Paths.get(arkId.getDashArkImplementation(),
+        implementationPath).toString();
 
-  }
+    log.info("find payload for  " + payloadPath);
 
-  public JsonNode findPayload(ArkId arkId, JsonNode implementationNode) {
-
-    log.info("find payload for  " + arkId.getDashArkImplementation());
-
-    return null;
+    return dataStore.getBinary(payloadPath);
 
   }
 
@@ -234,7 +233,9 @@ public class KnowledgeObjectRepository {
   /**
    * Loads a YMAL specification file (service or deployment) and maps to a JSON node
    *
-   * @return specification node
+   * @param arkId implementation ark id
+   * @param uriPath path to specification file
+   * @return JsonNode representing YMAL specification file
    */
   protected JsonNode loadSpecificationNode(ArkId arkId, String uriPath) {
     try {

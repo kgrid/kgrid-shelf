@@ -1,5 +1,6 @@
 package org.kgrid.shelf.repository;
 
+import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -19,7 +20,6 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObject;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.ContextConfiguration;
@@ -134,12 +134,48 @@ public class KnowledgeObjectRepositoryTest {
     JsonNode serviceSpecNode = repository.findServiceSpecification(arkId);
 
   }
-
   @Test
-  public void findPayload() {
+  public void findDeploymentSpecification() throws IOException, URISyntaxException {
+
+    URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/hello-world.zip");
+    byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+
+    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-.zip", "application/zip", zippedKO);;
+    repository.importZip(arkId, koZip);
+
+    ArkId arkId = new ArkId("hello-world/koio.v1");
+    JsonNode serviceSpecNode = repository.findDeploymentSpecification(arkId);
+    assertNotNull( serviceSpecNode );
+
+
   }
 
   @Test
-  public void findDeploymentSpecification() {
+  public void findPayload() throws IOException, URISyntaxException {
+
+    URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/hello-world.zip");
+    byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+
+    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-.zip", "application/zip", zippedKO);;
+    repository.importZip(arkId, koZip);
+
+    ArkId arkId = new ArkId("hello-world/koio.v1");
+    byte[] payload = repository.findPayload(arkId, "welcome.js");
+    assertNotNull( payload );
+
+  }
+
+  @Test
+  public void findPayloadNotFound() throws IOException, URISyntaxException {
+
+    URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/hello-world.zip");
+    byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+
+    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world-.zip", "application/zip", zippedKO);;
+    repository.importZip(arkId, koZip);
+
+    ArkId arkId = new ArkId("hello-world/koio.v1");
+    byte[] payload  = repository.findPayload(arkId, "one/two/three/welcome.js");
+    assertNull( payload );
   }
 }
