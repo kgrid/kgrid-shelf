@@ -150,7 +150,7 @@ public class KnowledgeObjectRepository {
 
   public byte[] findPayload(ArkId arkId, String implementationPath) {
 
-    String payloadPath = Paths.get(arkId.getDashArkImplementation(),
+    String payloadPath = Paths.get(arkId.getDashArk(),
         implementationPath).toString();
 
     log.info("find payload for  " + payloadPath);
@@ -244,7 +244,6 @@ public class KnowledgeObjectRepository {
       JsonNode serviceSpecNode = yamlMapper.readTree(dataStore.getBinary(uriPath));
 
       return serviceSpecNode;
-
 
     } catch (IOException exception) {
       throw new ShelfException("Could not parse service specification for " +

@@ -160,7 +160,7 @@ public class KnowledgeObjectRepositoryTest {
     repository.importZip(arkId, koZip);
 
     ArkId arkId = new ArkId("hello-world/koio.v1");
-    byte[] payload = repository.findPayload(arkId, "welcome.js");
+    byte[] payload = repository.findPayload(arkId, "koio.v1/welcome.js");
     assertNotNull( payload );
 
   }
