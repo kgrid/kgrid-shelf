@@ -23,33 +23,59 @@ import org.springframework.web.multipart.MultipartFile;
 @Service
 public class KnowledgeObjectRepository {
 
+  private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
   private CompoundDigitalObjectStore dataStore;
   private ZipImportService zipImportService;
   private ZipExportService zipExportService;
-  private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
 
   @Autowired
-  KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore, ZipImportService zis,
+  KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore,
+      ZipImportService zis,
       ZipExportService zes) {
     this.dataStore = compoundDigitalObjectStore;
     this.zipImportService = zis;
     this.zipExportService = zes;
   }
 
-  public JsonNode getMetadataAtPath(ArkId arkId, String path) {
-    return dataStore.getMetadata(arkId.getDashArk(), arkId.getImplementation(), path);
-  }
-
-  public JsonNode findKnowledgeObjectMetadata(ArkId arkId) {
-    return dataStore.getMetadata(arkId.getDashArk());
-  }
-
-  public JsonNode findImplementationMetadata(ArkId arkId) {
-    ObjectNode metadataNode = dataStore.getMetadata(arkId.getDashArk(), arkId.getImplementation(), KnowledgeObject.METADATA_FILENAME);
-    if(!metadataNode.has("title")) {
-      log.warn("Metadata for ko " + arkId.getSlashArkImplementation() + " is missing a title");
+  public void delete(ArkId arkId) throws IOException {
+    if (arkId.getImplementation() != null) {
+      dataStore.removeFile(arkId.getDashArk(), arkId.getImplementation());
+    } else {
+      dataStore.removeFile(arkId.getDashArk());
     }
-    return metadataNode;
+    log.info("Deleted ko with ark id " + arkId);
+  }
+
+  public ObjectNode editMetadata(ArkId arkId, String path, String metadata) {
+    Path metadataPath;
+    if (path != null && !"".equals(path)) {
+      metadataPath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), path,
+          KnowledgeObject.METADATA_FILENAME);
+    } else {
+      metadataPath = Paths
+          .get(arkId.getDashArk(), arkId.getImplementation(), KnowledgeObject.METADATA_FILENAME);
+    }
+    try {
+      JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
+
+      dataStore.saveMetadata(jsonMetadata, metadataPath.toString());
+
+    } catch (IOException e) {
+      log.error("Cannot edit metadata at " + metadataPath + " " + e);
+    }
+    return dataStore.getMetadata(metadataPath.toString());
+  }
+
+  /**
+   * Extract ZIP file of the KO
+   *
+   * @param arkId ark id of the object
+   * @param outputStream zipped file in outputstream
+   * @throws IOException if the system can't extract the zip file to the filesystem
+   */
+  public void extractZip(ArkId arkId, OutputStream outputStream) throws IOException {
+    outputStream
+        .write(zipExportService.exportCompoundDigitalObject(arkId, dataStore).toByteArray());
   }
 
   public Map<ArkId, JsonNode> findAll() {
@@ -59,12 +85,11 @@ public class KnowledgeObjectRepository {
     for (String path : dataStore.getChildren("")) {
       try {
         ArkId arkId;
-        if(path.contains("/")) {
+        if (path.contains("/")) {
           arkId = new ArkId(StringUtils.substringAfterLast(path, "/"));
         } else if (path.contains("\\")) {
           arkId = new ArkId(StringUtils.substringAfterLast(path, "\\"));
-        }
-        else {
+        } else {
           arkId = new ArkId(path);
         }
         knowledgeObjects.put(arkId, findKnowledgeObjectMetadata(arkId));
@@ -73,6 +98,66 @@ public class KnowledgeObjectRepository {
       }
     }
     return knowledgeObjects;
+  }
+
+  /**
+   *
+   */
+  public JsonNode findDeploymentSpecification(ArkId arkId) {
+
+    log.info("find deployment specification for  " + arkId.getDashArkImplementation());
+
+    throw new RuntimeException("not implemented yet");
+  }
+
+  /**
+   * Find the Deployment Specification for the implementation
+   *
+   * @param arkId Ark ID for the implementation
+   * @param implementationNode implementation
+   * @return JsonNode deployment specification
+   */
+  public JsonNode findDeploymentSpecification(ArkId arkId, JsonNode implementationNode) {
+
+    String deploymentSpecPath = implementationNode.findValue(
+        KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText();
+
+    log.info("find deployment specification for  " + arkId.getDashArkImplementation());
+
+    String uriPath = ResourceUtils.isUrl(deploymentSpecPath) ?
+        deploymentSpecPath : Paths.get(arkId.getDashArk(), deploymentSpecPath).toString();
+
+    return loadSpecificationNode(arkId, uriPath);
+
+  }
+
+  public JsonNode findImplementationMetadata(ArkId arkId) {
+    ObjectNode metadataNode = dataStore.getMetadata(arkId.getDashArk(), arkId.getImplementation(),
+        KnowledgeObject.METADATA_FILENAME);
+    if (!metadataNode.has("title")) {
+      log.warn("Metadata for ko " + arkId.getSlashArkImplementation() + " is missing a title");
+    }
+    return metadataNode;
+  }
+
+  public JsonNode findKnowledgeObjectMetadata(ArkId arkId) {
+    return dataStore.getMetadata(arkId.getDashArk());
+  }
+
+  public JsonNode findPayload(ArkId arkId) {
+
+    log.info("find payload for  " + arkId.getDashArkImplementation());
+
+    return null;
+
+  }
+
+  public JsonNode findPayload(ArkId arkId, JsonNode implementationNode) {
+
+    log.info("find payload for  " + arkId.getDashArkImplementation());
+
+    return null;
+
   }
 
   /**
@@ -89,20 +174,10 @@ public class KnowledgeObjectRepository {
 
     log.info("find service specification at " + serviceSpecPath);
 
-    String uriPath = ResourceUtils.isUrl(serviceSpecPath)?
-        serviceSpecPath:Paths.get( arkId.getDashArk(), serviceSpecPath).toString();
+    String uriPath = ResourceUtils.isUrl(serviceSpecPath) ?
+        serviceSpecPath : Paths.get(arkId.getDashArk(), serviceSpecPath).toString();
 
-    try {
-
-      YAMLMapper yamlMapper = new YAMLMapper();
-      JsonNode serviceSpecNode =  yamlMapper.readTree(dataStore.getBinary(uriPath));
-
-      return serviceSpecNode;
-
-    } catch (IOException exception){
-      throw new ShelfException("Could not parse service specification for " +
-          arkId.getDashArkImplementation(), exception);
-    }
+    return loadSpecificationNode(arkId, uriPath);
 
   }
 
@@ -120,24 +195,29 @@ public class KnowledgeObjectRepository {
 
   }
 
-  public JsonNode findPayload(ArkId arkId) {
+  public byte[] getBinaryOrMetadata(ArkId arkId, String childPath) {
+    String filepath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), childPath)
+        .toString();
+    if (this.dataStore.isMetadata(filepath)) {
 
-   log.info("find payload for  " + arkId.getDashArkImplementation());
+      return this.dataStore.getMetadata(filepath).toString().getBytes();
 
-   throw new RuntimeException("not implemented yet");
-
+    }
+    return this.dataStore.getBinary(filepath);
   }
 
-  public JsonNode findDeploymentSpecification(ArkId arkId) {
+  public String getConnection() {
 
-    log.info("find deployment specification for  " + arkId.getDashArkImplementation());
+    return this.dataStore.getAbsoluteLocation("");
+  }
 
-
-    throw new RuntimeException("not implemented yet");
+  public JsonNode getMetadataAtPath(ArkId arkId, String path) {
+    return dataStore.getMetadata(arkId.getDashArk(), arkId.getImplementation(), path);
   }
 
   /**
    * Import ZIP file of a KO into self
+   *
    * @param arkId ark id of object
    * @param zippedKO zip file
    * @return ark id of the import object
@@ -152,54 +232,22 @@ public class KnowledgeObjectRepository {
   }
 
   /**
-   * Extract ZIP file of the KO
-   * @param arkId ark id of the object
-   * @param outputStream zipped file in outputstream
-   * @throws IOException if the system can't extract the zip file to the filesystem
+   * Loads a YMAL specification file (service or deployment) and maps to a JSON node
+   *
+   * @return specification node
    */
-  public void extractZip(ArkId arkId, OutputStream outputStream) throws IOException {
-    outputStream.write(zipExportService.exportCompoundDigitalObject(arkId, dataStore).toByteArray());
-  }
-
-  public ObjectNode editMetadata(ArkId arkId, String path, String metadata) {
-    Path metadataPath;
-    if (path != null && !"".equals(path)) {
-      metadataPath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), path, KnowledgeObject.METADATA_FILENAME);
-    } else {
-      metadataPath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), KnowledgeObject.METADATA_FILENAME);
-    }
+  protected JsonNode loadSpecificationNode(ArkId arkId, String uriPath) {
     try {
-      JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
 
-      dataStore.saveMetadata(jsonMetadata, metadataPath.toString());
+      YAMLMapper yamlMapper = new YAMLMapper();
+      JsonNode serviceSpecNode = yamlMapper.readTree(dataStore.getBinary(uriPath));
 
-    } catch (IOException e) {
-      log.error("Cannot edit metadata at " + metadataPath + " " + e);
+      return serviceSpecNode;
+
+
+    } catch (IOException exception) {
+      throw new ShelfException("Could not parse service specification for " +
+          arkId.getDashArkImplementation(), exception);
     }
-    return dataStore.getMetadata(metadataPath.toString());
-  }
-
-  public void delete(ArkId arkId) throws IOException {
-    if(arkId.getImplementation() != null) {
-      dataStore.removeFile(arkId.getDashArk(), arkId.getImplementation());
-    } else {
-      dataStore.removeFile(arkId.getDashArk());
-    }
-    log.info("Deleted ko with ark id " + arkId);
-  }
-
-  public String getConnection() {
-
-    return this.dataStore.getAbsoluteLocation("");
-  }
-
-  public byte[] getBinaryOrMetadata(ArkId arkId, String childPath) {
-    String filepath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), childPath).toString();
-    if(this.dataStore.isMetadata(filepath)) {
-
-      return this.dataStore.getMetadata(filepath).toString().getBytes();
-
-    }
-    return this.dataStore.getBinary(filepath);
   }
 }

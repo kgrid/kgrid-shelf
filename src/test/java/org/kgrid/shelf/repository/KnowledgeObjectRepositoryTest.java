@@ -127,8 +127,16 @@ public class KnowledgeObjectRepositoryTest {
 
   }
 
+  @Test(expected = IllegalArgumentException.class)
+  public void findServiceSpecificationNotFound() throws IOException, URISyntaxException {
+
+    ArkId arkId = new ArkId("hello-world/xxxx");
+    JsonNode serviceSpecNode = repository.findServiceSpecification(arkId);
+
+  }
+
   @Test
-  public void findPayloadUsing() {
+  public void findPayload() {
   }
 
   @Test
