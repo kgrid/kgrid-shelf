@@ -58,6 +58,9 @@ public class ZipImportServiceTest {
     });
     assertEquals(5,filesPaths.size());
 
+    zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
+    service.importCompoundDigitalObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+
   }
 
 

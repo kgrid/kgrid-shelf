@@ -58,8 +58,8 @@ public class ShelfControllerTest {
     @Test
     public void addZippedKO() throws Exception {
 
-        MockMultipartFile file = new MockMultipartFile("ko", "hello-world-jsonld.zip",
-            "application/zip", new ClassPathResource("/hello-world-jsonld.zip").getInputStream());
+        MockMultipartFile file = new MockMultipartFile("ko", "hello-world.zip",
+            "application/zip", new ClassPathResource("/fixtures/hello-world.zip").getInputStream());
 
         mockMvc.perform(putWithFileUpload("/hello/world").file(file))
             .andExpect(status().isCreated());
@@ -75,7 +75,7 @@ public class ShelfControllerTest {
 
     @Test
     public void findImplementationMetadata() throws Exception {
-        this.mockMvc.perform(get("/hello/world/v0.0.1"))
+        this.mockMvc.perform(get("/hello/world/koio.v1"))
             .andExpect(status().isOk())
             .andExpect(content().contentType("application/json;charset=UTF-8"));
     }

@@ -35,6 +35,8 @@ public class ZipImportService {
   public void importCompoundDigitalObject(ArkId arkId, InputStream zipFileStream,
       CompoundDigitalObjectStore cdoStore) {
 
+    cdoStore.delete(arkId.getDashArk());
+
     Map<String, JsonNode> containerResources = new HashMap<>();
     Map<String, byte[]> binaryResources = new HashMap<>();
 
