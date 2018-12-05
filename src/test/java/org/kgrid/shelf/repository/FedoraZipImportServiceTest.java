@@ -82,32 +82,5 @@ public class FedoraZipImportServiceTest {
 
   }
 
-  @Test
-  public void testImportMixedFormatKnowledgeObject()  {
-
-    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-koio.zip");
-
-    service.importCompoundDigitalObject(new ArkId("hello", "koio"), zipStream, compoundDigitalObjectStore);
-
-
-    ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "koio").getDashArk() );
-
-    assertEquals("should have 1 implementations", "http://localhost:8080/fcrepo/rest/hello-koio/koio",
-        metadata.findValue(IMPLEMENTATIONS_TERM).asText());
-
-
-    metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "koio").getDashArk()+"/"+ "koio" );
-
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-koio/koio/welcome.js",
-        metadata.findValue(PAYLOAD_TERM).asText());
-
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-koio/koio/service-specification.yaml",
-        metadata.findValue(SERVICE_SPEC_TERM).asText());
-
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-koio/koio/deployment-specification.yaml",
-        metadata.findValue(DEPLOYMENT_SPEC_TERM).asText());
-
-
-  }
 
 }
