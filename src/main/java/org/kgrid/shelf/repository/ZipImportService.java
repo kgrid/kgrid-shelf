@@ -10,6 +10,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.kgrid.shelf.domain.ArkId;
@@ -126,8 +127,14 @@ public class ZipImportService {
     List<String> binaryPaths = getImplementationBinaryPaths(metadata);
 
     binaryPaths.forEach( (binaryPath) -> {
-      cdoStore.saveBinary(binaryResources.get( Paths.get(arkId.getDashArk(), binaryPath).toString()),
-          arkId.getDashArk(), binaryPath);
+
+      byte[] binaryBytes =  binaryResources.get( Paths.get(arkId.getDashArk(), binaryPath).toString());
+
+      Objects.requireNonNull(binaryBytes,
+          "Can't find linked file " + Paths.get(arkId.getDashArk(), binaryPath).toString());
+
+      cdoStore.saveBinary(binaryBytes, arkId.getDashArk(), binaryPath);
+
     });
 
     cdoStore.saveMetadata(metadata, path,  KnowledgeObject.METADATA_FILENAME);
@@ -154,8 +161,5 @@ public class ZipImportService {
     return binaryNodes;
   }
 
-  public  JsonNode getImplementationIDs(JsonNode node){
-    return node.findValue(KnowledgeObject.IMPLEMENTATIONS_TERM);
-  }
 
 }

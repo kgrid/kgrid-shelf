@@ -1,6 +1,5 @@
 package org.kgrid.shelf.repository;
 
-import static junit.framework.TestCase.assertNull;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -36,7 +35,7 @@ public class KnowledgeObjectRepositoryTest {
   ZipImportService zipImportService = new ZipImportService();
   ZipExportService zipExportService = new ZipExportService();
 
-  private ArkId arkId = new ArkId("hello", "world", "koio.v1");
+  private ArkId helloWorldArkId = new ArkId("hello", "world", "koio.v1");
 
   @Before
   public void setUp() throws Exception {
@@ -45,11 +44,18 @@ public class KnowledgeObjectRepositoryTest {
     repository = new KnowledgeObjectRepository(compoundDigitalObjectStore, zipImportService, zipExportService);
 
     //Load Hello-World example object
-    URL zipStream = FilesystemCDOStoreTest.class.getResource("/fixtures/hello-world.zip");
+    URL zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/hello-world.zip");
     byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world.zip", "application/zip", zippedKO);;
-    repository.importZip(arkId, koZip);
-    assertNotNull(repository.findImplementationMetadata(arkId));
+    repository.importZip(helloWorldArkId, koZip);
+    assertNotNull(repository.findImplementationMetadata(helloWorldArkId));
+
+    ArkId bmiArkId = new ArkId("ri", "bmicalc");
+    zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/ri-bmicalc.zip");
+    zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+    koZip = new MockMultipartFile("ko", "ri-bmicalc.zip", "application/zip", zippedKO);;
+    repository.importZip(bmiArkId, koZip);
+
 
   }
 
@@ -66,13 +72,13 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getKnowledgeObject() throws Exception {
-    assertNotNull(repository.findImplementationMetadata(arkId));
+    assertNotNull(repository.findImplementationMetadata(helloWorldArkId));
   }
 
   @Test
   public void getTopLevelMetadata() throws Exception {
 
-    JsonNode map = repository.findKnowledgeObjectMetadata(arkId);
+    JsonNode map = repository.findKnowledgeObjectMetadata(helloWorldArkId);
     assertNotNull(map);
   }
 
@@ -80,7 +86,7 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getCorrectMetadata() throws Exception {
-    JsonNode koMeatadata = repository.findImplementationMetadata(arkId);
+    JsonNode koMeatadata = repository.findImplementationMetadata(helloWorldArkId);
     assertTrue(koMeatadata.findValue("identifier").asText().equals("koio.v1"));
     String resource = koMeatadata.findValue("hasPayload").asText();
     assertEquals("koio.v1/welcome.js", resource);
@@ -89,14 +95,15 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void listAllObjects() {
     Map<ArkId, JsonNode>  objects = repository.findAll();
-    assertEquals(1,objects.size());
-    assertEquals("hello-world", objects.get(arkId).get("@id").asText());
+    assertEquals(2,objects.size());
+    assertEquals("hello-world", objects.get(helloWorldArkId).get("@id").asText());
+    assertEquals("ri-bmicalc", objects.get(new ArkId("ri", "bmicalc")).get("@id").asText());
   }
 
   @Test
   public void testEditMainMetadata() {
     String testdata = "{\"test\":\"data\"}";
-    ObjectNode metadata = repository.editMetadata(arkId, null, testdata);
+    ObjectNode metadata = repository.editMetadata(helloWorldArkId, null, testdata);
     assertEquals("data", metadata.get("test").asText());
   }
 
@@ -104,7 +111,7 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void findServiceSpecification() throws IOException, URISyntaxException {
 
-    JsonNode serviceSpecNode = repository.findServiceSpecification(arkId);
+    JsonNode serviceSpecNode = repository.findServiceSpecification(helloWorldArkId);
     assertEquals( "Hello, World", serviceSpecNode.path("info").path("title").asText());
     assertEquals( "/welcome", serviceSpecNode.findValue("paths").fieldNames().next());
 
