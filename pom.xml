@@ -1,12 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-
   <modelVersion>4.0.0</modelVersion>
-  <groupId>org.kgrid</groupId>
-  <artifactId>shelf-api</artifactId>
-  <version>0.6.8-SNAPSHOT</version>
-  <name>kgrid-shelf-api</name>
-  <description>KGrid Shelf API</description>
 
   <parent>
     <groupId>org.springframework.boot</groupId>
@@ -15,6 +9,29 @@
     <relativePath />
   </parent>
 
+  <groupId>org.kgrid</groupId>
+  <artifactId>shelf-api</artifactId>
+  <version>0.6.8-SNAPSHOT</version>
+
+  <name>kgrid-shelf-api</name>
+  <description>KGrid Shelf API</description>
+  <url>https://github.com/kgrid</url>
+  <licenses>
+    <license>
+      <name>The Apache Software License, Version 2.0</name>
+      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
+    </license>
+  </licenses>
+
+  <developers>
+    <developer>
+      <name>KGrid Developer</name>
+      <email>kgrid-developers@umich.edu</email>
+      <organization>KGrid</organization>
+      <organizationUrl>http://kgrig.org</organizationUrl>
+    </developer>
+  </developers>
+
   <scm>
 
     <url>https://github.com/kgrid/kgrid-shelf</url>
@@ -22,7 +39,6 @@
     <developerConnection>scm:git:https://github.com/kgrid/kgrid-shelf.git</developerConnection>
     <tag>HEAD</tag>
   </scm>
-
   <distributionManagement>
     <snapshotRepository>
       <id>ossrh</id>
@@ -33,22 +49,6 @@
       <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
     </repository>
   </distributionManagement>
-
-  <url>https://github.com/kgrid</url>
-  <licenses>
-    <license>
-      <name>The Apache Software License, Version 2.0</name>
-      <url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-    </license>
-  </licenses>
-  <developers>
-    <developer>
-      <name>KGrid Developer</name>
-      <email>kgrid-developers@umich.edu</email>
-      <organization>KGrid</organization>
-      <organizationUrl>http://kgrig.org</organizationUrl>
-    </developer>
-  </developers>
 
   <dependencies>
     <dependency>
@@ -72,8 +72,8 @@
     <dependency>
       <groupId>org.apache.jena</groupId>
       <artifactId>apache-jena-libs</artifactId>
-      <type>pom</type>
       <version>3.9.0</version>
+      <type>pom</type>
     </dependency>
     <dependency>
       <groupId>com.github.jsonld-java</groupId>

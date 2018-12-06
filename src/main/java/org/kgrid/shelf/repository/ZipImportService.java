@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.InputStream;
 import java.io.StringWriter;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -13,10 +14,12 @@ import java.util.Map;
 import java.util.Objects;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ResourceUtils;
 import org.zeroturnaround.zip.ZipUtil;
 
 @Service
@@ -121,25 +124,55 @@ public class ZipImportService {
   protected void importImplementation(ArkId arkId, CompoundDigitalObjectStore cdoStore,
       Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources,
       JsonNode jsonNode) {
-    String path = jsonNode.asText();
-    JsonNode metadata = containerResources.get(Paths.get(path).toString());
 
-    cdoStore.createContainer( path);
+    try {
 
-    List<String> binaryPaths = getImplementationBinaryPaths(metadata);
+      //handle absolute and relative IRI (http://localhost:8080/fcrepo/rest/hello-world/v1 vs hello-world/v1)
+      String path = ResourceUtils.isUrl(jsonNode.asText()) ?
+        ResourceUtils.toURI(jsonNode.asText()).getPath().substring(
+              ResourceUtils.toURI(jsonNode.asText()).getPath().indexOf(arkId.getDashArk())):
+                 jsonNode.asText();
 
-    binaryPaths.forEach( (binaryPath) -> {
+      JsonNode metadata = containerResources.get(Paths.get(path).toString());
 
-      byte[] binaryBytes =  binaryResources.get( Paths.get(arkId.getDashArk(), binaryPath).toString());
+      cdoStore.createContainer( path);
 
-      Objects.requireNonNull(binaryBytes,
-          "Can't find linked file " + Paths.get(arkId.getDashArk(), binaryPath).toString());
+      List<String> binaryPaths = getImplementationBinaryPaths(metadata);
 
-      cdoStore.saveBinary(binaryBytes, arkId.getDashArk(), binaryPath);
+      binaryPaths.forEach( (binaryPath) -> {
 
-    });
+        try {
 
-    cdoStore.saveMetadata(metadata, path,  KnowledgeObject.METADATA_FILENAME);
+          //handle absolute and relative IRI
+          // (http://localhost:8080/fcrepo/rest/hello-world/koio.v1/deployment-specification.yaml vs
+          // koio.v1/deployment-specification.yaml)
+          String filePath = ResourceUtils.isUrl(binaryPath) ?
+              ResourceUtils.toURI(binaryPath).getPath().substring(
+                  ResourceUtils.toURI(binaryPath).getPath().indexOf(arkId.getDashArk())) :
+              Paths.get(arkId.getDashArk(), binaryPath).toString();
+
+          byte[] binaryBytes = binaryResources.get(filePath);
+
+          Objects.requireNonNull(binaryBytes,
+              "Issue importing implementation binary can not find " + filePath);
+
+          cdoStore.saveBinary(binaryBytes, filePath);
+
+        } catch(URISyntaxException e) {
+          throw new ShelfException("Issue importing implementation binary " , e);
+        }
+
+      });
+
+      cdoStore.saveMetadata(metadata, path,  KnowledgeObject.METADATA_FILENAME);
+
+    } catch (URISyntaxException e) {
+      throw new ShelfException("Issue importing implementation " , e);
+    }
+
+
+
+
   }
 
   /**

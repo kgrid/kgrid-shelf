@@ -103,7 +103,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
       return ((ObjectNode) koMetadata);
     } catch (Exception ioEx) {
-      log.error("Could not find metadata resource " + metadataPath,ioEx);
+      log.error("Could not find metadata resource " + metadataPath);
       throw new ShelfResourceNotFound(
           "Metadata resource not found " + metadataPath, ioEx);
     }
@@ -116,7 +116,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     try {
       bytes = Files.readAllBytes(binaryPath);
     } catch (IOException ioEx) {
-      log.error("Could not find binary resource " + binaryPath,ioEx);
+      log.error("Could not find binary resource " + binaryPath);
       throw new ShelfResourceNotFound("Binary resource not found " + binaryPath,ioEx);
     }
     return bytes;

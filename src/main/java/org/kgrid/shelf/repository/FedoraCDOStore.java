@@ -409,7 +409,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
               authenticationHeader(), String.class);
 
     } catch (HttpClientErrorException exception) {
-      log.error("Error deleting resource" + destination.toString());
+      log.info("Issue deleting resource " + destination.toString());
     }
 
   }
