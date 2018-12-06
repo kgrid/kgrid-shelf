@@ -64,7 +64,7 @@ public class FilesystemCDOStoreTest {
   }
   @After
   public void deleteKO() throws Exception {
-    koStore.removeFile(this.arkId.getDashArk());
+    koStore.delete(this.arkId.getDashArk());
     Path shelf = Paths.get(koStore.getAbsoluteLocation(null));
     if(Files.isDirectory(shelf)) {
       nukeTestShelf(shelf);

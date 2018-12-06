@@ -40,7 +40,6 @@ public class FedoraZipExportServiceTest {
 
   }
 
-
   @Test
   public void exportCompoundDigitalObject() throws IOException {
 
@@ -86,6 +85,9 @@ public class FedoraZipExportServiceTest {
     }
   }
 
-
+  @After
+  public void teardown(){
+    compoundDigitalObjectStore.delete("hello-world");
+  }
 
 }

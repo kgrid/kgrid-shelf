@@ -1,5 +1,7 @@
 package org.kgrid.shelf.repository;
 
+import static org.zeroturnaround.zip.ZipUtil.*;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
@@ -97,7 +99,7 @@ public class ZipExportService {
     });
 
     //Package it all up
-    ZipUtil.pack(entries.toArray(new ZipEntrySource[entries.size()]), outputStream);
+    pack(entries.toArray(new ZipEntrySource[entries.size()]), outputStream);
 
     return outputStream;
   }

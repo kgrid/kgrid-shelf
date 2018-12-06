@@ -20,6 +20,7 @@ import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.junit.runners.JUnit4;
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 import org.springframework.mock.web.MockMultipartFile;
 
@@ -61,13 +62,9 @@ public class KnowledgeObjectRepositoryTest {
 
   @After
   public void clearShelf() throws Exception {
-    repository.delete(new ArkId("ark:/hello/world"));
-    try {
-      JsonNode metadata = repository.findKnowledgeObjectMetadata(new ArkId("hello-world"));
-      assertTrue("Should have deleted helo-world", false);
-    }catch (ShelfException e){
-      assertTrue(true);
-    }
+    repository.delete(new ArkId("hello-world"));
+    repository.delete(new ArkId("ri-bmicalc"));
+
   }
 
   @Test
@@ -117,7 +114,7 @@ public class KnowledgeObjectRepositoryTest {
 
   }
 
-  @Test(expected = Exception.class)
+  @Test(expected = ShelfResourceNotFound.class)
   public void findServiceSpecificationNotFound()  {
 
     ArkId arkId = new ArkId("hello-world/koio.v2");

@@ -68,11 +68,12 @@ public class ShelfController {
       @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer,
       RequestEntity request) {
 
-    log.info("get ko " + naan + "/" + name );
+    log.info("get ko " + naan + "/" + name);
 
     // Prevent infinite loop when trying to connect to fcrepo on the same address as the library
-    if("fcrepo".equals(naan) && "rest".equals(name)) {
-      throw new IllegalArgumentException("Cannot connect to fcrepo at the same address as the shelf. Make sure shelf and fcrepo configuration is correct.");
+    if ("fcrepo".equals(naan) && "rest".equals(name)) {
+      throw new IllegalArgumentException(
+          "Cannot connect to fcrepo at the same address as the shelf. Make sure shelf and fcrepo configuration is correct.");
     }
     ArkId arkId = new ArkId(naan, name);
     JsonNode results = shelf.findKnowledgeObjectMetadata(arkId);
@@ -85,10 +86,13 @@ public class ShelfController {
   }
 
   @GetMapping(path = "/{naan}/{name}/{implementation}")
-  public JsonNode getKnowledgeObjectImplementation(@PathVariable String naan, @PathVariable String name,
-      @PathVariable String implementation, RequestEntity request, HttpServletRequest httpServletRequest) {
+  public JsonNode getKnowledgeObjectImplementation(@PathVariable String naan,
+      @PathVariable String name,
+      @PathVariable String implementation, RequestEntity request,
+      HttpServletRequest httpServletRequest) {
 
-    log.info("getting ko " + naan + "/" + name + "/" + implementation + " Look at this "+ request.getUrl()  );
+    log.info("getting ko " + naan + "/" + name + "/" + implementation + " Look at this " + request
+        .getUrl());
 
     ArkId arkId = new ArkId(naan, name, implementation);
 
@@ -99,7 +103,7 @@ public class ShelfController {
   public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name,
       HttpServletResponse response) {
 
-    log.info("get ko zip for " + naan + "/" + name );
+    log.info("get ko zip for " + naan + "/" + name);
 
     ArkId arkId = new ArkId(naan, name);
     response.addHeader("Content-Disposition",
@@ -121,19 +125,20 @@ public class ShelfController {
   public Object getServiceDescription(@PathVariable String naan, @PathVariable String name,
       @PathVariable String implementation) throws NoSuchFileException, NoSuchFieldException {
 
-    log.info("getting ko service  " + naan + "/" + name + "/" + implementation );
+    log.info("getting ko service  " + naan + "/" + name + "/" + implementation);
 
     ArkId arkId = new ArkId(naan, name, implementation);
 
     JsonNode metadata = shelf.findImplementationMetadata(arkId);
     String childPath;
-    if(metadata.has("service")) {
+    if (metadata.has("service")) {
       childPath = metadata.get("service").asText();
     } else {
-      throw new NoSuchFieldException("Object has no service description location specified in metadata.");
+      throw new NoSuchFieldException(
+          "Object has no service description location specified in metadata.");
     }
     byte[] binary = shelf.getBinaryOrMetadata(arkId, childPath);
-    if(binary != null) {
+    if (binary != null) {
       return binary;
     } else {
       throw new NoSuchFileException("Cannot fetch file at " + childPath);
@@ -144,7 +149,7 @@ public class ShelfController {
   public Object getBinary(@PathVariable String naan, @PathVariable String name,
       @PathVariable String implementation, HttpServletRequest request) throws NoSuchFileException {
 
-    log.info("getting ko resource " + naan + "/" + name + "/" + implementation );
+    log.info("getting ko resource " + naan + "/" + name + "/" + implementation);
 
     ArkId arkId = new ArkId(naan, name, implementation);
 
@@ -155,7 +160,7 @@ public class ShelfController {
     log.info("getting ko resource " + naan + "/" + name + "/" + implementation + childPath);
 
     byte[] binary = shelf.getBinaryOrMetadata(arkId, childPath);
-    if(binary != null) {
+    if (binary != null) {
       return binary;
     } else {
       throw new NoSuchFileException("Cannot fetch file at " + childPath);
@@ -163,7 +168,8 @@ public class ShelfController {
   }
 
   @PutMapping(path = "/{naan}/{name}")
-  public ResponseEntity<Map <String, String>> importKO(@PathVariable String naan, @PathVariable String name,
+  public ResponseEntity<Map<String, String>> importKO(@PathVariable String naan,
+      @PathVariable String name,
       @RequestParam("ko") MultipartFile zippedKo) {
 
     Map<String, String> result = importKO(naan, name, null, zippedKo).getBody();
@@ -172,10 +178,12 @@ public class ShelfController {
   }
 
   @PutMapping(path = "/{naan}/{name}/{implementation}")
-  public ResponseEntity<Map<String, String>> importKO(@PathVariable String naan, @PathVariable String name,
+  public ResponseEntity<Map<String, String>> importKO(@PathVariable String naan,
+      @PathVariable String name,
       @PathVariable String implementation, @RequestParam("ko") MultipartFile zippedKo) {
 
-    log.info("add ko " + naan + "/" + name + (implementation==null?"":"/" + implementation) + " zip file " +zippedKo.getOriginalFilename());
+    log.info("add ko " + naan + "/" + name + (implementation == null ? "" : "/" + implementation)
+        + " zip file " + zippedKo.getOriginalFilename());
 
     ArkId pathArk = new ArkId(naan, name);
     ArkId arkId = shelf.importZip(pathArk, zippedKo);
@@ -200,24 +208,18 @@ public class ShelfController {
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan,
       @PathVariable String name) {
     ArkId arkId = new ArkId(naan, name);
-    try {
-      shelf.delete(arkId);
-      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    } catch (IOException ex) {
-      throw new IllegalArgumentException(ex);
-    }
+    shelf.delete(arkId);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
   }
 
   @DeleteMapping(path = "/{naan}/{name}/{implementation}")
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan,
       @PathVariable String name, @PathVariable String implementation) {
     ArkId arkId = new ArkId(naan, name, implementation);
-    try {
-      shelf.delete(arkId);
-      return new ResponseEntity<>(HttpStatus.NO_CONTENT);
-    } catch (IOException ex) {
-      throw new IllegalArgumentException(ex);
-    }
+    shelf.delete(arkId);
+    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
+
   }
 
   //Exception handling:

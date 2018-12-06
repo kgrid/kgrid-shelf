@@ -2,7 +2,6 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.IOException;
 import java.util.List;
 import org.kgrid.shelf.ShelfException;
 
@@ -24,8 +23,6 @@ public interface CompoundDigitalObjectStore {
 
   void saveBinary(byte[] data, String... relativeLocationParts);
 
-  void removeFile(String... relativeLocationParts) throws IOException;
-
-  void delete(String cdoIdentifier) throws ShelfException;
+  void delete(String... relativeLocationParts) throws ShelfException;
 
 }

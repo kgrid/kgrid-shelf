@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.InputStream;
 import java.nio.file.Paths;
+import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -45,6 +46,7 @@ public class FedoraZipImportServiceTest {
     assertEquals("should have 2 implementations", 2,
         metadata.findValue(IMPLEMENTATIONS_TERM).size());
 
+
     metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk()+"/"+ "v0.0.1" );
 
     assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/welcome.js",
@@ -55,6 +57,8 @@ public class FedoraZipImportServiceTest {
 
     assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/deployment-specification.yaml",
         metadata.findValue(DEPLOYMENT_SPEC_TERM).asText());
+
+    compoundDigitalObjectStore.delete("hello-world");
 
   }
 
@@ -80,7 +84,11 @@ public class FedoraZipImportServiceTest {
 
     }
 
+    compoundDigitalObjectStore.delete("hello-usa");
+
+
   }
+
 
 
 }

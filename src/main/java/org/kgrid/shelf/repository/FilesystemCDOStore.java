@@ -21,6 +21,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -102,9 +103,9 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
       return ((ObjectNode) koMetadata);
     } catch (Exception ioEx) {
-      log.error("Cannot read file at " + metadataPath + " " + ioEx);
-      throw new ShelfException(
-          "Cannot read metadata file at path " + metadataPath, ioEx);
+      log.error("Could not find metadata resource " + metadataPath,ioEx);
+      throw new ShelfResourceNotFound(
+          "Metadata resource not found " + metadataPath, ioEx);
     }
   }
 
@@ -115,8 +116,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     try {
       bytes = Files.readAllBytes(binaryPath);
     } catch (IOException ioEx) {
-      log.error("Cannot read file at " + binaryPath + " " + ioEx);
-      throw new ShelfException("Could not find " + binaryPath,ioEx);
+      log.error("Could not find binary resource " + binaryPath,ioEx);
+      throw new ShelfResourceNotFound("Binary resource not found " + binaryPath,ioEx);
     }
     return bytes;
   }
@@ -147,23 +148,6 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
-  // rm -rf repository/arkId ** dangerous! **
-  @Override
-  public void removeFile(String... relativePathParts) throws IOException {
-    Path ko = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
-
-    Files.walk(ko)
-        .sorted(Comparator
-            .reverseOrder()) // Need to reverse the order to delete files before the directory they're in
-        .forEach(file -> {
-          try {
-            Files.delete(file);
-          } catch (IOException e) {
-            log.error("Could not delete file " + file + " " + e);
-          }
-        });
-  }
-
   private void createKOFolderStructure(Path resourceLocation, Path serviceLocation) {
     Path shelf = Paths.get(localStorageURI);
 
@@ -187,12 +171,12 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void delete(String cdoIdentifier) throws ShelfException {
-    Path path = Paths.get(localStorageURI.toString(), cdoIdentifier);
+  public void delete(String... relativePathParts) throws ShelfException {
+    Path path = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     try {
       FileUtils.deleteDirectory(new File(path.toString()));
     } catch (IOException e) {
-      throw new ShelfException("Could not delete cdo " + cdoIdentifier, e);
+      throw new ShelfException("Could not delete cdo " + relativePathParts, e);
     }
 
   }

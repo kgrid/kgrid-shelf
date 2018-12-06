@@ -37,12 +37,9 @@ public class KnowledgeObjectRepository {
     this.zipExportService = zes;
   }
 
-  public void delete(ArkId arkId) throws IOException {
-    if (arkId.getImplementation() != null) {
-      dataStore.removeFile(arkId.getDashArk(), arkId.getImplementation());
-    } else {
-      dataStore.removeFile(arkId.getDashArk());
-    }
+  public void delete(ArkId arkId) {
+
+    dataStore.delete(arkId.getDashArkImplementation());
     log.info("Deleted ko with ark id " + arkId);
   }
 
@@ -102,6 +99,7 @@ public class KnowledgeObjectRepository {
 
   /**
    * Find the deployment specification based on implementation ark id
+   *
    * @param arkId implementation ark id
    * @return JsonNode deployment specification
    */
