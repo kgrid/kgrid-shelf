@@ -2,6 +2,9 @@ package org.kgrid.shelf.domain;
 
 import static org.junit.Assert.*;
 
+import java.util.HashMap;
+import java.util.Map;
+import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Test;
 
 public class ArkIdTest {
@@ -20,6 +23,10 @@ public class ArkIdTest {
     assertEquals("world", arkId.getName());
 
 
+  }
+  @Test
+  public void equalsContract() {
+    EqualsVerifier.forClass(ArkId.class).verify();
   }
 
   @Test

@@ -93,7 +93,7 @@ public class KnowledgeObjectRepositoryTest {
   public void listAllObjects() {
     Map<ArkId, JsonNode>  objects = repository.findAll();
     assertEquals(2,objects.size());
-    assertEquals("hello-world", objects.get(helloWorldArkId).get("@id").asText());
+    assertEquals("hello-world", objects.get(new ArkId("hello", "world")).get("@id").asText());
     assertEquals("ri-bmicalc", objects.get(new ArkId("ri", "bmicalc")).get("@id").asText());
   }
 
