@@ -20,7 +20,7 @@ import org.zeroturnaround.zip.ByteSource;
 import org.zeroturnaround.zip.ZipEntrySource;
 
 @Service
-public class ZipExportService {
+public class ZipExportService extends ZipService {
 
 
   public ByteArrayOutputStream exportObject(ArkId arkId,
@@ -122,26 +122,6 @@ public class ZipExportService {
       }
 
     });
-  }
-
-  /**
-   * Get a list of implementation paths, service, deployment and payload
-   *
-   * @param implementationNode
-   * @return
-   */
-  private List<String> listBinaryNodes(JsonNode implementationNode) {
-    List<String> binaryNodes = new ArrayList<>();
-    if (implementationNode.has(KnowledgeObject.DEPLOYMENT_SPEC_TERM)) {
-      binaryNodes.add(implementationNode.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText());
-    }
-    if (implementationNode.has(KnowledgeObject.PAYLOAD_TERM)) {
-      binaryNodes.add(implementationNode.findValue(KnowledgeObject.PAYLOAD_TERM).asText());
-    }
-    if (implementationNode.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
-        binaryNodes.add(implementationNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText());
-    }
-    return binaryNodes;
   }
 
   /**

@@ -89,7 +89,7 @@ public class KnowledgeObjectRepository {
         } else {
           arkId = new ArkId(path);
         }
-        knowledgeObjects.put(arkId, findKnowledgeObjectMetadata(arkId));
+        knowledgeObjects.put(arkId, dataStore.getMetadata(arkId.getDashArk()));
       } catch (Exception illegalArgument) {
         log.warn("Unable to load KO " + illegalArgument.getMessage());
       }

@@ -23,7 +23,7 @@ import org.springframework.util.ResourceUtils;
 import org.zeroturnaround.zip.ZipUtil;
 
 @Service
-public class ZipImportService {
+public class ZipImportService extends ZipService{
 
   private final org.slf4j.Logger log = LoggerFactory.getLogger(ZipImportService.class);
 
@@ -137,7 +137,7 @@ public class ZipImportService {
 
       cdoStore.createContainer( path);
 
-      List<String> binaryPaths = getImplementationBinaryPaths(metadata);
+      List<String> binaryPaths = listBinaryNodes(metadata);
 
       binaryPaths.forEach( (binaryPath) -> {
 
@@ -172,26 +172,7 @@ public class ZipImportService {
 
   }
 
-  /**
-   * Give a JsonNode this will look for the KOIO defined
-   * Implementation binaries for deployment, service and payload
-   *
-   * @param node implementation json node
-   * @return paths to the binaries that define service, deployment and payload
-   */
-  private List<String> getImplementationBinaryPaths(JsonNode node){
-    List<String> binaryNodes = new ArrayList<>();
-    if (node.has(KnowledgeObject.DEPLOYMENT_SPEC_TERM)) {
-      binaryNodes.add(node.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText());
-    }
-    if (node.has(KnowledgeObject.PAYLOAD_TERM)) {
-      binaryNodes.add(node.findValue(KnowledgeObject.PAYLOAD_TERM).asText());
-    }
-    if (node.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
-      binaryNodes.add(node.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText());
-    }
-    return binaryNodes;
-  }
+
 
 
 }

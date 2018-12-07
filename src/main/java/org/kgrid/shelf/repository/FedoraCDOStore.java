@@ -160,7 +160,6 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
           .exchange(path, HttpMethod.GET, authenticationHeader(), byte[].class);
       return response.getBody();
     } catch (HttpClientErrorException ex) {
-      log.error("Could not find binary resource " + path);
       throw new ShelfResourceNotFound("Binary resource not found " + path, ex);
     }
 
@@ -346,8 +345,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       return (ObjectNode) node;
 
     } catch (HttpClientErrorException | ResourceAccessException | IOException ex) {
-      log.error("Could not find metadata resource " + objectURI);
-      throw new ShelfResourceNotFound("Metadata resource not found  " + objectURI, ex);
+        throw new ShelfResourceNotFound("Metadata resource not found  " + objectURI, ex);
     }
   }
 
