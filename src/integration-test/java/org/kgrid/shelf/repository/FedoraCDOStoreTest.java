@@ -7,9 +7,6 @@ import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.InputStream;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 
 import org.junit.*;
@@ -18,7 +15,6 @@ import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
-import org.springframework.mock.web.MockMultipartFile;
 
 @Category(FedoraIntegrationTest.class)
 public class FedoraCDOStoreTest {
@@ -39,11 +35,11 @@ public class FedoraCDOStoreTest {
 
       //Load Hello-World example object
       InputStream zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world.zip");
-      zipImportService.importCompoundDigitalObject( new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+      zipImportService.importObject( new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
 
       //Load ri-bmicalc example object
       zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/ri-bmicalc.zip");
-      zipImportService.importCompoundDigitalObject(new ArkId("ri", "bmicalc"), zipStream, compoundDigitalObjectStore);
+      zipImportService.importObject(new ArkId("ri", "bmicalc"), zipStream, compoundDigitalObjectStore);
 
 
     } catch (Exception exception) {

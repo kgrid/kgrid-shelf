@@ -47,11 +47,11 @@ public class ZipExportServiceTest {
 
 
   @Test
-  public void exportCompoundDigitalObject() throws IOException {
+  public void exportKnowledgeObject() throws IOException {
 
     ZipExportService zipExportService = new ZipExportService();
 
-    ByteArrayOutputStream outputStream = zipExportService.exportCompoundDigitalObject(
+    ByteArrayOutputStream outputStream = zipExportService.exportObject(
         new ArkId("hello", "world"), compoundDigitalObjectStore);
 
     writeZip(outputStream);
@@ -63,6 +63,8 @@ public class ZipExportServiceTest {
         .map(Path::toAbsolutePath)
         .collect(Collectors.toList());
 
+    System.out.println("exportKnowledgeObject");
+
     filesPaths.forEach(file ->{
       System.out.println(file.toAbsolutePath().toString());
     });
@@ -72,11 +74,36 @@ public class ZipExportServiceTest {
   }
 
   @Test
-  public void exportNoImplentationCompoundDigitalObject() throws IOException {
+  public void exportImplementation() throws IOException {
 
     ZipExportService zipExportService = new ZipExportService();
 
-    ByteArrayOutputStream outputStream = zipExportService.exportCompoundDigitalObject(
+    ByteArrayOutputStream outputStream = zipExportService.exportObject(
+        new ArkId("hello", "world", "v0.0.2"), compoundDigitalObjectStore);
+
+    writeZip(outputStream);
+
+    List<Path> filesPaths;
+    filesPaths = Files.walk(Paths.get(
+        temporaryFolder.getRoot().toPath().toString(),"export","hello-world"),  2, FOLLOW_LINKS)
+        .filter(Files::isRegularFile)
+        .map(Path::toAbsolutePath)
+        .collect(Collectors.toList());
+
+    System.out.println("extractImplementation");
+    filesPaths.forEach(file ->{
+      System.out.println(file.toAbsolutePath().toString());
+    });
+
+    assertEquals(5,filesPaths.size());
+  }
+
+  @Test
+  public void exportNoImplementation() throws IOException {
+
+    ZipExportService zipExportService = new ZipExportService();
+
+    ByteArrayOutputStream outputStream = zipExportService.exportObject(
         new ArkId("empty", "world"), compoundDigitalObjectStore);
 
     writeZip(outputStream);
@@ -88,6 +115,7 @@ public class ZipExportServiceTest {
         .map(Path::toAbsolutePath)
         .collect(Collectors.toList());
 
+    System.out.println("exportNoImplentation");
     filesPaths.forEach(file ->{
       System.out.println(file.toAbsolutePath().toString());
     });

@@ -22,4 +22,16 @@ public class ArkIdTest {
 
   }
 
+  @Test
+  public void testIsImplentation(){
+
+    ArkId arkId = new ArkId("hello-world/v1");
+    assertEquals(true, arkId.isImplementation());
+
+    arkId = new ArkId("hello-world");
+    assertEquals(false,arkId.isImplementation());
+
+
+  }
+
 }

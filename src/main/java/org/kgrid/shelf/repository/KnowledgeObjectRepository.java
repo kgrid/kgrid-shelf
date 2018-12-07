@@ -72,7 +72,7 @@ public class KnowledgeObjectRepository {
    */
   public void extractZip(ArkId arkId, OutputStream outputStream) throws IOException {
     outputStream
-        .write(zipExportService.exportCompoundDigitalObject(arkId, dataStore).toByteArray());
+        .write(zipExportService.exportObject(arkId, dataStore).toByteArray());
   }
 
   public Map<ArkId, JsonNode> findAll() {
@@ -221,7 +221,7 @@ public class KnowledgeObjectRepository {
    */
   public ArkId importZip(ArkId arkId, MultipartFile zippedKO) {
     try {
-      zipImportService.importCompoundDigitalObject(arkId, zippedKO.getInputStream(), dataStore);
+      zipImportService.importObject(arkId, zippedKO.getInputStream(), dataStore);
     } catch (IOException e) {
       log.warn("Cannot load full zip file for ark id " + arkId);
     }

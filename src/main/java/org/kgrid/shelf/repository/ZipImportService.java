@@ -35,7 +35,7 @@ public class ZipImportService {
    * @param zipFileStream zip in the form of a stream
    * @param cdoStore persistence layer
    */
-  public void importCompoundDigitalObject(ArkId arkId, InputStream zipFileStream,
+  public void importObject(ArkId arkId, InputStream zipFileStream,
       CompoundDigitalObjectStore cdoStore) {
 
     cdoStore.delete(arkId.getDashArk());
@@ -81,7 +81,7 @@ public class ZipImportService {
    * @param containerResources collection of metadata files
    * @param binaryResources collection of binary files
    */
-  protected void captureZipEntries(InputStream zipFileStream,
+  private void captureZipEntries(InputStream zipFileStream,
       Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources) {
 
     log.info("processing zipEntries");
@@ -121,7 +121,7 @@ public class ZipImportService {
    * @param binaryResources binaries load based on the metadata in the zip
    * @param jsonNode implementation node
    */
-  protected void importImplementation(ArkId arkId, CompoundDigitalObjectStore cdoStore,
+  private void importImplementation(ArkId arkId, CompoundDigitalObjectStore cdoStore,
       Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources,
       JsonNode jsonNode) {
 
@@ -170,9 +170,6 @@ public class ZipImportService {
       throw new ShelfException("Issue importing implementation " , e);
     }
 
-
-
-
   }
 
   /**
@@ -182,7 +179,7 @@ public class ZipImportService {
    * @param node implementation json node
    * @return paths to the binaries that define service, deployment and payload
    */
-  public List<String> getImplementationBinaryPaths(JsonNode node){
+  private List<String> getImplementationBinaryPaths(JsonNode node){
     List<String> binaryNodes = new ArrayList<>();
     if (node.has(KnowledgeObject.DEPLOYMENT_SPEC_TERM)) {
       binaryNodes.add(node.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText());

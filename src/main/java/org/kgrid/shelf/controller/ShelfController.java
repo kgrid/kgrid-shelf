@@ -99,15 +99,30 @@ public class ShelfController {
     return shelf.findImplementationMetadata(arkId);
   }
 
+  @GetMapping(path = "/{naan}/{name}/{implementation}", produces = "application/zip")
+  public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name,
+      @PathVariable String implementation, HttpServletResponse response) {
+
+    log.info("get ko zip for " + naan + "/" + name);
+    ArkId arkId = new ArkId(naan, name, implementation);
+
+    exportZip(response, arkId);
+  }
+
   @GetMapping(path = "/{naan}/{name}", produces = "application/zip")
   public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name,
       HttpServletResponse response) {
 
     log.info("get ko zip for " + naan + "/" + name);
-
     ArkId arkId = new ArkId(naan, name);
+
+    exportZip(response, arkId);
+  }
+
+  protected void exportZip(HttpServletResponse response, ArkId arkId) {
+
     response.addHeader("Content-Disposition",
-        "attachment; filename=\"" + naan + "-" + name + "-complete.zip\"");
+        "attachment; filename=\"" + arkId.getDashArkImplementation() + "-complete.zip\"");
     try {
       shelf.extractZip(arkId, response.getOutputStream());
     } catch (IOException ex) {

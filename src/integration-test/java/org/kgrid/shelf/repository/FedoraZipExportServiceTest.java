@@ -13,7 +13,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -36,7 +35,7 @@ public class FedoraZipExportServiceTest {
 
     InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
 
-    service.importCompoundDigitalObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+    service.importObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
 
   }
 
@@ -45,7 +44,7 @@ public class FedoraZipExportServiceTest {
 
     ZipExportService zipExportService = new ZipExportService();
 
-    ByteArrayOutputStream outputStream = zipExportService.exportCompoundDigitalObject(
+    ByteArrayOutputStream outputStream = zipExportService.exportObject(
         new ArkId("hello", "world"), compoundDigitalObjectStore);
 
     writeZip(outputStream);

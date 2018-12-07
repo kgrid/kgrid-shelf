@@ -113,6 +113,10 @@ public class ArkId {
     return implementation;
   }
 
+  public boolean isImplementation(){
+    return implementation!=null;
+  }
+
   /*
    * Can create an ark id with optional implementation from the following formats:
    * ark:/naan/name

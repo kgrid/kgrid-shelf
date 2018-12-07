@@ -7,7 +7,6 @@ import static org.junit.Assert.assertTrue;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import org.junit.After;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -37,7 +36,7 @@ public class FedoraZipImportServiceTest {
 
     InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
 
-    service.importCompoundDigitalObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+    service.importObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
 
     ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk() );
 
@@ -68,7 +67,7 @@ public class FedoraZipImportServiceTest {
 
     InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-usa-jsonld.zip");
 
-    service.importCompoundDigitalObject(new ArkId("hello", "usa"), zipStream, compoundDigitalObjectStore);
+    service.importObject(new ArkId("hello", "usa"), zipStream, compoundDigitalObjectStore);
 
     ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "usa").getDashArk() );
 

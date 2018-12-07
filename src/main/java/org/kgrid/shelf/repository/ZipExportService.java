@@ -23,7 +23,7 @@ import org.zeroturnaround.zip.ZipEntrySource;
 public class ZipExportService {
 
 
-  public ByteArrayOutputStream exportCompoundDigitalObject(ArkId arkId,
+  public ByteArrayOutputStream exportObject(ArkId arkId,
       CompoundDigitalObjectStore cdoStore) throws ShelfException {
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
@@ -41,15 +41,19 @@ public class ZipExportService {
     //Get KO Implementations
     JsonNode implementations = koMetaData.findPath(KnowledgeObject.IMPLEMENTATIONS_TERM);
 
-    if(implementations.isTextual()){
+    if (arkId.isImplementation()){
 
-      extractImplementation(arkId, cdoStore, entries, implementations);
+      extractImplementation(arkId, cdoStore, entries, arkId.getDashArkImplementation());
+
+    } else if (implementations.isTextual()){
+
+      extractImplementation(arkId, cdoStore, entries, implementations.asText());
 
     } else {
 
       implementations.forEach(jsonNode -> {
 
-        extractImplementation(arkId, cdoStore, entries, jsonNode);
+        extractImplementation(arkId, cdoStore, entries, jsonNode.asText());
 
       });
 
@@ -66,13 +70,13 @@ public class ZipExportService {
    * @param arkId Ark ID
    * @param cdoStore CDO Store
    * @param entries List of all of the zip entries
-   * @param jsonNode the implementation node
+   * @param implementationPath the implementation path absolute and relative IR
    */
-  protected void extractImplementation(ArkId arkId, CompoundDigitalObjectStore cdoStore,
-      List<ZipEntrySource> entries, JsonNode jsonNode) {
+  private void extractImplementation(ArkId arkId, CompoundDigitalObjectStore cdoStore,
+      List<ZipEntrySource> entries, String implementationPath) {
 
-    String path = ResourceUtils.isUrl(jsonNode.asText())?
-        jsonNode.asText(): Paths.get(jsonNode.asText()).toString();
+    String path = ResourceUtils.isUrl(implementationPath)?
+        implementationPath: Paths.get(implementationPath).toString();
 
     //Get and add KO Implementation metadat export zip entries
     JsonNode implementationNode = cdoStore.getMetadata(path);
@@ -85,12 +89,12 @@ public class ZipExportService {
               ResourceUtils.toURI(path).getPath().indexOf(arkId.getDashArk())),
               KnowledgeObject.METADATA_FILENAME).toString() :
           FilenameUtils.normalize(
-              Paths.get(jsonNode.asText(), KnowledgeObject.METADATA_FILENAME).toString(), true);
+              Paths.get(implementationPath, KnowledgeObject.METADATA_FILENAME).toString(), true);
 
       entries.add(new ByteSource(fileName, prettyPrintJsonString(implementationNode).getBytes()));
 
     } catch (URISyntaxException ex){
-      throw new ShelfException("Issue creating file name for extract " + jsonNode.asText(), ex);
+      throw new ShelfException("Issue creating file name for extract " + implementationPath, ex);
     }
 
     //Add Implementation binary files to export zip entries

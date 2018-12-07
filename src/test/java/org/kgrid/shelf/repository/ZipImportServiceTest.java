@@ -5,13 +5,11 @@ import static org.junit.Assert.*;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -44,7 +42,7 @@ public class ZipImportServiceTest {
 
     InputStream zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
 
-    service.importCompoundDigitalObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+    service.importObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
@@ -59,7 +57,7 @@ public class ZipImportServiceTest {
     assertEquals(5,filesPaths.size());
 
     zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
-    service.importCompoundDigitalObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+    service.importObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
 
   }
 
@@ -69,7 +67,7 @@ public class ZipImportServiceTest {
 
     InputStream zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-usa-jsonld.zip");
 
-    service.importCompoundDigitalObject(new ArkId("hello", "usa"), zipStream, compoundDigitalObjectStore);
+    service.importObject(new ArkId("hello", "usa"), zipStream, compoundDigitalObjectStore);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
