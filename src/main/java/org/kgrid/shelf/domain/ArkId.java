@@ -14,6 +14,23 @@ public final class ArkId {
   private final String name;
   private final String implementation;
 
+  /* TODO:
+  *    - add static 'create(String path)' factory method for creation from existing path
+  *    - remove all '..Slash..' methods (consider using only naan-name, even in urls)
+  *    - make getId() return 'ark:/naan/name'
+  *    - make getArk return 'naan-name'
+  *    - make getImplementation return 'naan-name/version'
+  *    - make getEndpoint return 'naan-name/version/endpoint'
+  *  TODO (consider):
+  *    - add a builder
+  *    - add a 'toURI()' method
+  *    - add a 'with(...)' method to extend the path
+  *    - add a 'server' parameter, 'withServer(...)' method, or static
+  *      'withServer(ArkId, server)' method to support full urls
+  *   .
+  *   Note: all the above stay in URL/URI style forward slash style
+  */
+
   /*
    * Can create an ark id with optional implementation from the following formats:
    * ark:/naan/name
