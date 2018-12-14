@@ -59,17 +59,17 @@ public class FusekiClientTest {
     JsonNode impls = fusekiClient.getImplsOfKO(arkId);
     assertTrue("json-ld has @graph", impls.has("@graph"));
   }
-
-  @Test
-  public void getImplOfKoList() throws Exception {
-    TimeUnit.SECONDS.sleep(1);
-    ArkId arkId = new ArkId("hello", "world");
-    List list = fusekiClient.getImplListOfKO(arkId);
-    assertTrue("List has v0.0.1 impl",
-        list.contains("http://localhost:8080/fcrepo/rest/hello-world/v0.0.1"));
-    assertTrue("List has v0.0.2 impl",
-        list.contains("http://localhost:8080/fcrepo/rest/hello-world/v0.0.2"));
-  }
+//
+//  @Test
+//  public void getImplOfKoList() throws Exception {
+//    TimeUnit.SECONDS.sleep(1);
+//    ArkId arkId = new ArkId("hello", "world");
+//    List list = fusekiClient.getImplListOfKO(arkId);
+//    assertTrue("List has v0.0.1 impl",
+//        list.contains("http://localhost:8080/fcrepo/rest/hello-world/v0.0.1"));
+//    assertTrue("List has v0.0.2 impl",
+//        list.contains("http://localhost:8080/fcrepo/rest/hello-world/v0.0.2"));
+//  }
 
   @AfterClass
   public static void teardown() throws Exception {
