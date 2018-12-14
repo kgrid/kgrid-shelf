@@ -9,7 +9,6 @@ jobs:
   # Build job
   ##############
   build:
-    machine: true
 
     docker:
       - image: circleci/openjdk:11-jdk
