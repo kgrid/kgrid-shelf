@@ -227,7 +227,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     return descendants;
   }
 
-  private String createTransaction() {
+  @Override
+  public String createTransaction() {
     URI destination = URI.create(storagePath + "fcr:tx");
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
@@ -251,7 +252,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     return transactionId;
   }
 
-  private void commitTransaction(String transactionId) {
+  @Override
+  public void commitTransaction(String transactionId) {
     URI destination = URI.create(storagePath + transactionId + "/fcr:tx/fcr:commit");
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();
@@ -273,7 +275,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
-  private void rollbackTransaction(String transactionId) {
+  @Override
+  public void rollbackTransaction(String transactionId) {
     URI destination = URI.create(storagePath + transactionId + "/fcr:tx/fcr:rollback");
     HttpClient instance = HttpClientBuilder.create()
         .setRedirectStrategy(new DefaultRedirectStrategy()).build();

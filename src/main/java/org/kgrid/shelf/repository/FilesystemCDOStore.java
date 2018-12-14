@@ -16,7 +16,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
@@ -115,7 +114,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     try {
       bytes = Files.readAllBytes(binaryPath);
     } catch (IOException ioEx) {
-      throw new ShelfResourceNotFound("Binary resource not found " + binaryPath,ioEx);
+      throw new ShelfResourceNotFound("Binary resource not found " + binaryPath, ioEx);
     }
     return bytes;
   }
@@ -124,7 +123,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   public void saveMetadata(JsonNode metadata, String... relativePathParts) {
     Path metadataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     File metadataFile = metadataPath.toFile();
-    if(metadataFile.isDirectory()){
+    if (metadataFile.isDirectory()) {
       metadataFile = metadataPath.resolve(KnowledgeObject.METADATA_FILENAME).toFile();
     }
     try {
@@ -176,6 +175,22 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     } catch (IOException e) {
       throw new ShelfException("Could not delete cdo " + relativePathParts, e);
     }
+
+  }
+
+  // Todo: make these do something
+  @Override
+  public String createTransaction() {
+    return null;
+  }
+
+  @Override
+  public void commitTransaction(String transactionID) {
+
+  }
+
+  @Override
+  public void rollbackTransaction(String transactionID) {
 
   }
 }

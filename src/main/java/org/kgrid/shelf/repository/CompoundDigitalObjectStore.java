@@ -25,4 +25,10 @@ public interface CompoundDigitalObjectStore {
 
   void delete(String... relativeLocationParts) throws ShelfException;
 
+  String createTransaction();
+
+  void commitTransaction(String transactionID);
+
+  void rollbackTransaction(String transactionID);
+
 }

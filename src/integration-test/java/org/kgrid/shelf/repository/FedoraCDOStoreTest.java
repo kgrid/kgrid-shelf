@@ -34,7 +34,7 @@ public class FedoraCDOStoreTest {
       ZipImportService zipImportService = new ZipImportService();
 
       //Load Hello-World example object
-      InputStream zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world.zip");
+      InputStream zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
       zipImportService.importObject( new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
 
       //Load ri-bmicalc example object
@@ -49,10 +49,16 @@ public class FedoraCDOStoreTest {
   }
 
   @Test
-  public void getChildern() throws Exception {
+  public void getChildren() throws Exception {
 
     List<String> koList = compoundDigitalObjectStore.getChildren("");
     assertEquals(2, koList.size());
+  }
+
+  @Test
+  public void getImplementations() throws Exception {
+    List<String> impList = compoundDigitalObjectStore.getChildren("hello-world");
+    assertEquals(2, impList.size());
   }
 
   @Test
@@ -60,7 +66,7 @@ public class FedoraCDOStoreTest {
 
     ObjectNode koNode = compoundDigitalObjectStore.getMetadata("hello-world");
 
-    assertEquals("Hello World Title", koNode.findValue("title").asText());
+    assertEquals("Hello  World Title", koNode.findValue("title").asText());
 
   }
 
@@ -85,7 +91,7 @@ public class FedoraCDOStoreTest {
   public void findBinary() {
 
     assertNotNull(
-        compoundDigitalObjectStore.getBinary("hello-world/koio.v1/welcome.js"));
+        compoundDigitalObjectStore.getBinary("hello-world/v0.0.1/welcome.js"));
   }
 
   @Test(expected = ShelfException.class)
