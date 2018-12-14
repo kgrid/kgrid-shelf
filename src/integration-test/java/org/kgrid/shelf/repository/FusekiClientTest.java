@@ -39,15 +39,14 @@ public class FusekiClientTest {
       zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/ri-bmicalc.zip");
       zipImportService.importObject(new ArkId("ri", "bmicalc"), zipStream, compoundDigitalObjectStore);
 
-      TimeUnit.SECONDS.sleep(5);
-
     } catch (Exception exception) {
       assertFalse(exception.getMessage(), true);
     }
   }
 
   @Test
-  public void getAllKnowledgeObjects() {
+  public void getAllKnowledgeObjects() throws Exception {
+    TimeUnit.SECONDS.sleep(5);
     JsonNode node = fusekiClient.getAllKnowledgeObjectIDs();
     assertTrue("json-ld has @graph", node.has("@graph"));
     List<LinkedHashMap> list = JsonPath.parse(node.toString()).read("$.@graph[*]", List.class);
@@ -55,7 +54,8 @@ public class FusekiClientTest {
   }
 
   @Test
-  public void getAllKnowledgeObjectImpls() {
+  public void getAllKnowledgeObjectImpls() throws Exception {
+    TimeUnit.SECONDS.sleep(5);
     JsonNode node = fusekiClient.getAllKnowledgeObjectImpls();
     assertTrue("json-ld has @graph", node.has("@graph"));
     List<LinkedHashMap> list = JsonPath.parse(node.toString()).read("$.@graph[*]", List.class);
