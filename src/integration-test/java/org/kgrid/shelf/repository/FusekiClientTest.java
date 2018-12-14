@@ -3,8 +3,10 @@ package org.kgrid.shelf.repository;
 import static org.junit.Assert.*;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.jayway.jsonpath.JsonPath;
 import java.io.InputStream;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import org.junit.After;
@@ -45,24 +47,31 @@ public class FusekiClientTest {
   @Test
   public void getAllKnowledgeObjects() {
     JsonNode node = fusekiClient.getAllKnowledgeObjectIDs();
-
+    assertTrue("json-ld has @graph", node.has("@graph"));
+    List<LinkedHashMap> list = JsonPath.parse(node.toString()).read("$.@graph[*]", List.class);
+    assertEquals("ko list has two objects", 2, list.size());
   }
 
   @Test
   public void getAllKnowledgeObjectImpls() {
     JsonNode node = fusekiClient.getAllKnowledgeObjectImpls();
+    assertTrue("json-ld has @graph", node.has("@graph"));
+    List<LinkedHashMap> list = JsonPath.parse(node.toString()).read("$.@graph[*]", List.class);
+    assertEquals("implementation list has three objects", 3, list.size());
   }
 
   @Test
-  public void getImplObjectsOfKO() throws Exception {
+  public void getImplObjectsOfKO() {
     ArkId arkId = new ArkId("hello", "world");
     JsonNode impls = fusekiClient.getImplsOfKO(arkId);
-    assertTrue("json-ld has @graph", impls.has("@graph"));
+    assertTrue("hello world implementation list has @graph", impls.has("@graph"));
+    List<LinkedHashMap> list = JsonPath.parse(impls.toString()).read("$.@graph[*]", List.class);
+    assertEquals("implementation list has three objects", 2, list.size());
   }
-//
+
+// This test uses all the memory in the test vm and crashes it D:
 //  @Test
 //  public void getImplOfKoList() throws Exception {
-//    TimeUnit.SECONDS.sleep(1);
 //    ArkId arkId = new ArkId("hello", "world");
 //    List list = fusekiClient.getImplListOfKO(arkId);
 //    assertTrue("List has v0.0.1 impl",
