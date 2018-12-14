@@ -70,6 +70,13 @@ public class FedoraCDOStoreTest {
   }
 
   @Test(expected = ShelfResourceNotFound.class)
+  public void findKONotInThisShelf() throws Exception {
+
+    ObjectNode koNode = compoundDigitalObjectStore.getMetadata("http://library.kgrig.org/fcrepo/rest/hello-world/v0.0.2");
+
+  }
+
+  @Test(expected = ShelfResourceNotFound.class)
   public void delete() throws Exception {
 
     compoundDigitalObjectStore.delete("hello-world");

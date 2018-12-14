@@ -1,20 +1,15 @@
 # Java Maven CircleCI 2.0 configuration file
 #
 # Check https://circleci.com/docs/2.0/language-java/ for more details
-#
-
-defaults: &defaults
-  working_directory: ~/shelf
 
 version: 2
 jobs:
 
   ##############
-  # Build job uses a go cli tool to create a github release
+  # Build job
   ##############
   build:
-
-    <<: *defaults
+    machine: true
 
     docker:
       - image: circleci/openjdk:11-jdk

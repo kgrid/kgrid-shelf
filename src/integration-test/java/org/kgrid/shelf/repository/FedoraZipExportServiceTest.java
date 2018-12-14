@@ -45,7 +45,7 @@ public class FedoraZipExportServiceTest {
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world"), compoundDigitalObjectStore);
+        new ArkId("hello", "world"), compoundDigitalObjectStore, true);
 
     writeZip(outputStream);
 
@@ -57,7 +57,8 @@ public class FedoraZipExportServiceTest {
         .collect(Collectors.toList());
 
     filesPaths.forEach(file ->{
-      System.out.println(file.toAbsolutePath().toString());
+      System.out.println(file.toString());
+
     });
 
     assertEquals(9,filesPaths.size());

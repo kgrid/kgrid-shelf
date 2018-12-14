@@ -8,6 +8,7 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -155,10 +156,19 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     URI path = URI.create(pathBuilder(relativePathParts));
 
     RestTemplate restTemplate = builder.build();
+
     try {
+
+      if (path.getHost().contains(getAbsoluteLocation("")) ){
+        throw new ShelfResourceNotFound("Binary resource not located on this CDO shelf " +
+            getAbsoluteLocation("") +
+            " requested path " + path);
+      }
+
       ResponseEntity<byte[]> response = restTemplate
           .exchange(path, HttpMethod.GET, authenticationHeader(), byte[].class);
       return response.getBody();
+
     } catch (HttpClientErrorException ex) {
       throw new ShelfResourceNotFound("Binary resource not found " + path, ex);
     }
@@ -321,14 +331,23 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
    */
   private ObjectNode getJsonResource(String objectURI, HttpHeaders header) {
 
-    HttpClient instance = HttpClientBuilder.create()
-        .setRedirectStrategy(new DefaultRedirectStrategy()).build();
-
-    RestTemplate restTemplate = new RestTemplate(
-        new HttpComponentsClientHttpRequestFactory(instance));
-
-    HttpEntity<String> entity = new HttpEntity<>("", header);
     try {
+
+      if (ResourceUtils.isUrl(objectURI) &&
+          ResourceUtils.toURI(objectURI).getHost().contains(getAbsoluteLocation("")) ){
+        throw new ShelfResourceNotFound("Metadata resource not located on this CDO shelf " +
+            getAbsoluteLocation("") +
+            " requested path " + objectURI);
+      }
+
+      HttpClient instance = HttpClientBuilder.create()
+          .setRedirectStrategy(new DefaultRedirectStrategy()).build();
+
+      RestTemplate restTemplate = new RestTemplate(
+          new HttpComponentsClientHttpRequestFactory(instance));
+
+      HttpEntity<String> entity = new HttpEntity<>("", header);
+
       if (objectURI.endsWith(KnowledgeObject.METADATA_FILENAME)) {
         objectURI = objectURI.substring(0,
             objectURI.length() - KnowledgeObject.METADATA_FILENAME.length());
@@ -347,8 +366,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       }
       return (ObjectNode) node;
 
-    } catch (HttpClientErrorException | ResourceAccessException | IOException ex) {
-        throw new ShelfResourceNotFound("Metadata resource not found  " + objectURI, ex);
+    } catch (HttpClientErrorException | ResourceAccessException | URISyntaxException | IOException ex) {
+      throw new ShelfResourceNotFound("Metadata resource not found  " + objectURI, ex);
     }
   }
 
