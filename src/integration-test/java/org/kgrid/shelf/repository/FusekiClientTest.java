@@ -39,6 +39,8 @@ public class FusekiClientTest {
       zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/ri-bmicalc.zip");
       zipImportService.importObject(new ArkId("ri", "bmicalc"), zipStream, compoundDigitalObjectStore);
 
+      TimeUnit.SECONDS.sleep(5);
+
     } catch (Exception exception) {
       assertFalse(exception.getMessage(), true);
     }
@@ -57,7 +59,7 @@ public class FusekiClientTest {
     JsonNode node = fusekiClient.getAllKnowledgeObjectImpls();
     assertTrue("json-ld has @graph", node.has("@graph"));
     List<LinkedHashMap> list = JsonPath.parse(node.toString()).read("$.@graph[*]", List.class);
-    assertEquals("implementation list has three objects", 3, list.size());
+    assertEquals("overall implementation list has three objects", 3, list.size());
   }
 
   @Test
@@ -66,7 +68,7 @@ public class FusekiClientTest {
     JsonNode impls = fusekiClient.getImplsOfKO(arkId);
     assertTrue("hello world implementation list has @graph", impls.has("@graph"));
     List<LinkedHashMap> list = JsonPath.parse(impls.toString()).read("$.@graph[*]", List.class);
-    assertEquals("implementation list has three objects", 2, list.size());
+    assertEquals("hello world implementation list has two objects", 2, list.size());
   }
 
 // This test uses all the memory in the test vm and crashes it D:
