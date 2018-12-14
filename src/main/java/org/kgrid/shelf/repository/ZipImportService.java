@@ -69,7 +69,6 @@ public class ZipImportService extends ZipService{
 
     cdoStore.saveMetadata(koMetaData, arkId.getDashArk(),
         KnowledgeObject.METADATA_FILENAME);
-    cdoStore.saveMetadata(koMetaData, arkId.getDashArk(), KnowledgeObject.METADATA_FILENAME);
 
   }
 
@@ -135,7 +134,7 @@ public class ZipImportService extends ZipService{
 
       JsonNode metadata = containerResources.get(Paths.get(path).toString());
 
-      cdoStore.createContainer( path);
+      cdoStore.createContainer(path);
 
       List<String> binaryPaths = listBinaryNodes(metadata);
 
