@@ -17,7 +17,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.kgrid.shelf.domain.ArkId;
 
-@Category(FedoraIntegrationTest.class)
+@Category(FedoraFusekiTest.class)
 public class FusekiClientTest {
 
   static FusekiClient fusekiClient;

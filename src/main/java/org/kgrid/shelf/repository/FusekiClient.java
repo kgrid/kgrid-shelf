@@ -136,6 +136,7 @@ public class FusekiClient {
     return list;
   }
 
+
   private ConstructBuilder prefixedConstructQuery() {
 
     return new ConstructBuilder()

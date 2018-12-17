@@ -135,7 +135,7 @@
           <includes>
             <include>**/*.class</include>
           </includes>
-          <excludedGroups>org.kgrid.shelf.repository.FedoraIntegrationTest</excludedGroups>
+          <excludedGroups>org.kgrid.shelf.repository.FedoraIntegrationTest, org.kgrid.shelf.repository.FedoraFusekiTest</excludedGroups>
         </configuration>
       </plugin>
       <plugin>
@@ -231,7 +231,7 @@
          <configuration>
            <images>
              <image>
-               <name>yinlinchen/fcrepo4-docker:4.7.5</name>
+               <name>kgrid/fcrepo:4.7.5</name>
                <alias>fcrepo_test</alias>
                <run>
                  <ports>

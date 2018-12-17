@@ -31,12 +31,12 @@ public class ZipExportService extends ZipService {
   private String basePath="";
 
   /**
-   *
-   * @param arkId KO to expoprt
-   * @param cdoStore
-   * @param stripBase
-   * @return
-   * @throws ShelfException
+   * Allows the export process to strip out the base url
+   * @param arkId KO to export
+   * @param cdoStore digital object store
+   * @param stripBase indicates if the export should strip out the base URL
+   * @return byte stream of the zip
+   * @throws ShelfException export process exception
    */
   public ByteArrayOutputStream exportObject(ArkId arkId,
       CompoundDigitalObjectStore cdoStore, boolean stripBase) throws ShelfException {
@@ -49,10 +49,10 @@ public class ZipExportService extends ZipService {
 
   /**
    *
-   * @param arkId
-   * @param cdoStore
-   * @return
-   * @throws ShelfException
+   * @param arkId export object ark id
+   * @param cdoStore digital object store
+   * @return  byte stream of the zip
+   * @throws ShelfException export process exception
    */
   public ByteArrayOutputStream exportObject(ArkId arkId,
       CompoundDigitalObjectStore cdoStore) throws ShelfException {
