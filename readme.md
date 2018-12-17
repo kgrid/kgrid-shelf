@@ -78,28 +78,47 @@ mvn clean verify -P fcrepo_it
 The first time we run _mvn verify -P fcrepo_it_ the docker image with only the fcreop running.  
 The build will wait until the fcrepo is up and running than will run the integration tests.  
  
- Integration tests are identified using _@Category(FedoraIntegrationTest.class)_. Once the tests are complete the docker container will be stopped and removed.
+Integration tests are identified using _@Category(FedoraIntegrationTest.class)_. Once the tests are complete the docker container will be stopped and removed.
 
 **Tips and Tricks**
 
  * You can start up fcrepo docker instance with 
  
-```
-mvn docker:start -P fcrepo_it
-``` 
+```mvn docker:start -P fcrepo_it``` 
 
 and stop it with 
 
-```
-mvn docker:stop -P fcrepo_it
-```
+```mvn docker:stop -P fcrepo_it```
 
 Yo can keep the fcrepo container running after the tests running with the _docker.keepRunning_ switch
-```
- mvn -Ddocker.keepRunning clean verify -P fcrepo_it
-
-```
+```mvn -Ddocker.keepRunning clean verify -P fcrepo_it```
 Once started, access [Docker FCRepo](http://localhost:8080/fcrepo/rest/)
+
+## Fedora Fuseki Tests
+
+Fuseki tests are identified using _@Category(FedoraFusekiTest.class)_. These use a docker instance of
+Fedora that includes Tomcat 8.0.53, Fedora 4.7.5, Solr 4.10.3 ,Apache Karaf 4.0.5, Fuseki 2.3.1, Fcrepo-camel-toolbox 4.7.2
+
+_NOTE: this is not run as a part of CircleCI build because of the heavy weight nature of the full Fedora image_
+```
+mvn clean verify -P fcrepo_fuseki
+```
+                    
+**Tips and Tricks**
+
+ * You can start up fcrepo docker instance with 
+ 
+```mvn docker:start -P fcrepo_fuseki``` 
+
+and stop it with 
+
+```mvn docker:stop -P fcrepo_fuseki```
+
+Yo can keep the fcrepo container running after the tests running with the _docker.keepRunning_ switch
+```mvn -Ddocker.keepRunning clean verify -P fcrepo_fuseki```
+
+Once started, access [Docker FCRepo](http://localhost:8080/fcrepo/rest/)
+
 
 ## Fedora Repository Characterization Tests
 
