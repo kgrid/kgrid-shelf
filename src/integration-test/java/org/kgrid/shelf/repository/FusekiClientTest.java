@@ -5,13 +5,11 @@ import static org.junit.Assert.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jayway.jsonpath.JsonPath;
 import java.io.InputStream;
-import java.util.ArrayList;
+import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
-import org.junit.After;
 import org.junit.AfterClass;
-import org.junit.Before;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -39,6 +37,11 @@ public class FusekiClientTest {
       zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/ri-bmicalc.zip");
       zipImportService.importObject(new ArkId("ri", "bmicalc"), zipStream, compoundDigitalObjectStore);
 
+      /*
+       * TODO: Add a delay here after object creation to allow fuseki to detect that these
+       *   objects have been created
+       */
+
     } catch (Exception exception) {
       assertFalse(exception.getMessage(), true);
     }
@@ -46,8 +49,7 @@ public class FusekiClientTest {
 
   @Test
   public void getAllKnowledgeObjects() throws Exception {
-    TimeUnit.SECONDS.sleep(5);
-    JsonNode node = fusekiClient.getAllKnowledgeObjectIDs();
+    JsonNode node = fusekiClient.getAllKnowledgeObjects();
     assertTrue("json-ld has @graph", node.has("@graph"));
     List<LinkedHashMap> list = JsonPath.parse(node.toString()).read("$.@graph[*]", List.class);
     assertEquals("ko list has two objects", 2, list.size());
@@ -55,7 +57,6 @@ public class FusekiClientTest {
 
   @Test
   public void getAllKnowledgeObjectImpls() throws Exception {
-    TimeUnit.SECONDS.sleep(5);
     JsonNode node = fusekiClient.getAllKnowledgeObjectImpls();
     assertTrue("json-ld has @graph", node.has("@graph"));
     List<LinkedHashMap> list = JsonPath.parse(node.toString()).read("$.@graph[*]", List.class);
@@ -63,9 +64,9 @@ public class FusekiClientTest {
   }
 
   @Test
-  public void getImplObjectsOfKO() {
+  public void getImplObjectsOfKO() throws Exception {
     ArkId arkId = new ArkId("hello", "world");
-    JsonNode impls = fusekiClient.getImplsOfKO(arkId);
+    JsonNode impls = fusekiClient.getImplGraphOfKO(arkId);
     assertTrue("hello world implementation list has @graph", impls.has("@graph"));
     List<LinkedHashMap> list = JsonPath.parse(impls.toString()).read("$.@graph[*]", List.class);
     assertEquals("hello world implementation list has two objects", 2, list.size());
