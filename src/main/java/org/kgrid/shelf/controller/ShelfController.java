@@ -13,6 +13,7 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.KnowledgeObject;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -122,7 +123,7 @@ public class ShelfController {
   protected void exportZip(HttpServletResponse response, ArkId arkId) {
 
     response.addHeader("Content-Disposition",
-        "attachment; filename=\"" + arkId.getDashArkImplementation() + "-complete.zip\"");
+        "attachment; filename=\"" + arkId.getDashArkImplementation() + ".zip\"");
     try {
       shelf.extractZip(arkId, response.getOutputStream());
     } catch (IOException ex) {
@@ -144,20 +145,8 @@ public class ShelfController {
 
     ArkId arkId = new ArkId(naan, name, implementation);
 
-    JsonNode metadata = shelf.findImplementationMetadata(arkId);
-    String childPath;
-    if (metadata.has("service")) {
-      childPath = metadata.get("service").asText();
-    } else {
-      throw new NoSuchFieldException(
-          "Object has no service description location specified in metadata.");
-    }
-    byte[] binary = shelf.getBinaryOrMetadata(arkId, childPath);
-    if (binary != null) {
-      return binary;
-    } else {
-      throw new NoSuchFileException("Cannot fetch file at " + childPath);
-    }
+    return shelf.findServiceSpecification(arkId);
+
   }
 
   @GetMapping(path = "/{naan}/{name}/{implementation}/**", produces = MediaType.ALL_VALUE)
