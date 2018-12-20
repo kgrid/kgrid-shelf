@@ -63,17 +63,13 @@ public class ZipExportService extends ZipService {
     //Get KO and add to export zip entries
     ObjectNode koMetaData = cdoStore.getMetadata(arkId.getDashArk());
 
-    entries.add(new ByteSource(
-        FilenameUtils.normalize(
-            Paths.get(arkId.getDashArk(), KnowledgeObject.METADATA_FILENAME).toString(), true),
-        formatExportedMetadata(koMetaData)));
-
     //Get KO Implementations
     JsonNode implementations = koMetaData.findPath(KnowledgeObject.IMPLEMENTATIONS_TERM);
 
     if (arkId.isImplementation()) {
 
       extractImplementation(arkId, cdoStore, entries, arkId.getDashArkImplementation());
+      koMetaData.put(KnowledgeObject.IMPLEMENTATIONS_TERM, arkId.getDashArkImplementation());
 
     } else if (implementations.isTextual()) {
 
@@ -88,6 +84,12 @@ public class ZipExportService extends ZipService {
       });
 
     }
+
+    entries.add(new ByteSource(
+        FilenameUtils.normalize(
+            Paths.get(arkId.getDashArk(), KnowledgeObject.METADATA_FILENAME).toString(), true),
+        formatExportedMetadata(koMetaData)));
+
     //Package it all up
     pack(entries.toArray(new ZipEntrySource[entries.size()]), outputStream);
 
