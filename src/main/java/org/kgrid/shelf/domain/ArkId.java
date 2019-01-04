@@ -1,6 +1,7 @@
 package org.kgrid.shelf.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import org.apache.commons.lang3.StringUtils;
@@ -102,7 +103,7 @@ public final class ArkId {
 
   @JsonIgnore
   public String getSlashArkImplementation() {
-    return StringUtils.join(naan, "/", name, "/", implementation);
+    return StringUtils.join( new String[] {naan, name, implementation}, "/");
   }
 
   @Override
@@ -147,7 +148,7 @@ public final class ArkId {
   }
 
   public String getImplementation() {
-    return implementation;
+    return StringUtils.isEmpty(implementation)?"":implementation;
   }
 
   public boolean isImplementation(){

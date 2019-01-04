@@ -199,8 +199,17 @@ public class ShelfController {
 
   }
 
+  @PutMapping(path = "/{naan}/{name}", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<JsonNode> editKnowledgeObjectOMetadata(@PathVariable String naan,
+      @PathVariable String name, @RequestBody String data) {
+    ArkId arkId = new ArkId(naan, name);
+    shelf.editMetadata(arkId, null, data);
+    return new ResponseEntity<>(shelf.findKnowledgeObjectMetadata(arkId),
+        HttpStatus.OK);
+  }
+
   @PutMapping(path = "/{naan}/{name}/{implementation}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<JsonNode> editMetadata(@PathVariable String naan,
+  public ResponseEntity<JsonNode> editImplmentaionMetadata(@PathVariable String naan,
       @PathVariable String name, @PathVariable String implementation, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name, implementation);
     shelf.editMetadata(arkId, null, data);
