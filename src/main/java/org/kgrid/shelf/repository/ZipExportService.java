@@ -85,10 +85,14 @@ public class ZipExportService extends ZipService {
 
     }
 
-    entries.add(new ByteSource(
-        FilenameUtils.normalize(
-            Paths.get(arkId.getDashArk(), KnowledgeObject.METADATA_FILENAME).toString(), true),
-        formatExportedMetadata(koMetaData)));
+    try {
+      entries.add(new ByteSource(
+            FilenameUtils.normalize(
+                Paths.get(arkId.getDashArk(), KnowledgeObject.METADATA_FILENAME).toString(), true),
+                          JsonUtils.toPrettyString(koMetaData).getBytes()));
+    } catch (IOException e) {
+      throw new ShelfException("Issue extracting KO metadata for " + arkId, e);
+    }
 
     //Package it all up
     pack(entries.toArray(new ZipEntrySource[entries.size()]), outputStream);
@@ -123,7 +127,11 @@ public class ZipExportService extends ZipService {
           FilenameUtils.normalize(Paths.get(implementationPath,
               KnowledgeObject.METADATA_FILENAME).toString(), true);
 
-      entries.add(new ByteSource(metadataFileName, formatExportedMetadata(implementationNode)));
+      try {
+        entries.add(new ByteSource(metadataFileName, JsonUtils.toPrettyString(implementationNode).getBytes()));
+      } catch (IOException e) {
+        throw new ShelfException("Issue extracting Implementation metadata for " + arkId, e);
+      }
 
       //Add Implementation binary files to export zip entries
       List<String> binaryNodes = listBinaryNodes(implementationNode);
