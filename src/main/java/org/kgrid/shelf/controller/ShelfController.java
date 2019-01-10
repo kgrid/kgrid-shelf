@@ -230,7 +230,7 @@ public class ShelfController {
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan,
       @PathVariable String name, @PathVariable String implementation) {
     ArkId arkId = new ArkId(naan, name, implementation);
-    shelf.delete(arkId);
+    shelf.deleteImpl(arkId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
   }

@@ -2,6 +2,7 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import java.io.IOException;
@@ -41,6 +42,22 @@ public class KnowledgeObjectRepository {
 
     dataStore.delete(arkId.getDashArkImplementation());
     log.info("Deleted ko with ark id " + arkId);
+  }
+
+  public void deleteImpl(ArkId arkId) {
+    dataStore.delete(arkId.getDashArkImplementation());
+    JsonNode objectMetadata = dataStore.getMetadata(arkId.getDashArk());
+    if(objectMetadata.has(KnowledgeObject.IMPLEMENTATIONS_TERM) && objectMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()) {
+      ArrayNode impls = (ArrayNode)objectMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM);
+      for (int i = 0; i < impls.size(); i++) {
+        if(impls.get(i).asText().equals(arkId.getDashArkImplementation())) {
+          impls.remove(i);
+        }
+      }
+      ((ObjectNode) objectMetadata).set(KnowledgeObject.IMPLEMENTATIONS_TERM, impls);
+      dataStore.saveMetadata(objectMetadata, arkId.getDashArk());
+    }
+
   }
 
   public ObjectNode editMetadata(ArkId arkId, String path, String metadata) {
