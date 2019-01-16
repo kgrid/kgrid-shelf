@@ -7,8 +7,10 @@ import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -23,13 +25,13 @@ import org.springframework.util.ResourceUtils;
 import org.zeroturnaround.zip.ZipUtil;
 
 @Service
-public class ZipImportService extends ZipService{
+public class ZipImportService extends ZipService {
 
   private final org.slf4j.Logger log = LoggerFactory.getLogger(ZipImportService.class);
 
   /**
-   * Create KO object, must add Knowledge Object files, Knowledge Object properties and
-   * Knowledge Object Implementation properties
+   * Create KO object, must add Knowledge Object files, Knowledge Object properties and Knowledge
+   * Object Implementation properties
    *
    * @param arkId ark id of the importing object
    * @param zipFileStream zip in the form of a stream
@@ -46,15 +48,15 @@ public class ZipImportService extends ZipService{
     log.info("loading zip file for " + arkId.getDashArk());
     captureZipEntries(zipFileStream, containerResources, binaryResources);
 
-    cdoStore.createContainer( arkId.getDashArk() );
+    cdoStore.createContainer(arkId.getDashArk());
 
     JsonNode koMetaData = containerResources.get(
         arkId.getDashArk());
 
-    if(KnowledgeObject.getImplementationIDs( koMetaData ).isArray()){
+    if (KnowledgeObject.getImplementationIDs(koMetaData).isArray()) {
 
-      JsonNode implementationNodes = KnowledgeObject.getImplementationIDs( koMetaData );
-      implementationNodes.forEach( jsonNode ->{
+      JsonNode implementationNodes = KnowledgeObject.getImplementationIDs(koMetaData);
+      implementationNodes.forEach(jsonNode -> {
 
         importImplementation(arkId, cdoStore, containerResources, binaryResources, jsonNode);
 
@@ -63,7 +65,7 @@ public class ZipImportService extends ZipService{
     } else {
 
       importImplementation(arkId, cdoStore, containerResources, binaryResources,
-          KnowledgeObject.getImplementationIDs( koMetaData ));
+          KnowledgeObject.getImplementationIDs(koMetaData));
 
     }
 
@@ -73,8 +75,7 @@ public class ZipImportService extends ZipService{
   }
 
   /**
-   * Captures the Zip Entries loading a collection of metadata and collection of
-   * binaries
+   * Captures the Zip Entries loading a collection of metadata and collection of binaries
    *
    * @param zipFileStream zip file in a stream
    * @param containerResources collection of metadata files
@@ -84,31 +85,88 @@ public class ZipImportService extends ZipService{
       Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources) {
 
     log.info("processing zipEntries");
+    Map<String, JsonNode> metadataQueue = Collections.synchronizedMap(new LinkedHashMap<>());
+    Map<String, byte[]> binaryQueue = Collections.synchronizedMap(new LinkedHashMap<>());
 
-    ZipUtil.iterate(zipFileStream, (inputStream, zipEntry ) -> {
+    ZipUtil.iterate(zipFileStream, (inputStream, zipEntry) -> {
 
-      if( !zipEntry.getName().contains("__MACOSX")) {
+      if (!zipEntry.getName().contains("__MACOSX")) {
 
         if (zipEntry.getName().endsWith(KnowledgeObject.METADATA_FILENAME)) {
 
           StringWriter writer = new StringWriter();
           IOUtils.copy(inputStream, writer, StandardCharsets.UTF_8);
 
-          containerResources.put( FilenameUtils.normalize(
-              zipEntry.getName().substring(0,
-                  zipEntry.getName().indexOf(KnowledgeObject.METADATA_FILENAME) - 1)),
-              new ObjectMapper().readTree(writer.toString()));
+          JsonNode metadata = new ObjectMapper().readTree(writer.toString());
+
+          try {
+            validateMetadata(zipEntry.getName(), metadata);
+          } catch (ShelfException e) {
+            log.warn(e.getMessage());
+            return;
+          }
+
+          metadataQueue.put(zipEntry.getName(), metadata);
 
         } else if (!zipEntry.isDirectory() &&
             !zipEntry.getName().endsWith(KnowledgeObject.METADATA_FILENAME)) {
 
-          binaryResources.put(FilenameUtils.normalize(zipEntry.getName()),
-              IOUtils.toByteArray(inputStream));
+          binaryQueue.put(zipEntry.getName(), IOUtils.toByteArray(inputStream));
         }
-
       }
-
     });
+
+    metadataQueue.forEach((filename, metadata) ->
+        containerResources.put(FilenameUtils.normalize(
+            filename.substring(0,
+                filename.indexOf(KnowledgeObject.METADATA_FILENAME) - 1)),
+            metadata));
+
+    binaryQueue.forEach((filename, bytes) ->
+        binaryResources.put(FilenameUtils.normalize(filename),
+            bytes));
+  }
+
+  // Metadata must have an @type field that contains either koio:KnowledgeObject or koio:Implementation,
+  // an @id field and an @context field, ignores top-level @graph structures
+  void validateMetadata(String filename, JsonNode metadata) {
+    String typeLabel = "@type", idLabel = "@id", contextLabel = "@context";
+    String ko = "koio:KnowledgeObject", impl = "koio:Implementation";
+
+    if (metadata.has("@graph")) {
+      metadata = metadata.get("@graph").get(0);
+    }
+    if (!metadata.has(idLabel)) {
+      throw new ShelfException("Cannot import ko: Missing id label in file " + filename);
+    }
+
+    if (metadata.has(typeLabel)) {
+      if (metadata.get(typeLabel).isArray()) {
+        boolean valid = false;
+        Iterator<JsonNode> iter = metadata.get(typeLabel).elements();
+        while (iter.hasNext()) {
+          JsonNode typeNode = iter.next();
+          if (ko.equals(typeNode.asText()) || impl.equals(typeNode.asText())) {
+            valid = true;
+          }
+        }
+        if (!valid) {
+          throw new ShelfException(
+              "Cannot import ko: Missing knowledge object or implementation type in file "
+                  + filename);
+        }
+      } else if (!ko.equals(metadata.get(typeLabel).asText()) &&
+          !impl.equals(metadata.get(typeLabel).asText())) {
+        throw new ShelfException(
+            "Cannot import ko: Missing knowledge object or implementation type in file "
+                + filename);
+      }
+    } else {
+      throw new ShelfException("Cannot import ko: Missing type field in file " + filename);
+    }
+    if (!metadata.has(contextLabel)) {
+      throw new ShelfException("Cannot import ko: Missing context in file " + filename);
+    }
   }
 
   /**
@@ -128,9 +186,9 @@ public class ZipImportService extends ZipService{
 
       //handle absolute and relative IRI (http://localhost:8080/fcrepo/rest/hello-world/v1 vs hello-world/v1)
       String path = ResourceUtils.isUrl(jsonNode.asText()) ?
-        ResourceUtils.toURI(jsonNode.asText()).getPath().substring(
-              ResourceUtils.toURI(jsonNode.asText()).getPath().indexOf(arkId.getDashArk())):
-                 jsonNode.asText();
+          ResourceUtils.toURI(jsonNode.asText()).getPath().substring(
+              ResourceUtils.toURI(jsonNode.asText()).getPath().indexOf(arkId.getDashArk())) :
+          jsonNode.asText();
 
       JsonNode metadata = containerResources.get(Paths.get(path).toString());
 
@@ -138,7 +196,7 @@ public class ZipImportService extends ZipService{
 
       List<String> binaryPaths = listBinaryNodes(metadata);
 
-      binaryPaths.forEach( (binaryPath) -> {
+      binaryPaths.forEach((binaryPath) -> {
 
         try {
 
@@ -157,21 +215,19 @@ public class ZipImportService extends ZipService{
 
           cdoStore.saveBinary(binaryBytes, filePath);
 
-        } catch(URISyntaxException e) {
-          throw new ShelfException("Issue importing implementation binary " , e);
+        } catch (URISyntaxException e) {
+          throw new ShelfException("Issue importing implementation binary ", e);
         }
 
       });
 
-      cdoStore.saveMetadata(metadata, path,  KnowledgeObject.METADATA_FILENAME);
+      cdoStore.saveMetadata(metadata, path, KnowledgeObject.METADATA_FILENAME);
 
     } catch (URISyntaxException e) {
-      throw new ShelfException("Issue importing implementation " , e);
+      throw new ShelfException("Issue importing implementation ", e);
     }
 
   }
-
-
 
 
 }
