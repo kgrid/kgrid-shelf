@@ -46,32 +46,40 @@ public class ZipImportService extends ZipService {
     Map<String, byte[]> binaryResources = new HashMap<>();
 
     log.info("loading zip file for " + arkId.getDashArk());
-    captureZipEntries(zipFileStream, containerResources, binaryResources);
+    String trxId = cdoStore.createTransaction();
+    try {
+      captureZipEntries(zipFileStream, containerResources, binaryResources);
 
-    cdoStore.createContainer(arkId.getDashArk());
+      cdoStore.createContainer(trxId, arkId.getDashArk());
 
-    JsonNode koMetaData = containerResources.get(
-        arkId.getDashArk());
+      JsonNode koMetaData = containerResources.get(
+          arkId.getDashArk());
 
-    if (KnowledgeObject.getImplementationIDs(koMetaData).isArray()) {
+      if (KnowledgeObject.getImplementationIDs(koMetaData).isArray()) {
 
-      JsonNode implementationNodes = KnowledgeObject.getImplementationIDs(koMetaData);
-      implementationNodes.forEach(jsonNode -> {
+        JsonNode implementationNodes = KnowledgeObject.getImplementationIDs(koMetaData);
+        implementationNodes.forEach(jsonNode -> {
 
-        importImplementation(arkId, cdoStore, containerResources, binaryResources, jsonNode);
+          importImplementation(arkId, trxId, cdoStore, containerResources, binaryResources, jsonNode);
 
-      });
+        });
 
-    } else {
+      } else {
 
-      importImplementation(arkId, cdoStore, containerResources, binaryResources,
-          KnowledgeObject.getImplementationIDs(koMetaData));
+        importImplementation(arkId, trxId, cdoStore, containerResources, binaryResources,
+            KnowledgeObject.getImplementationIDs(koMetaData));
 
+      }
+
+      cdoStore.saveMetadata(koMetaData, trxId, arkId.getDashArk(),
+          KnowledgeObject.METADATA_FILENAME);
+
+      cdoStore.commitTransaction(trxId);
+    } catch(Exception e) {
+      cdoStore.rollbackTransaction(trxId);
+      log.warn(e.getMessage());
+      throw e;
     }
-
-    cdoStore.saveMetadata(koMetaData, arkId.getDashArk(),
-        KnowledgeObject.METADATA_FILENAME);
-
   }
 
   /**
@@ -118,13 +126,10 @@ public class ZipImportService extends ZipService {
 
     metadataQueue.forEach((filename, metadata) ->
         containerResources.put(FilenameUtils.normalize(
-            filename.substring(0,
-                filename.indexOf(KnowledgeObject.METADATA_FILENAME) - 1)),
-            metadata));
+            filename.substring(0, filename.indexOf(KnowledgeObject.METADATA_FILENAME) - 1)), metadata));
 
     binaryQueue.forEach((filename, bytes) ->
-        binaryResources.put(FilenameUtils.normalize(filename),
-            bytes));
+        binaryResources.put(FilenameUtils.normalize(filename), bytes));
   }
 
   // Metadata must have an @type field that contains either koio:KnowledgeObject or koio:Implementation,
@@ -178,7 +183,7 @@ public class ZipImportService extends ZipService {
    * @param binaryResources binaries load based on the metadata in the zip
    * @param jsonNode implementation node
    */
-  private void importImplementation(ArkId arkId, CompoundDigitalObjectStore cdoStore,
+  private void importImplementation(ArkId arkId, String trxId, CompoundDigitalObjectStore cdoStore,
       Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources,
       JsonNode jsonNode) {
 
@@ -192,14 +197,12 @@ public class ZipImportService extends ZipService {
 
       JsonNode metadata = containerResources.get(Paths.get(path).toString());
 
-      cdoStore.createContainer(path);
+      cdoStore.createContainer(trxId, path);
 
       List<String> binaryPaths = listBinaryNodes(metadata);
 
       binaryPaths.forEach((binaryPath) -> {
-
         try {
-
           //handle absolute and relative IRI
           // (http://localhost:8080/fcrepo/rest/hello-world/koio.v1/deployment-specification.yaml vs
           // koio.v1/deployment-specification.yaml)
@@ -213,7 +216,7 @@ public class ZipImportService extends ZipService {
           Objects.requireNonNull(binaryBytes,
               "Issue importing implementation binary can not find " + filePath);
 
-          cdoStore.saveBinary(binaryBytes, filePath);
+          cdoStore.saveBinary(binaryBytes, trxId, filePath);
 
         } catch (URISyntaxException e) {
           throw new ShelfException("Issue importing implementation binary ", e);
@@ -221,13 +224,11 @@ public class ZipImportService extends ZipService {
 
       });
 
-      cdoStore.saveMetadata(metadata, path, KnowledgeObject.METADATA_FILENAME);
+      cdoStore.saveMetadata(metadata, trxId, path, KnowledgeObject.METADATA_FILENAME);
 
     } catch (URISyntaxException e) {
       throw new ShelfException("Issue importing implementation ", e);
     }
 
   }
-
-
 }

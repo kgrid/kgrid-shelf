@@ -17,6 +17,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FileUtils;
 import org.kgrid.shelf.ShelfException;
@@ -178,19 +179,31 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   }
 
-  // Todo: make these do something
   @Override
   public String createTransaction() {
-    return null;
+    String trxID = "trx-" + UUID.randomUUID().toString();
+    createContainer(trxID);
+    return trxID;
   }
 
   @Override
   public void commitTransaction(String transactionID) {
-
+    File tempFolder = new File(localStorageURI.getPath(), transactionID);
+    try {
+      FileUtils.copyDirectory(tempFolder, new File(localStorageURI));
+      FileUtils.deleteDirectory(tempFolder);
+    } catch (IOException e) {
+      log.warn("Cannot copy files from temp directory to shelf " + e);
+    }
   }
 
   @Override
   public void rollbackTransaction(String transactionID) {
-
+    File tempFolder = new File(localStorageURI.getPath(), transactionID);
+    try {
+      FileUtils.deleteDirectory(tempFolder);
+    } catch(IOException e) {
+      log.warn("Cannot rollback failed transaction " + e);
+    }
   }
 }
