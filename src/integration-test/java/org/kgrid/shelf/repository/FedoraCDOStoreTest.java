@@ -34,11 +34,11 @@ public class FedoraCDOStoreTest {
 
       //Load Hello-World example object
       InputStream zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
-      zipImportService.importObject( new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+      zipImportService.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
 
       //Load ri-bmicalc example object
       zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/ri-bmicalc.zip");
-      zipImportService.importObject(new ArkId("ri", "bmicalc"), zipStream, compoundDigitalObjectStore);
+      zipImportService.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
 
 
     } catch (Exception exception) {

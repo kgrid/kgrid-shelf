@@ -238,11 +238,21 @@ public class KnowledgeObjectRepository {
    */
   public ArkId importZip(ArkId arkId, MultipartFile zippedKO) {
     try {
-      zipImportService.importObject(arkId, zippedKO.getInputStream(), dataStore);
+      zipImportService.findArkIdImportKO(zippedKO.getInputStream(), dataStore);
     } catch (IOException e) {
       log.warn("Cannot load full zip file for ark id " + arkId);
     }
     return arkId;
+  }
+
+  public ArkId importZip(MultipartFile zippedKO) {
+    try {
+      ArkId arkId = zipImportService.findArkIdImportKO(zippedKO.getInputStream(), dataStore);
+      return arkId;
+    } catch (IOException e) {
+      log.warn("Cannot load zip file with filename " + zippedKO.getName());
+    }
+    return null;
   }
 
   /**

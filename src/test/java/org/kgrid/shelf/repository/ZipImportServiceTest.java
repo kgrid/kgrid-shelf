@@ -48,7 +48,7 @@ public class ZipImportServiceTest {
     InputStream zipStream = ZipImportServiceTest.class
         .getResourceAsStream("/fixtures/hello-world.zip");
 
-    service.importObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
@@ -63,7 +63,7 @@ public class ZipImportServiceTest {
     assertEquals(5, filesPaths.size());
 
     zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
-    service.importObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
 
   }
 
@@ -74,7 +74,7 @@ public class ZipImportServiceTest {
     InputStream zipStream = ZipImportServiceTest.class
         .getResourceAsStream("/fixtures/hello-usa-jsonld.zip");
 
-    service.importObject(new ArkId("hello", "usa"), zipStream, compoundDigitalObjectStore);
+    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(

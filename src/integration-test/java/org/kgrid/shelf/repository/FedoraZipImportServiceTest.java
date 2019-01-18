@@ -36,7 +36,7 @@ public class FedoraZipImportServiceTest {
 
     InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
 
-    service.importObject(new ArkId("hello", "world"), zipStream, compoundDigitalObjectStore);
+    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
 
     ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk() );
 
@@ -67,7 +67,7 @@ public class FedoraZipImportServiceTest {
 
     InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-usa-jsonld.zip");
 
-    service.importObject(new ArkId("hello", "usa"), zipStream, compoundDigitalObjectStore);
+    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
 
     ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "usa").getDashArk() );
 

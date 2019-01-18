@@ -33,22 +33,29 @@ public class ZipImportService extends ZipService {
    * Create KO object, must add Knowledge Object files, Knowledge Object properties and Knowledge
    * Object Implementation properties
    *
-   * @param arkId ark id of the importing object
    * @param zipFileStream zip in the form of a stream
    * @param cdoStore persistence layer
    */
-  public void importObject(ArkId arkId, InputStream zipFileStream,
-      CompoundDigitalObjectStore cdoStore) {
-
-    cdoStore.delete(arkId.getDashArk());
+  public ArkId findArkIdImportKO(InputStream zipFileStream, CompoundDigitalObjectStore cdoStore) {
 
     Map<String, JsonNode> containerResources = new HashMap<>();
     Map<String, byte[]> binaryResources = new HashMap<>();
 
+    captureZipEntries(zipFileStream, containerResources, binaryResources);
+
+    ArkId arkId = new ArkId(containerResources.keySet().toArray()[0].toString());
+    importObject(arkId, cdoStore, containerResources, binaryResources);
+    return arkId;
+  }
+
+  public void importObject(ArkId arkId, CompoundDigitalObjectStore cdoStore,
+      Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources) {
+
+    cdoStore.delete(arkId.getDashArk());
+
     log.info("loading zip file for " + arkId.getDashArk());
     String trxId = cdoStore.createTransaction();
     try {
-      captureZipEntries(zipFileStream, containerResources, binaryResources);
 
       cdoStore.createContainer(trxId, arkId.getDashArk());
 
@@ -60,7 +67,8 @@ public class ZipImportService extends ZipService {
         JsonNode implementationNodes = KnowledgeObject.getImplementationIDs(koMetaData);
         implementationNodes.forEach(jsonNode -> {
 
-          importImplementation(arkId, trxId, cdoStore, containerResources, binaryResources, jsonNode);
+          importImplementation(arkId, trxId, cdoStore, containerResources, binaryResources,
+              jsonNode);
 
         });
 
@@ -75,7 +83,7 @@ public class ZipImportService extends ZipService {
           KnowledgeObject.METADATA_FILENAME);
 
       cdoStore.commitTransaction(trxId);
-    } catch(Exception e) {
+    } catch (Exception e) {
       cdoStore.rollbackTransaction(trxId);
       log.warn(e.getMessage());
       throw e;
@@ -126,7 +134,8 @@ public class ZipImportService extends ZipService {
 
     metadataQueue.forEach((filename, metadata) ->
         containerResources.put(FilenameUtils.normalize(
-            filename.substring(0, filename.indexOf(KnowledgeObject.METADATA_FILENAME) - 1)), metadata));
+            filename.substring(0, filename.indexOf(KnowledgeObject.METADATA_FILENAME) - 1)),
+            metadata));
 
     binaryQueue.forEach((filename, bytes) ->
         binaryResources.put(FilenameUtils.normalize(filename), bytes));

@@ -179,6 +179,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   }
 
+  // Simple transaction support:
   @Override
   public String createTransaction() {
     String trxID = "trx-" + UUID.randomUUID().toString();
