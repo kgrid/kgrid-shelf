@@ -135,7 +135,7 @@ public class ShelfController {
   protected void exportZip(HttpServletResponse response, ArkId arkId) {
 
     response.addHeader("Content-Disposition",
-        "attachment; filename=\"" + (arkId.isImplementation()?arkId.getDashArkImplementation():arkId.getDashArk()) + ".zip\"");
+        "attachment; filename=\"" + (arkId.isImplementation()?arkId.getDashArkImplementation().replace("/","-"):arkId.getDashArk()) + ".zip\"");
     try {
       shelf.extractZip(arkId, response.getOutputStream());
     } catch (IOException ex) {
