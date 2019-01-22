@@ -27,6 +27,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
@@ -62,6 +63,18 @@ public class ShelfController {
     Map koMap = shelf.findAll();
     log.info("found " + koMap.size() + " kos");
     return koMap;
+  }
+
+
+  @PostMapping
+  public ResponseEntity<Map<String, String>> depositKnowledgeObject(@RequestParam("ko") MultipartFile zippedKo) {
+
+    ArkId arkId = shelf.importZip(zippedKo);
+
+    Map<String, String> response = new HashMap<>();
+    response.put("Added", arkId.toString());
+
+    return new ResponseEntity<>(response, HttpStatus.CREATED);
   }
 
   @GetMapping(path = "/{naan}/{name}")
