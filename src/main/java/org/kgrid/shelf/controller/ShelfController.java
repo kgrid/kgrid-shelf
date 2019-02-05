@@ -2,6 +2,7 @@ package org.kgrid.shelf.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.NoSuchFileException;
 import java.util.Date;
 import java.util.HashMap;
@@ -13,11 +14,11 @@ import javax.servlet.http.HttpServletResponse;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObject;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.RequestEntity;
@@ -67,14 +68,18 @@ public class ShelfController {
 
 
   @PostMapping
-  public ResponseEntity<Map<String, String>> depositKnowledgeObject(@RequestParam("ko") MultipartFile zippedKo) {
+  public ResponseEntity<Map<String, String>> depositKnowledgeObject(
+      @RequestParam("ko") MultipartFile zippedKo, HttpServletRequest request) {
 
     ArkId arkId = shelf.importZip(zippedKo);
 
     Map<String, String> response = new HashMap<>();
     response.put("Added", arkId.toString());
+    URI loc = URI.create(request.getRequestURL().append(arkId.getSlashArk()).toString());
+    HttpHeaders headers = new HttpHeaders();
+    headers.setLocation(loc);
 
-    return new ResponseEntity<>(response, HttpStatus.CREATED);
+    return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
   }
 
   @GetMapping(path = "/{naan}/{name}")
@@ -136,8 +141,8 @@ public class ShelfController {
   protected void exportZip(HttpServletResponse response, ArkId arkId) {
 
     response.addHeader("Content-Disposition",
-        "attachment; filename=\"" + (arkId.isImplementation()?
-            arkId.getDashArk()+"-"+arkId.getImplementation():arkId.getDashArk()) + ".zip\"");
+        "attachment; filename=\"" + (arkId.isImplementation() ?
+            arkId.getDashArk() + "-" + arkId.getImplementation() : arkId.getDashArk()) + ".zip\"");
     try {
       shelf.extractZip(arkId, response.getOutputStream());
     } catch (IOException ex) {
