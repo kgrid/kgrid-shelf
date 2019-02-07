@@ -51,8 +51,6 @@ public class ZipImportService extends ZipService {
   public void importObject(ArkId arkId, CompoundDigitalObjectStore cdoStore,
       Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources) {
 
-    cdoStore.delete(arkId.getDashArk());
-
     log.info("loading zip file for " + arkId.getDashArk());
     String trxId = cdoStore.createTransaction();
     try {
@@ -81,6 +79,9 @@ public class ZipImportService extends ZipService {
 
       cdoStore.saveMetadata(koMetaData, trxId, arkId.getDashArk(),
           KnowledgeObject.METADATA_FILENAME);
+
+      // Remove the object if it exists before committing the transaction and copying the new one to its location
+      cdoStore.delete(arkId.getDashArk());
 
       cdoStore.commitTransaction(trxId);
     } catch (Exception e) {
