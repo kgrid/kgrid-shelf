@@ -21,6 +21,7 @@ import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import org.springframework.util.ObjectUtils;
 import org.springframework.util.ResourceUtils;
 import org.zeroturnaround.zip.ZipUtil;
 
@@ -55,10 +56,15 @@ public class ZipImportService extends ZipService {
     String trxId = cdoStore.createTransaction();
     try {
 
-      cdoStore.createContainer(trxId, arkId.getDashArk());
-
       JsonNode koMetaData = containerResources.get(
           arkId.getDashArk());
+
+      if (ObjectUtils.isEmpty(koMetaData)){
+        throw new ShelfException("No KO metadata found, can not import zip file");
+
+      }
+      cdoStore.createContainer(trxId, arkId.getDashArk());
+
 
       if (KnowledgeObject.getImplementationIDs(koMetaData).isArray()) {
 
@@ -236,7 +242,7 @@ public class ZipImportService extends ZipService {
 
       cdoStore.saveMetadata(metadata, trxId, path, KnowledgeObject.METADATA_FILENAME);
 
-    } catch (URISyntaxException e) {
+    } catch (Exception e) {
       throw new ShelfException("Issue importing implementation ", e);
     }
 

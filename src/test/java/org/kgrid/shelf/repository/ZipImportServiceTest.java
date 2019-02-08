@@ -90,6 +90,26 @@ public class ZipImportServiceTest {
 
 
   }
+  @Test
+  public void testBadKOMetaData() throws IOException {
+
+    InputStream zipStream = ZipImportServiceTest.class
+        .getResourceAsStream("/fixtures/bad-kometadata.zip");
+
+    try{
+
+      service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+
+      fail("should throw exception");
+
+    } catch (ShelfException se){
+
+      assertFalse(Files.exists(
+          Paths.get(temporaryFolder.getRoot().toPath().toString(),
+              "bad-kometadata")));
+    }
+
+  }
 
   @Test
   public void testValidatorStringTypeSuccess() {
