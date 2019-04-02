@@ -47,7 +47,6 @@ public class FilesystemCDOWatcher implements Runnable, AutoCloseable {
   @Override
   public void run() {
     if (running.compareAndSet(false, true)) {
-      long now = System.currentTimeMillis();
       while(running.get()) {
         WatchKey key;
         try {
@@ -65,8 +64,8 @@ public class FilesystemCDOWatcher implements Runnable, AutoCloseable {
               }
               Path name = (Path)event.context();
               Path path = watchKeys.get(key).resolve(name);
-              if((System.currentTimeMillis() - now ) > 100 && !name.toString().startsWith(".")) {
-                now = System.currentTimeMillis();
+              if(!name.toString().startsWith(".")) {
+
                 fireOnEvent(path, event.kind());
               }
               if (event.kind() == ENTRY_CREATE) {
