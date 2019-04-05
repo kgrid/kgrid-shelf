@@ -3,6 +3,7 @@ package org.kgrid.shelf.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URL;
 import java.nio.file.NoSuchFileException;
 import java.util.Date;
 import java.util.HashMap;
@@ -217,6 +218,29 @@ public class ShelfController {
     return new ResponseEntity<>(response, HttpStatus.CREATED);
 
   }
+
+  @PostMapping(path = "/deposit", consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Map<String, String>> depositKnowledgeObject (
+      @RequestBody JsonNode requestBody, HttpServletRequest request) {
+
+    Map<String, String> response = new HashMap<>();
+    try {
+      String koLocation = requestBody.get("ko").asText();
+      URL koURL = new URL(koLocation);
+      ArkId arkId = shelf.importZip(koURL.openStream());
+      response.put("Added", arkId.toString());
+      URI loc = URI.create(request.getRequestURL().append(arkId.getSlashArk()).toString());
+      HttpHeaders headers = new HttpHeaders();
+      headers.setLocation(loc);
+
+      return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
+
+    } catch (IOException ex) {
+      throw new ShelfException(ex);
+    }
+
+  }
+
 
   @PutMapping(path = "/{naan}/{name}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<JsonNode> editKnowledgeObjectOMetadata(@PathVariable String naan,

@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -253,6 +254,12 @@ public class KnowledgeObjectRepository {
       log.warn("Cannot load zip file with filename " + zippedKO.getName());
     }
     return null;
+  }
+
+  public ArkId importZip(InputStream zipStream) {
+
+    ArkId arkId = zipImportService.findArkIdImportKO(zipStream, dataStore);
+    return arkId;
   }
 
   /**

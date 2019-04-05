@@ -43,7 +43,9 @@ public class ZipImportService extends ZipService {
     Map<String, byte[]> binaryResources = new HashMap<>();
 
     captureZipEntries(zipFileStream, containerResources, binaryResources);
-
+    if(containerResources.isEmpty()) {
+      throw new ShelfException("The imported zip is not a valid knowledge object, no valid metadata found");
+    }
     ArkId arkId = new ArkId(containerResources.keySet().toArray()[0].toString());
     importObject(arkId, cdoStore, containerResources, binaryResources);
     return arkId;
