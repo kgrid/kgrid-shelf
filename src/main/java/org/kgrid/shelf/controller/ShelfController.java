@@ -1,6 +1,8 @@
 package org.kgrid.shelf.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -220,20 +222,36 @@ public class ShelfController {
   }
 
   @PostMapping(path = "/deposit", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Map<String, String>> depositKnowledgeObject (
+  public ResponseEntity<Map<String, Object>> depositKnowledgeObject (
       @RequestBody JsonNode requestBody, HttpServletRequest request) {
 
-    Map<String, String> response = new HashMap<>();
+    Map<String, Object> response = new HashMap<>();
     try {
-      String koLocation = requestBody.get("ko").asText();
-      URL koURL = new URL(koLocation);
-      ArkId arkId = shelf.importZip(koURL.openStream());
-      response.put("Added", arkId.toString());
-      URI loc = URI.create(request.getRequestURL().append(arkId.getSlashArk()).toString());
-      HttpHeaders headers = new HttpHeaders();
-      headers.setLocation(loc);
+      if(requestBody.get("ko").isArray()) {
+        ArrayNode arkList = new ObjectMapper().createArrayNode();
+          requestBody.get("ko").forEach(ko -> {
+            String koLocation = ko.asText();
+            try {
+              URL koURL = new URL(koLocation);
+              arkList.add((shelf.importZip(koURL.openStream())).toString());
+            }  catch (IOException ex) {
+              throw new ShelfException(ex);
+            }
+          });
+        response.put("Added", arkList);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+      } else {
+        String koLocation = requestBody.get("ko").asText();
+        URL koURL = new URL(koLocation);
+        ArkId arkId = shelf.importZip(koURL.openStream());
+        response.put("Added", arkId.toString());
+        URI loc = URI.create(request.getRequestURL().append(arkId.getSlashArk()).toString());
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(loc);
+        return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
+      }
 
-      return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
+
 
     } catch (IOException ex) {
       throw new ShelfException(ex);
