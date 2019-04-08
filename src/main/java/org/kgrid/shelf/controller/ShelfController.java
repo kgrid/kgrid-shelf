@@ -224,6 +224,9 @@ public class ShelfController {
   @PostMapping(path = "/deposit", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Map<String, Object>> depositKnowledgeObject (
       @RequestBody JsonNode requestBody, HttpServletRequest request) {
+    if(!requestBody.has("ko")) {
+      throw new ShelfException("Provide ko field with url or array of urls as the value");
+    }
 
     Map<String, Object> response = new HashMap<>();
     try {
@@ -250,8 +253,6 @@ public class ShelfController {
         headers.setLocation(loc);
         return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
       }
-
-
 
     } catch (IOException ex) {
       throw new ShelfException(ex);
