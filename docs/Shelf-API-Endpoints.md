@@ -31,7 +31,7 @@
 - multipart data needs to have a complete zipped knowledge object with key "ko"
 - 201 created on success
 
-#### /deposit
+#### /
 - fetches zipped ko(s) and puts them on the shelf
 - requires a json body like {"ko":"url here"} or {"ko":["url1", "url2", ...]}
 - 201 created on success 

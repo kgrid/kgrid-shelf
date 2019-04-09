@@ -73,20 +73,21 @@ public class ShelfController {
 
   @PostMapping
   public ResponseEntity<Map<String, String>> depositKnowledgeObject(
-      @RequestParam("ko") MultipartFile zippedKo, HttpServletRequest request) {
+      @RequestParam("ko") MultipartFile zippedKo) {
 
     log.info("Add ko via zip");
     ArkId arkId = shelf.importZip(zippedKo);
 
     Map<String, String> response = new HashMap<>();
-    HttpHeaders headers = addKOHeaderLocation(arkId, response);
+    HttpHeaders headers = addKOHeaderLocation(arkId);
+    response.put("Added", arkId.getDashArk());
 
     return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
   }
 
 
   @PostMapping( consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Map<String, String>> depositKnowledgeObject (
+  public ResponseEntity<Map<String, Object>> depositKnowledgeObject (
       @RequestBody JsonNode requestBody) {
 
     log.info("Add kos from manifest {}", requestBody.asText());
@@ -95,7 +96,7 @@ public class ShelfController {
       throw new IllegalArgumentException("Provide ko field with url or array of urls as the value");
     }
 
-    Map<String, String> response = new HashMap<>();
+    Map<String, Object> response = new HashMap<>();
     try {
       if(requestBody.get("ko").isArray()) {
         ArrayNode arkList = new ObjectMapper().createArrayNode();
@@ -108,14 +109,15 @@ public class ShelfController {
             throw new ShelfException(ex);
           }
         });
-        response.put("Added", arkList.asText());
+        response.put("Added", arkList);
         return new ResponseEntity<>(response, HttpStatus.CREATED);
       } else {
         String koLocation = requestBody.get("ko").asText();
         URL koURL = new URL(koLocation);
         ArkId arkId = shelf.importZip(koURL.openStream());
+        response.put("Added", arkId);
 
-        HttpHeaders headers = addKOHeaderLocation(arkId, response);
+        HttpHeaders headers = addKOHeaderLocation(arkId);
 
         return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
       }
@@ -126,8 +128,8 @@ public class ShelfController {
 
   }
 
-  private HttpHeaders addKOHeaderLocation(ArkId arkId, Map<String, String> response) {
-    response.put("Added", arkId.toString());
+  private HttpHeaders addKOHeaderLocation(ArkId arkId) {
+
     URI loc = ServletUriComponentsBuilder
         .fromCurrentContextPath()
         .path(arkId.getSlashArk())
