@@ -1,21 +1,19 @@
 package org.kgrid.shelf.repository;
 
-import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.content;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+import org.json.JSONObject;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.experimental.categories.Category;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.core.io.ClassPathResource;
+import org.springframework.http.MediaType;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.context.junit4.SpringRunner;
@@ -63,6 +61,46 @@ public class ShelfControllerTest {
 
         mockMvc.perform(putWithFileUpload("/hello/world").file(file))
             .andExpect(status().isCreated());
+
+    }
+
+    @Test
+    public void addZippedKoNoPath() throws Exception {
+
+        MockMultipartFile file = new MockMultipartFile("ko", "hello-world.zip",
+            "application/zip", new ClassPathResource("/fixtures/hello-world.zip").getInputStream());
+
+        mockMvc.perform(MockMvcRequestBuilders.multipart("/").file(file))
+            .andExpect(status().isCreated());
+
+    }
+
+    @Test
+    public void addKOBasedManifest() throws Exception {
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("ko", "https://github.com/kgrid-objects/example-collection/releases/download/1.2.0/hello-world.zip");
+
+        mockMvc.perform(
+            post("/")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(jsonObject.toString()))
+            .andExpect(header().string("Location", "http://localhost/hello/world"))
+            .andExpect(status().isCreated());
+
+        mockMvc.perform(
+            post("/")
+                .content(jsonObject.toString()))
+            .andExpect(status().isBadRequest());
+
+        jsonObject = new JSONObject();
+        jsonObject.put("xx", "https://github.com/kgrid-objects/example-collection/releases/download/1.2.0/hello-world.zip");
+        mockMvc.perform(
+            post("/")
+                .contentType(MediaType.APPLICATION_JSON_VALUE)
+                .content(jsonObject.toString()))
+            .andExpect(status().isBadRequest());
+
 
     }
 

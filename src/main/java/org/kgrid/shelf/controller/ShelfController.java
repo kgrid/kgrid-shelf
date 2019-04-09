@@ -40,6 +40,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @CrossOrigin(origins = "${cors.url:}")
 @RestController
@@ -74,15 +75,66 @@ public class ShelfController {
   public ResponseEntity<Map<String, String>> depositKnowledgeObject(
       @RequestParam("ko") MultipartFile zippedKo, HttpServletRequest request) {
 
+    log.info("Add ko via zip");
     ArkId arkId = shelf.importZip(zippedKo);
 
     Map<String, String> response = new HashMap<>();
-    response.put("Added", arkId.toString());
-    URI loc = URI.create(request.getRequestURL().append(arkId.getSlashArk()).toString());
-    HttpHeaders headers = new HttpHeaders();
-    headers.setLocation(loc);
+    HttpHeaders headers = addKOHeaderLocation(arkId, response);
 
     return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
+  }
+
+
+  @PostMapping( consumes = MediaType.APPLICATION_JSON_VALUE)
+  public ResponseEntity<Map<String, String>> depositKnowledgeObject (
+      @RequestBody JsonNode requestBody) {
+
+    log.info("Add kos from manifest {}", requestBody.asText());
+
+    if(!requestBody.has("ko")) {
+      throw new IllegalArgumentException("Provide ko field with url or array of urls as the value");
+    }
+
+    Map<String, String> response = new HashMap<>();
+    try {
+      if(requestBody.get("ko").isArray()) {
+        ArrayNode arkList = new ObjectMapper().createArrayNode();
+        requestBody.get("ko").forEach(ko -> {
+          String koLocation = ko.asText();
+          try {
+            URL koURL = new URL(koLocation);
+            arkList.add((shelf.importZip(koURL.openStream())).toString());
+          }  catch (IOException ex) {
+            throw new ShelfException(ex);
+          }
+        });
+        response.put("Added", arkList.asText());
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
+      } else {
+        String koLocation = requestBody.get("ko").asText();
+        URL koURL = new URL(koLocation);
+        ArkId arkId = shelf.importZip(koURL.openStream());
+
+        HttpHeaders headers = addKOHeaderLocation(arkId, response);
+
+        return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
+      }
+
+    } catch (IOException ex) {
+      throw new ShelfException(ex);
+    }
+
+  }
+
+  private HttpHeaders addKOHeaderLocation(ArkId arkId, Map<String, String> response) {
+    response.put("Added", arkId.toString());
+    URI loc = ServletUriComponentsBuilder
+        .fromCurrentContextPath()
+        .path(arkId.getSlashArk())
+        .build().toUri();
+    HttpHeaders headers = new HttpHeaders();
+    headers.setLocation(loc);
+    return headers;
   }
 
   @GetMapping(path = "/{naan}/{name}")
@@ -221,44 +273,6 @@ public class ShelfController {
 
   }
 
-  @PostMapping(path = "/deposit", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Map<String, Object>> depositKnowledgeObject (
-      @RequestBody JsonNode requestBody, HttpServletRequest request) {
-    if(!requestBody.has("ko")) {
-      throw new ShelfException("Provide ko field with url or array of urls as the value");
-    }
-
-    Map<String, Object> response = new HashMap<>();
-    try {
-      if(requestBody.get("ko").isArray()) {
-        ArrayNode arkList = new ObjectMapper().createArrayNode();
-          requestBody.get("ko").forEach(ko -> {
-            String koLocation = ko.asText();
-            try {
-              URL koURL = new URL(koLocation);
-              arkList.add((shelf.importZip(koURL.openStream())).toString());
-            }  catch (IOException ex) {
-              throw new ShelfException(ex);
-            }
-          });
-        response.put("Added", arkList);
-        return new ResponseEntity<>(response, HttpStatus.CREATED);
-      } else {
-        String koLocation = requestBody.get("ko").asText();
-        URL koURL = new URL(koLocation);
-        ArkId arkId = shelf.importZip(koURL.openStream());
-        response.put("Added", arkId.toString());
-        URI loc = URI.create(request.getRequestURL().append(arkId.getSlashArk()).toString());
-        HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(loc);
-        return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
-      }
-
-    } catch (IOException ex) {
-      throw new ShelfException(ex);
-    }
-
-  }
 
 
   @PutMapping(path = "/{naan}/{name}", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -310,8 +324,8 @@ public class ShelfController {
   public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(
       IllegalArgumentException e, WebRequest request) {
 
-    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
-        HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST),
+        HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(IOException.class)
