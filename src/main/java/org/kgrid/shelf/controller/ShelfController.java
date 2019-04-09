@@ -100,13 +100,15 @@ public class ShelfController {
     try {
       if(requestBody.get("ko").isArray()) {
         ArrayNode arkList = new ObjectMapper().createArrayNode();
+        log.info( "importing {} kos", requestBody.get("ko").size());
         requestBody.get("ko").forEach(ko -> {
           String koLocation = ko.asText();
           try {
             URL koURL = new URL(koLocation);
+            log.info( "import {}", koLocation);
             arkList.add((shelf.importZip(koURL.openStream())).toString());
-          }  catch (IOException ex) {
-            throw new ShelfException(ex);
+          }  catch (Exception ex) {
+            log.warn( "Error importing {}, {}",koLocation, ex.getMessage());
           }
         });
         response.put("Added", arkList);
