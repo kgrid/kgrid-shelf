@@ -139,11 +139,12 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   public void saveBinary(byte[] output, String... relativePathParts) {
     Path dataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     File dataFile = dataPath.toFile();
-    try (FileOutputStream fos = new FileOutputStream(dataFile)) {
+    try (FileOutputStream fos = FileUtils.openOutputStream(dataFile)) {
       fos.write(output);
     } catch (IOException ioEx) {
-      log.error("Could not write to file at " + dataPath + " " + ioEx);
-    }
+      log.error("Could not write to file at {}", dataPath );
+      throw new ShelfException("Could not write to file at " + dataPath );
+     }
   }
 
   private void createKOFolderStructure(Path resourceLocation, Path serviceLocation) {
