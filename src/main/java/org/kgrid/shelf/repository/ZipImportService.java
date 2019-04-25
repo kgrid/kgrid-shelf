@@ -249,7 +249,7 @@ public class ZipImportService extends ZipService {
 
       });
 
-      cdoStore.saveMetadata(metadata, trxId, id, KnowledgeObject.METADATA_FILENAME);
+      cdoStore.saveMetadata(metadata, trxId, path, KnowledgeObject.METADATA_FILENAME);
 
     } catch (Exception e) {
       throw new ShelfException("Issue importing implementation ", e);

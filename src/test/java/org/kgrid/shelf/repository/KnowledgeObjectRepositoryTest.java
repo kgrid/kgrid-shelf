@@ -95,6 +95,13 @@ public class KnowledgeObjectRepositoryTest {
     assertEquals(helloFolderArkId.getDashArk(), metadata.get("@id").asText());
   }
 
+  @Test
+  public void getImplementationMetadataFromFolder() throws Exception {
+    JsonNode metadata = repository.findImplementationMetadata(helloFolderArkId);
+    assertTrue(metadata.has("@id"));
+    assertEquals(helloFolderArkId.getImplementation(), metadata.get("@id").asText());
+  }
+
 
   @Test
   public void getCorrectMetadata() throws Exception {
