@@ -86,9 +86,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   public ObjectNode getMetadata(String... relativePathParts) {
     Path metadataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     File metadataFile = metadataPath.toFile();
-    if (metadataFile.isDirectory()) {
-      metadataFile = metadataPath.resolve(KnowledgeObject.METADATA_FILENAME)
-          .toFile();
+    if (metadataFile.isDirectory() || !metadataFile.getPath().endsWith(KnowledgeObject.METADATA_FILENAME)) {
+      metadataFile = metadataPath.resolve(KnowledgeObject.METADATA_FILENAME).toFile();
     }
 
     ObjectMapper mapper = new ObjectMapper();
