@@ -286,6 +286,14 @@ public class KnowledgeObjectRepository {
     return arkId;
   }
 
+  public String getObjectLocation(ArkId arkId) {
+    // Reload for activation use cases
+    if(objectLocations.get(arkId.getDashArk()) == null) {
+      findAll();
+    }
+    return objectLocations.get(arkId.getDashArk());
+  }
+
   /**
    * Loads a YMAL specification file (service or deployment) and maps to a JSON node
    *
