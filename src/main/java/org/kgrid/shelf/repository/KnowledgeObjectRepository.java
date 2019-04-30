@@ -145,7 +145,8 @@ public class KnowledgeObjectRepository {
   }
 
   /**
-   * Find the Deployment Specification for the implementation
+   * Find the Deployment Specification for the implementation, if not found throw
+   * shelf exception
    *
    * @param arkId Ark ID for the implementation
    * @param implementationNode implementation
@@ -153,15 +154,25 @@ public class KnowledgeObjectRepository {
    */
   public JsonNode findDeploymentSpecification(ArkId arkId, JsonNode implementationNode) {
 
-    String deploymentSpecPath = implementationNode.findValue(
-        KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText();
+    if (implementationNode.has(KnowledgeObject.DEPLOYMENT_SPEC_TERM)) {
 
-    log.info("find deployment specification for  " + arkId.getDashArkImplementation());
+      String deploymentSpecPath = implementationNode.findValue(
+          KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText();
 
     String uriPath = ResourceUtils.isUrl(deploymentSpecPath) ?
         deploymentSpecPath : Paths.get(objectLocations.get(arkId.getDashArk()), deploymentSpecPath).toString();
 
-    return loadSpecificationNode(arkId, uriPath);
+      String uriPath = ResourceUtils.isUrl(deploymentSpecPath) ?
+          deploymentSpecPath : Paths.get(arkId.getDashArk(), deploymentSpecPath).toString();
+
+      return loadSpecificationNode(arkId, uriPath);
+
+
+    } else {
+
+      throw new ShelfException("deployment specification not found in metadata");
+
+    }
 
   }
 
