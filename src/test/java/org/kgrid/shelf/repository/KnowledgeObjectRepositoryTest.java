@@ -37,6 +37,7 @@ public class KnowledgeObjectRepositoryTest {
   ZipExportService zipExportService = new ZipExportService();
 
   private ArkId helloWorldArkId = new ArkId("hello", "world", "koio.v1");
+  private ArkId helloFolderArkId = new ArkId("hello", "folder", "koio.v1");
 
   @Before
   public void setUp() throws Exception {
@@ -56,6 +57,14 @@ public class KnowledgeObjectRepositoryTest {
     zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
     koZip = new MockMultipartFile("ko", "ri-bmicalc.zip", "application/zip", zippedKO);;
     repository.importZip(bmiArkId, koZip);
+
+    ArkId helloFolder = new ArkId("hello", "folder");
+    zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/hello world folder.zip");
+    zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
+    koZip = new MockMultipartFile("ko", "hello world folder.zip", "application/zip", zippedKO);;
+    repository.importZip(helloFolder, koZip);
+
+
 
 
   }
@@ -79,6 +88,19 @@ public class KnowledgeObjectRepositoryTest {
     assertNotNull(map);
   }
 
+  @Test
+  public void getMetadataFromFolder() throws Exception {
+    JsonNode metadata = repository.findKnowledgeObjectMetadata(helloFolderArkId);
+    assertTrue(metadata.has("@id"));
+    assertEquals(helloFolderArkId.getDashArk(), metadata.get("@id").asText());
+  }
+
+  @Test
+  public void getImplementationMetadataFromFolder() throws Exception {
+    JsonNode metadata = repository.findImplementationMetadata(helloFolderArkId);
+    assertTrue(metadata.has("@id"));
+    assertEquals(helloFolderArkId.getImplementation(), metadata.get("@id").asText());
+  }
 
 
   @Test
@@ -92,9 +114,10 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void listAllObjects() {
     Map<ArkId, JsonNode>  objects = repository.findAll();
-    assertEquals(2,objects.size());
+    assertEquals(3,objects.size());
     assertEquals("hello-world", objects.get(new ArkId("hello", "world")).get("@id").asText());
     assertEquals("ri-bmicalc", objects.get(new ArkId("ri", "bmicalc")).get("@id").asText());
+    assertEquals("hello-folder", objects.get(new ArkId("hello", "folder")).get("@id").asText());
   }
 
   @Test

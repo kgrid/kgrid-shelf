@@ -2,8 +2,6 @@ package org.kgrid.shelf.domain;
 
 import static org.junit.Assert.*;
 
-import java.util.HashMap;
-import java.util.Map;
 import nl.jqno.equalsverifier.EqualsVerifier;
 import org.junit.Test;
 

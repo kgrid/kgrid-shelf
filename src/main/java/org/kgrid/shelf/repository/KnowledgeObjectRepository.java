@@ -29,6 +29,7 @@ public class KnowledgeObjectRepository {
   private CompoundDigitalObjectStore dataStore;
   private ZipImportService zipImportService;
   private ZipExportService zipExportService;
+  private final static Map<String, String> objectLocations = new HashMap<>();
 
   @Autowired
   KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore,
@@ -37,17 +38,19 @@ public class KnowledgeObjectRepository {
     this.dataStore = compoundDigitalObjectStore;
     this.zipImportService = zis;
     this.zipExportService = zes;
+    // Initialize the map of folder names -> ark ids
+    findAll();
   }
 
   public void delete(ArkId arkId) {
 
-    dataStore.delete(arkId.getDashArkImplementation());
+    dataStore.delete(objectLocations.get(arkId.getDashArk()));
     log.info("Deleted ko with ark id " + arkId);
   }
 
   public void deleteImpl(ArkId arkId) {
-    dataStore.delete(arkId.getDashArkImplementation());
-    JsonNode objectMetadata = dataStore.getMetadata(arkId.getDashArk());
+    dataStore.delete(objectLocations.get(arkId.getDashArk()), arkId.getImplementation());
+    JsonNode objectMetadata = dataStore.getMetadata(objectLocations.get(arkId.getDashArk()));
     if(objectMetadata.has(KnowledgeObject.IMPLEMENTATIONS_TERM) && objectMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()) {
       ArrayNode impls = (ArrayNode)objectMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM);
       for (int i = 0; i < impls.size(); i++) {
@@ -56,7 +59,7 @@ public class KnowledgeObjectRepository {
         }
       }
       ((ObjectNode) objectMetadata).set(KnowledgeObject.IMPLEMENTATIONS_TERM, impls);
-      dataStore.saveMetadata(objectMetadata, arkId.getDashArk());
+      dataStore.saveMetadata(objectMetadata, objectLocations.get(arkId.getDashArk()));
     }
 
   }
@@ -64,11 +67,11 @@ public class KnowledgeObjectRepository {
   public ObjectNode editMetadata(ArkId arkId, String path, String metadata) {
     Path metadataPath;
     if (path != null && !"".equals(path)) {
-      metadataPath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), path,
+      metadataPath = Paths.get(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(), path,
           KnowledgeObject.METADATA_FILENAME);
     } else {
       metadataPath = Paths
-          .get(arkId.getDashArk(), arkId.getImplementation(), KnowledgeObject.METADATA_FILENAME);
+          .get(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(), KnowledgeObject.METADATA_FILENAME);
     }
     try {
       JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
@@ -95,19 +98,31 @@ public class KnowledgeObjectRepository {
 
   public Map<ArkId, JsonNode> findAll() {
     Map<ArkId, JsonNode> knowledgeObjects = new HashMap<>();
+    objectLocations.clear();
 
     //Load KO objects and skip any KOs with exceptions like missing metadata
     for (String path : dataStore.getChildren("")) {
       try {
         ArkId arkId;
+        String folderName;
         if (path.contains("/")) {
-          arkId = new ArkId(StringUtils.substringAfterLast(path, "/"));
+          folderName = StringUtils.substringAfterLast(path, "/");
         } else if (path.contains("\\")) {
-          arkId = new ArkId(StringUtils.substringAfterLast(path, "\\"));
+          folderName = StringUtils.substringAfterLast(path, "\\");
         } else {
-          arkId = new ArkId(path);
+          folderName = path;
         }
-        knowledgeObjects.put(arkId, dataStore.getMetadata(arkId.getDashArk()));
+        JsonNode metadata = dataStore.getMetadata(folderName);
+        if(!metadata.has("@id")) {
+          log.warn("Folder with metadata " + folderName + " is missing an @id field, cannot load.");
+          continue;
+        }
+        arkId = new ArkId(metadata.get("@id").asText());
+        if(objectLocations.get(arkId.getDashArk()) != null) {
+          log.warn("Two objects on the shelf have the same ark id: " + arkId + " Check folders " + folderName + " and " + objectLocations.get(arkId.getDashArk()));
+        }
+        objectLocations.put(arkId.getDashArk(), folderName);
+        knowledgeObjects.put(arkId, metadata);
       } catch (Exception illegalArgument) {
         log.warn("Unable to load KO " + illegalArgument.getMessage());
       }
@@ -144,7 +159,8 @@ public class KnowledgeObjectRepository {
       String deploymentSpecPath = implementationNode.findValue(
           KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText();
 
-      log.info("find deployment specification for  " + arkId.getDashArkImplementation());
+    String uriPath = ResourceUtils.isUrl(deploymentSpecPath) ?
+        deploymentSpecPath : Paths.get(objectLocations.get(arkId.getDashArk()), deploymentSpecPath).toString();
 
       String uriPath = ResourceUtils.isUrl(deploymentSpecPath) ?
           deploymentSpecPath : Paths.get(arkId.getDashArk(), deploymentSpecPath).toString();
@@ -161,7 +177,7 @@ public class KnowledgeObjectRepository {
   }
 
   public JsonNode findImplementationMetadata(ArkId arkId) {
-    ObjectNode metadataNode = dataStore.getMetadata(arkId.getDashArk(), arkId.getImplementation(),
+    ObjectNode metadataNode = dataStore.getMetadata(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(),
         KnowledgeObject.METADATA_FILENAME);
     if (!metadataNode.has("title")) {
       log.warn("Metadata for ko " + arkId.getSlashArkImplementation() + " is missing a title");
@@ -170,13 +186,13 @@ public class KnowledgeObjectRepository {
   }
 
   public JsonNode findKnowledgeObjectMetadata(ArkId arkId) {
-    return dataStore.getMetadata(arkId.getDashArk());
+    return dataStore.getMetadata(objectLocations.get(arkId.getDashArk()));
   }
 
 
   public byte[] findPayload(ArkId arkId, String implementationPath) {
 
-    String payloadPath = Paths.get(arkId.getDashArk(),
+    String payloadPath = Paths.get(objectLocations.get(arkId.getDashArk()),
         implementationPath).toString();
 
     log.info("find payload for  " + payloadPath);
@@ -200,7 +216,7 @@ public class KnowledgeObjectRepository {
     log.info("find service specification at " + serviceSpecPath);
 
     String uriPath = ResourceUtils.isUrl(serviceSpecPath) ?
-        serviceSpecPath : Paths.get(arkId.getDashArk(), serviceSpecPath).toString();
+        serviceSpecPath : Paths.get(objectLocations.get(arkId.getDashArk()), serviceSpecPath).toString();
 
     return loadSpecificationNode(arkId, uriPath);
 
@@ -221,7 +237,7 @@ public class KnowledgeObjectRepository {
   }
 
   public byte[] getBinaryOrMetadata(ArkId arkId, String childPath) {
-    String filepath = Paths.get(arkId.getDashArk(), arkId.getImplementation(), childPath)
+    String filepath = Paths.get(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(), childPath)
         .toString();
     if (this.dataStore.isMetadata(filepath)) {
 
@@ -237,7 +253,7 @@ public class KnowledgeObjectRepository {
   }
 
   public JsonNode getMetadataAtPath(ArkId arkId, String path) {
-    return dataStore.getMetadata(arkId.getDashArk(), arkId.getImplementation(), path);
+    return dataStore.getMetadata(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(), path);
   }
 
   /**
@@ -249,7 +265,10 @@ public class KnowledgeObjectRepository {
    */
   public ArkId importZip(ArkId arkId, MultipartFile zippedKO) {
     try {
-      zipImportService.findArkIdImportKO(zippedKO.getInputStream(), dataStore);
+      String folderName = zipImportService.findArkIdImportKO(zippedKO.getInputStream(), dataStore);
+      JsonNode metadata = dataStore.getMetadata(folderName);
+      arkId = new ArkId(metadata.get("@id").asText());
+      objectLocations.put(arkId.getDashArk(), folderName);
     } catch (IOException e) {
       log.warn("Cannot load full zip file for ark id " + arkId);
     }
@@ -258,7 +277,10 @@ public class KnowledgeObjectRepository {
 
   public ArkId importZip(MultipartFile zippedKO) {
     try {
-      ArkId arkId = zipImportService.findArkIdImportKO(zippedKO.getInputStream(), dataStore);
+      String folderName = zipImportService.findArkIdImportKO(zippedKO.getInputStream(), dataStore);
+      JsonNode metadata = dataStore.getMetadata(folderName);
+      ArkId arkId = new ArkId(metadata.get("@id").asText());
+      objectLocations.put(arkId.getDashArk(), folderName);
       return arkId;
     } catch (IOException e) {
       log.warn("Cannot load zip file with filename " + zippedKO.getName());
@@ -268,8 +290,19 @@ public class KnowledgeObjectRepository {
 
   public ArkId importZip(InputStream zipStream) {
 
-    ArkId arkId = zipImportService.findArkIdImportKO(zipStream, dataStore);
+    String folderName = zipImportService.findArkIdImportKO(zipStream, dataStore);
+    JsonNode metadata = dataStore.getMetadata(folderName);
+    ArkId arkId = new ArkId(metadata.get("@id").asText());
+    objectLocations.put(arkId.getDashArk(), folderName);
     return arkId;
+  }
+
+  public String getObjectLocation(ArkId arkId) {
+    // Reload for activation use cases
+    if(objectLocations.get(arkId.getDashArk()) == null) {
+      findAll();
+    }
+    return objectLocations.get(arkId.getDashArk());
   }
 
   /**
