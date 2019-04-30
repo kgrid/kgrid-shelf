@@ -162,9 +162,6 @@ public class KnowledgeObjectRepository {
     String uriPath = ResourceUtils.isUrl(deploymentSpecPath) ?
         deploymentSpecPath : Paths.get(objectLocations.get(arkId.getDashArk()), deploymentSpecPath).toString();
 
-      String uriPath = ResourceUtils.isUrl(deploymentSpecPath) ?
-          deploymentSpecPath : Paths.get(arkId.getDashArk(), deploymentSpecPath).toString();
-
       return loadSpecificationNode(arkId, uriPath);
 
 
