@@ -7,6 +7,7 @@ import java.io.StringWriter;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
@@ -20,6 +21,7 @@ import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -44,13 +46,17 @@ public class ZipImportService extends ZipService {
     Map<String, JsonNode> containerResources = new HashMap<>();
     Map<String, byte[]> binaryResources = new HashMap<>();
 
-    captureZipEntries(zipFileStream, containerResources, binaryResources);
+    ArkId arkId = captureZipEntries(zipFileStream, containerResources, binaryResources);
     if(containerResources.isEmpty()) {
       throw new ShelfException("The imported zip is not a valid knowledge object, no valid metadata found");
     }
     // The parent folder name is the shortest one
     String folderName = Arrays.stream(containerResources.keySet().toArray())
         .min(Comparator.comparing(name -> name.toString().length())).get().toString();
+
+    if(cdoStore instanceof FedoraCDOStore && !arkId.getDashArk().equals(folderName)) {
+      throw new ShelfException("The object you are attempting to import does not have a folder name that matches its ark id");
+    }
     importObject(folderName, cdoStore, containerResources, binaryResources);
     return folderName;
   }
@@ -110,12 +116,13 @@ public class ZipImportService extends ZipService {
    * @param containerResources collection of metadata files
    * @param binaryResources collection of binary files
    */
-  private void captureZipEntries(InputStream zipFileStream,
+  private ArkId captureZipEntries(InputStream zipFileStream,
       Map<String, JsonNode> containerResources, Map<String, byte[]> binaryResources) {
 
     log.info("processing zipEntries");
     Map<String, JsonNode> metadataQueue = Collections.synchronizedMap(new LinkedHashMap<>());
     Map<String, byte[]> binaryQueue = Collections.synchronizedMap(new LinkedHashMap<>());
+    List<ArkId> arkIds = new ArrayList<>();
 
     ZipUtil.iterate(zipFileStream, (inputStream, zipEntry) -> {
 
@@ -128,6 +135,9 @@ public class ZipImportService extends ZipService {
 
           JsonNode metadata = new ObjectMapper().readTree(writer.toString());
 
+          if(metadata.has("@id") && ArkId.isValid(metadata.get("@id").asText())) {
+            arkIds.add(new ArkId(metadata.get("@id").asText()));
+          }
           try {
             validateMetadata(zipEntry.getName(), metadata);
           } catch (ShelfException e) {
@@ -152,6 +162,12 @@ public class ZipImportService extends ZipService {
 
     binaryQueue.forEach((filename, bytes) ->
         binaryResources.put(FilenameUtils.normalize(filename), bytes));
+
+    if(!arkIds.isEmpty()) {
+      return arkIds.get(0);
+    } else {
+      throw new ShelfException("No valid id found in metadata when loading zip file " + zipFileStream.toString());
+    }
   }
 
   // Metadata must have an @type field that contains either koio:KnowledgeObject or koio:Implementation,
@@ -246,7 +262,6 @@ public class ZipImportService extends ZipService {
         } catch (URISyntaxException e) {
           throw new ShelfException("Issue importing implementation binary ", e);
         }
-
       });
 
       cdoStore.saveMetadata(metadata, trxId, path, KnowledgeObject.METADATA_FILENAME);

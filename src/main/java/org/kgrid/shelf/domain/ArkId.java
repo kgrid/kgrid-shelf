@@ -155,4 +155,13 @@ public final class ArkId {
     return implementation!=null;
   }
 
+  public static boolean isValid(String id){
+    try {
+      new ArkId(id);
+      return true;
+    } catch (IllegalArgumentException e) {
+      return false;
+    }
+  }
+
 }
