@@ -65,6 +65,20 @@ public class FedoraZipImportServiceTest {
 
   }
 
+  @Test
+  public void testImportKnowledgeObjectFolder()  {
+
+    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello world folder.zip");
+
+    try {
+      service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+      assertTrue("Should throw exception", false);
+    } catch (ShelfException e) {
+      assertTrue("Should not be able to import an object with a folder name that does not match the ark id", true);
+    }
+
+  }
+
 
   @Test
   public void testImportKnowledgeObjectExtraFiles()  {
