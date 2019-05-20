@@ -48,7 +48,7 @@ public class FilesystemCDOStoreTest {
     arkId = new ArkId("hello", "world");
     // Add zip file to our test shelf:
     InputStream zipStream = FilesystemCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
-    zis.findArkIdImportKO(zipStream, koStore);
+    zis.importKO(zipStream, koStore);
   }
 
   @Test

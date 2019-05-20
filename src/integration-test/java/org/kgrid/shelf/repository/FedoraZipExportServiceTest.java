@@ -35,7 +35,7 @@ public class FedoraZipExportServiceTest {
 
     InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
 
-    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
   }
 

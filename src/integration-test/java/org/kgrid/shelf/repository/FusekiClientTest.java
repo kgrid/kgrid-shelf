@@ -5,10 +5,8 @@ import static org.junit.Assert.*;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jayway.jsonpath.JsonPath;
 import java.io.InputStream;
-import java.net.URI;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -31,11 +29,11 @@ public class FusekiClientTest {
 
       //Load Hello-World example object
       InputStream zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
-      zipImportService.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+      zipImportService.importKO(zipStream, compoundDigitalObjectStore);
 
       //Load ri-bmicalc example object
       zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/ri-bmicalc.zip");
-      zipImportService.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+      zipImportService.importKO(zipStream, compoundDigitalObjectStore);
 
       /*
        * TODO: Add a delay here after object creation to allow fuseki to detect that these

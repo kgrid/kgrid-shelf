@@ -12,14 +12,15 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import org.junit.Before;
 import org.junit.ClassRule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.ShelfException;
-import org.kgrid.shelf.domain.ArkId;
 import org.springframework.beans.factory.annotation.Autowired;
 
 public class ZipImportServiceTest {
@@ -48,7 +49,7 @@ public class ZipImportServiceTest {
     InputStream zipStream = ZipImportServiceTest.class
         .getResourceAsStream("/fixtures/hello-world.zip");
 
-    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
@@ -63,17 +64,38 @@ public class ZipImportServiceTest {
     assertEquals(5, filesPaths.size());
 
     zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
-    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
   }
+  @Test
+  public void testImportDifferentDirectoryKnowledgeObject() throws IOException {
 
+    InputStream zipStream = ZipImportServiceTest.class
+        .getResourceAsStream("/fixtures/hello world folder.zip");
+
+    service.importKO(zipStream, compoundDigitalObjectStore);
+
+    List<Path> filesPaths;
+    filesPaths = Files.walk(Paths.get(
+        temporaryFolder.getRoot().toPath().toString(), "hello-folder"), 2, FOLLOW_LINKS)
+        .filter(Files::isRegularFile)
+        .map(Path::toAbsolutePath)
+        .collect(Collectors.toList());
+
+    filesPaths.forEach(file -> {
+      System.out.println(file.toAbsolutePath().toString());
+    });
+    assertEquals(5, filesPaths.size());
+
+
+  }
   @Test
   public void testImportMultiDirectoryKnowledgeObject() throws IOException {
 
     InputStream zipStream = ZipImportServiceTest.class
         .getResourceAsStream("/fixtures/99999-score.zip");
 
-    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
@@ -88,7 +110,7 @@ public class ZipImportServiceTest {
     assertEquals(5, filesPaths.size());
 
     zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
-    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
   }
 
@@ -99,7 +121,7 @@ public class ZipImportServiceTest {
     InputStream zipStream = ZipImportServiceTest.class
         .getResourceAsStream("/fixtures/hello-usa-jsonld.zip");
 
-    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
@@ -123,7 +145,7 @@ public class ZipImportServiceTest {
 
     try{
 
-      service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+      service.importKO(zipStream, compoundDigitalObjectStore);
 
       fail("should throw exception");
 
@@ -135,6 +157,77 @@ public class ZipImportServiceTest {
     }
 
   }
+
+
+  @Test
+  public void testfindKOMetadata() {
+    Map<String, JsonNode> containerResources = new HashMap<>();
+
+    ObjectNode koMetadata = new ObjectMapper().createObjectNode();
+    koMetadata.put("@id", "hello-world");
+    koMetadata.put("@type", "koio:KnowledgeObject");
+
+    ObjectNode implMetadata = new ObjectMapper().createObjectNode();
+    implMetadata = new ObjectMapper().createObjectNode();
+    implMetadata.put("@id", "v1");
+    implMetadata.put("@type", "koio:Implementation\"");
+
+    containerResources.put("v1", implMetadata);
+    containerResources.put("v1", koMetadata);
+
+    JsonNode metadata = service.findKOMetadata(containerResources);
+    assertEquals("hello-world", metadata.get("@id").asText());
+    assertEquals("koio:KnowledgeObject", metadata.get("@type").asText());
+  }
+
+  @Test
+  public void testfindImplMetadata() {
+    Map<String, JsonNode> containerResources = new HashMap<>();
+
+    ObjectNode koMetadata = new ObjectMapper().createObjectNode();
+    koMetadata.put("@id", "hello-world");
+    koMetadata.put("@type", "koio:KnowledgeObject");
+
+    containerResources.put("hello-world", koMetadata);
+
+    ObjectNode implMetadataV1 = new ObjectMapper().createObjectNode();
+    implMetadataV1 = new ObjectMapper().createObjectNode();
+    implMetadataV1.put("@id", "v1");
+    implMetadataV1.put("@type", "koio:Implementation");
+    containerResources.put("v1", implMetadataV1);
+
+    ObjectNode implMetadatav2 = new ObjectMapper().createObjectNode();
+    implMetadatav2 = new ObjectMapper().createObjectNode();
+    implMetadatav2.put("@id", "v2");
+    implMetadatav2.put("@type", "koio:Implementation");
+    containerResources.put("v2", implMetadatav2);
+
+
+    List<JsonNode> metadata = service.findImplemtationMetadata(containerResources);
+    assertEquals(2, metadata.size());
+    assertTrue(metadata.contains( implMetadataV1 ));
+    assertTrue(metadata.contains( implMetadatav2 ));
+  }
+
+  @Test
+  public void testFindBinaries(){
+
+    Map<String, byte[]> binaryResources = new HashMap<>();
+
+    binaryResources.put("hello   world/koio.v1/deployment-specification.yaml","test data".getBytes());
+    binaryResources.put("hello   world/koio.v1/service-specification.yaml","service-specification.yaml".getBytes());
+    binaryResources.put("hello   world/v2/service-specification.yaml","test data".getBytes());
+    binaryResources.put("hello   world/v2/deployment-specification.yaml","v2deployment".getBytes());
+
+    byte[] serviceSpec = service.findBinaries(binaryResources, "koio.v1/service-specification.yaml");
+    assertEquals("service-specification.yaml", new String (serviceSpec) );
+
+    byte[] deploymentSpec = service.findBinaries(binaryResources, "v2/deployment-specification.yaml");
+    assertEquals("v2deployment", new String (deploymentSpec) );
+
+  }
+
+
 
   @Test
   public void testValidatorStringTypeSuccess() {

@@ -9,7 +9,6 @@ import static org.junit.Assert.fail;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.junit.ClassRule;
 import org.junit.Test;
@@ -40,7 +39,7 @@ public class FedoraZipImportServiceTest {
 
     InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
 
-    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
     ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk() );
 
@@ -71,8 +70,11 @@ public class FedoraZipImportServiceTest {
     InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello world folder.zip");
 
     try {
-      service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
-      assertTrue("Should throw exception", false);
+      service.importKO(zipStream, compoundDigitalObjectStore);
+      ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "folder").getDashArk() );
+      assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-folder/koio.v1/service-specification.yaml",
+          metadata.findValue(SERVICE_SPEC_TERM).asText());
+
     } catch (ShelfException e) {
       assertTrue("Should not be able to import an object with a folder name that does not match the ark id", true);
     }
@@ -85,7 +87,7 @@ public class FedoraZipImportServiceTest {
 
     InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-usa-jsonld.zip");
 
-    service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
     ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "usa").getDashArk() );
 
@@ -114,7 +116,7 @@ public class FedoraZipImportServiceTest {
 
     try{
 
-      service.findArkIdImportKO(zipStream, compoundDigitalObjectStore);
+      service.importKO(zipStream, compoundDigitalObjectStore);
 
       fail("should throw exception");
 

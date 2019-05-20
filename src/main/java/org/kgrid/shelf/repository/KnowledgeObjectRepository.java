@@ -92,6 +92,8 @@ public class KnowledgeObjectRepository {
    * @throws IOException if the system can't extract the zip file to the filesystem
    */
   public void extractZip(ArkId arkId, OutputStream outputStream) throws IOException {
+
+    String koPath = objectLocations.get(arkId.getDashArk());
     outputStream
         .write(zipExportService.exportObject(arkId, dataStore).toByteArray());
   }
@@ -262,10 +264,8 @@ public class KnowledgeObjectRepository {
    */
   public ArkId importZip(ArkId arkId, MultipartFile zippedKO) {
     try {
-      String folderName = zipImportService.findArkIdImportKO(zippedKO.getInputStream(), dataStore);
-      JsonNode metadata = dataStore.getMetadata(folderName);
-      arkId = new ArkId(metadata.get("@id").asText());
-      objectLocations.put(arkId.getDashArk(), folderName);
+      arkId= zipImportService.importKO(zippedKO.getInputStream(), dataStore);
+      objectLocations.put(arkId.getDashArk(), arkId.getDashArk());
     } catch (IOException e) {
       log.warn("Cannot load full zip file for ark id " + arkId);
     }
@@ -274,10 +274,8 @@ public class KnowledgeObjectRepository {
 
   public ArkId importZip(MultipartFile zippedKO) {
     try {
-      String folderName = zipImportService.findArkIdImportKO(zippedKO.getInputStream(), dataStore);
-      JsonNode metadata = dataStore.getMetadata(folderName);
-      ArkId arkId = new ArkId(metadata.get("@id").asText());
-      objectLocations.put(arkId.getDashArk(), folderName);
+      ArkId arkId = zipImportService.importKO(zippedKO.getInputStream(), dataStore);
+      objectLocations.put(arkId.getDashArk(),arkId.getDashArk());
       return arkId;
     } catch (IOException e) {
       log.warn("Cannot load zip file with filename " + zippedKO.getName());
@@ -287,10 +285,8 @@ public class KnowledgeObjectRepository {
 
   public ArkId importZip(InputStream zipStream) {
 
-    String folderName = zipImportService.findArkIdImportKO(zipStream, dataStore);
-    JsonNode metadata = dataStore.getMetadata(folderName);
-    ArkId arkId = new ArkId(metadata.get("@id").asText());
-    objectLocations.put(arkId.getDashArk(), folderName);
+    ArkId arkId = zipImportService.importKO(zipStream, dataStore);
+    objectLocations.put(arkId.getDashArk(), arkId.getDashArk());
     return arkId;
   }
 
