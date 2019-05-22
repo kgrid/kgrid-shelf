@@ -39,4 +39,12 @@ public class ArkIdTest {
 
   }
 
+  @Test
+  public void tets(){
+    ArkId arkId = new ArkId("ark:/hello/world/v0.1");
+    assertEquals("hello", arkId.getNaan());
+    assertEquals("world", arkId.getName());
+    assertEquals("v0.1", arkId.getImplementation());
+
+  }
 }

@@ -95,7 +95,7 @@ public class KnowledgeObjectRepository {
 
     String koPath = objectLocations.get(arkId.getDashArk());
     outputStream
-        .write(zipExportService.exportObject(arkId, dataStore).toByteArray());
+        .write(zipExportService.exportObject(arkId, koPath, dataStore).toByteArray());
   }
 
   public Map<ArkId, JsonNode> findAll() {

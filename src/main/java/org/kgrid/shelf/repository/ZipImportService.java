@@ -50,7 +50,7 @@ public class ZipImportService extends ZipService {
       throw new ShelfException("The imported zip is not a valid knowledge object, no valid metadata found");
     }
 
-    ArkId arkId = new ArkId( findKOMetadata(containerResources).get("@id").asText());
+    ArkId arkId = new ArkId( findKOMetadata(containerResources).get("identifier").asText());
 
     importObject(arkId, cdoStore, containerResources, binaryResources);
 

@@ -36,10 +36,13 @@ public class ZipExportServiceTest {
 
     Path helloWorld = Paths.get("src/test/resources/shelf/hello-world");
     Path emptyWorld = Paths.get("src/test/resources/shelf/empty-world");
+    Path helloFolder = Paths.get("src/test/resources/shelf/this is hello folder");
     FileUtils.copyDirectory(helloWorld.toFile(),
         Paths.get(shelf.toString(),"hello-world").toFile());
     FileUtils.copyDirectory(emptyWorld.toFile(),
         Paths.get(shelf.toString(),"empty-world").toFile());
+    FileUtils.copyDirectory(helloFolder.toFile(),
+        Paths.get(shelf.toString(),"hello-folder").toFile());
 
     temporaryFolder.newFolder("export");
 
@@ -52,7 +55,7 @@ public class ZipExportServiceTest {
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world"), compoundDigitalObjectStore);
+        new ArkId("hello", "world"), new ArkId("hello", "world").getDashArk(), compoundDigitalObjectStore);
 
     writeZip(outputStream);
 
@@ -74,12 +77,38 @@ public class ZipExportServiceTest {
   }
 
   @Test
+  public void exportKnowledgeObjectWackyFolderName() throws IOException {
+
+    ZipExportService zipExportService = new ZipExportService();
+
+    ByteArrayOutputStream outputStream = zipExportService.exportObject(
+        new ArkId("hello", "folder"),  new ArkId("hello", "folder").getDashArk(), compoundDigitalObjectStore);
+
+    writeZip(outputStream);
+
+    List<Path> filesPaths;
+    filesPaths = Files.walk(Paths.get(
+        temporaryFolder.getRoot().toPath().toString(),"export","hello-folder"),  2, FOLLOW_LINKS)
+        .filter(Files::isRegularFile)
+        .map(Path::toAbsolutePath)
+        .collect(Collectors.toList());
+
+    filesPaths.forEach(file ->{
+      System.out.println(file.toAbsolutePath().toString());
+    });
+
+    assertEquals(5,filesPaths.size());
+
+  }
+
+  @Test
   public void exportImplementation() throws IOException {
 
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world", "v0.0.2"), compoundDigitalObjectStore);
+        new ArkId("hello", "world", "v0.0.2"),
+        new ArkId("hello", "world", "v0.0.2").getDashArk(), compoundDigitalObjectStore);
 
     writeZip(outputStream);
 
@@ -104,7 +133,7 @@ public class ZipExportServiceTest {
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("empty", "world"), compoundDigitalObjectStore);
+        new ArkId("empty", "world"),  new ArkId("empty", "world").getDashArk(), compoundDigitalObjectStore);
 
     writeZip(outputStream);
 

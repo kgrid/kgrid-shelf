@@ -1,17 +1,22 @@
 package org.kgrid.shelf.repository;
 
+import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -168,6 +173,17 @@ public class KnowledgeObjectRepositoryTest {
 
     ArkId arkId = new ArkId("hello-world/koio.v1");
     byte[] payload  = repository.findPayload(arkId, "koio.v1/one/two/three/welcome.js");
+
+  }
+
+  @Test
+  public void exportKnowledgeObjectWackyFolderName() throws IOException {
+
+    ZipExportService zipExportService = new ZipExportService();
+
+    ByteArrayOutputStream outputStream = zipExportService.exportObject(
+        new ArkId("hello", "folder"),  new ArkId("hello", "folder").getDashArk(), compoundDigitalObjectStore);
+
 
   }
 }
