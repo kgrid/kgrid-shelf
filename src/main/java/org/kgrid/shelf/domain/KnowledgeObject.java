@@ -20,7 +20,6 @@ public class KnowledgeObject {
   public static final String IMPLEMENTATIONS_TERM = "hasImplementation";
   public static final String SERVICE_SPEC_TERM = "hasServiceSpecification";
   public static final String DEPLOYMENT_SPEC_TERM = "hasDeploymentSpecification";
-  public static final String PAYLOAD_TERM = "hasPayload";
 
 
   public KnowledgeObject(ArkId arkId) {

@@ -1,9 +1,12 @@
 package org.kgrid.shelf.repository;
 
+import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static org.zeroturnaround.zip.ZipUtil.pack;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import com.github.jsonldjava.core.DocumentLoader;
 import com.github.jsonldjava.core.JsonLdOptions;
 import com.github.jsonldjava.core.JsonLdProcessor;
@@ -12,41 +15,27 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 import org.zeroturnaround.zip.ByteSource;
 import org.zeroturnaround.zip.ZipEntrySource;
 
 @Service
-public class ZipExportService extends ZipService {
+public class ZipExportService  {
 
-  private boolean stripBase = false;
-  private String basePath = "";
-
-  /**
-   * Allows the export process to strip out the base url
-   *
-   * @param arkId KO to export
-   * @param cdoStore digital object store
-   * @param stripBase indicates if the export should strip out the base URL
-   * @return byte stream of the zip
-   * @throws ShelfException export process exception
-   */
-  public ByteArrayOutputStream exportObject(ArkId arkId, String koPath,
-      CompoundDigitalObjectStore cdoStore, boolean stripBase) throws ShelfException {
-
-    this.stripBase = stripBase;
-    this.basePath = cdoStore.getAbsoluteLocation("");
-
-    return exportObject(arkId, koPath, cdoStore);
-  }
+  private final org.slf4j.Logger log = LoggerFactory.getLogger(ZipExportService.class);
 
   /**
    * @param arkId export object ark id
@@ -134,7 +123,8 @@ public class ZipExportService extends ZipService {
       }
 
       //Add Implementation binary files to export zip entries
-      List<String> binaryNodes = listBinaryNodes(implementationNode);
+      List<String> binaryNodes =
+          findImplementationBinaries(koPath, cdoStore, implementationPath, implementationNode);
 
       binaryNodes.forEach((binaryPath) -> {
 
@@ -144,13 +134,15 @@ public class ZipExportService extends ZipService {
         byte[] bytes = cdoStore.getBinary(uriPath);
 
         try {
-        //handle absolute and relative IRIs for binary filesdoc
-        String binaryFileName = ResourceUtils.isUrl(binaryPath) ?
-            Paths.get(ResourceUtils.toURI(binaryPath).getPath().substring(
-                ResourceUtils.toURI(binaryPath).getPath().indexOf(arkId.getDashArk()))).toString() :
-            FilenameUtils.normalize(Paths.get(arkId.getDashArk(), binaryPath).toString(), true);
+          //handle absolute and relative IRIs for binary filesdoc
+          String binaryFileName = ResourceUtils.isUrl(binaryPath) ?
+              Paths.get(ResourceUtils.toURI(binaryPath).getPath().substring(
+                  ResourceUtils.toURI(binaryPath).getPath().indexOf(arkId.getDashArk()))).toString()
+              :
+                  FilenameUtils
+                      .normalize(Paths.get(arkId.getDashArk(), binaryPath).toString(), true);
 
-        entries.add(new ByteSource(binaryFileName, bytes));
+          entries.add(new ByteSource(binaryFileName, bytes));
 
         } catch (URISyntaxException ex) {
           throw new ShelfException(
@@ -166,42 +158,64 @@ public class ZipExportService extends ZipService {
   }
 
   /**
-   * Format JSON metadata based on json ld java core, also strip out based from IRI is needed
    *
-   * @return formatted JsonNode as a array of byes
+   * @param koPath
+   * @param cdoStore
+   * @param implementationPath
+   * @param implementationNode
+   * @return
    */
-  private byte[] formatExportedMetadata(JsonNode jsonNode) {
+  protected List<String> findImplementationBinaries(String koPath,
+      CompoundDigitalObjectStore cdoStore,
+      String implementationPath, JsonNode implementationNode) {
 
-    DocumentLoader documentLoader = new DocumentLoader();
-    Object context = null;
+    List<String> binaryNodes = new ArrayList<>();
 
-    try {
-
-      Object json = JsonUtils.fromString(jsonNode.toString());
-
-      if (jsonNode.findValue("@type").textValue().contains("KnowledgeObject")) {
-        context = JsonUtils
-            .fromURL(new URL("http://kgrid.org/koio/contexts/knowledgeobject.jsonld"),
-                documentLoader.getHttpClient());
-      } else if (jsonNode.findValue("@type").textValue().contains("Implementation")) {
-        context = JsonUtils
-            .fromURL(new URL("http://kgrid.org/koio/contexts/implementation.jsonld"),
-                documentLoader.getHttpClient());
-      }
-
-      JsonLdOptions options = new JsonLdOptions();
-
-      if (stripBase) {
-        options.setBase(basePath);
-      }
-
-      Object compact = JsonLdProcessor.compact(json, context, options);
-
-      byte[] nodeBytes = JsonUtils.toPrettyString(compact).getBytes();
-      return nodeBytes;
-    } catch (IOException e) {
-      throw new ShelfException("Could not create extracted metadata for "
-          + jsonNode.findValue("@id"), e);
+    if (implementationNode.has(KnowledgeObject.DEPLOYMENT_SPEC_TERM)) {
+      binaryNodes.add(implementationNode.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText());
     }
+    if (implementationNode.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
+      binaryNodes.add(implementationNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText());
+
+    }
+
+    if (implementationNode.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
+      YAMLMapper yamlMapper = new YAMLMapper();
+      try {
+
+        JsonNode serviceDescription = yamlMapper
+            .readTree(cdoStore.getBinary(koPath, implementationNode
+                .findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()));
+
+        serviceDescription.get("paths").fields().forEachRemaining(service -> {
+          String artifact = null;
+          try {
+            JsonNode deploymentSpecification = yamlMapper
+                .readTree(cdoStore.getBinary(koPath, implementationNode
+                    .findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText()));
+            artifact = deploymentSpecification.get("endpoints").get(service.getKey())
+                .get("artifact").asText();
+          } catch (Exception e) {
+            log.info(implementationPath
+                + " has no deployment descriptor, looking for info in the service spec.");
+          }
+
+          JsonNode post = service.getValue().get("post");
+          if (post.has("x-kgrid-activation")) {
+            artifact = post.get("x-kgrid-activation").get("artifact").asText();
+          }
+
+          binaryNodes.add(Paths.get(implementationNode.get("@id").asText(), artifact).toString());
+        });
+
+      } catch (IOException ioe) {
+
+        log.info(implementationPath, " has no service descriptor, can't export");
+
+      }
+    }
+
+    return binaryNodes;
   }
+
 }

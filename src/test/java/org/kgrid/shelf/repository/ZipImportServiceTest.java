@@ -133,7 +133,7 @@ public class ZipImportServiceTest {
     filesPaths.forEach(file -> {
       System.out.println(file.toAbsolutePath().toString());
     });
-    assertEquals(9, filesPaths.size());
+    assertEquals(10, filesPaths.size());
 
 
   }
@@ -210,7 +210,7 @@ public class ZipImportServiceTest {
   }
 
   @Test
-  public void testFindBinaries(){
+  public void testFindImplBinaries(){
 
     Map<String, byte[]> binaryResources = new HashMap<>();
 
@@ -218,82 +218,24 @@ public class ZipImportServiceTest {
     binaryResources.put("hello   world/koio.v1/service-specification.yaml","service-specification.yaml".getBytes());
     binaryResources.put("hello   world/v2/service-specification.yaml","test data".getBytes());
     binaryResources.put("hello   world/v2/deployment-specification.yaml","v2deployment".getBytes());
+    binaryResources.put("hello   world/v2/stuff.txt","stuff.txt".getBytes());
+    binaryResources.put("hello   world/v2/otherthing.txt","otherthing".getBytes());
+    binaryResources.put("hello   world/v1/deployment-specification.yaml","test data".getBytes());
+    binaryResources.put("hello   world/v1/service-specification.yaml","service-specification.yaml".getBytes());
 
-    byte[] serviceSpec = service.findBinaries(binaryResources, "koio.v1/service-specification.yaml");
-    assertEquals("service-specification.yaml", new String (serviceSpec) );
 
-    byte[] deploymentSpec = service.findBinaries(binaryResources, "v2/deployment-specification.yaml");
-    assertEquals("v2deployment", new String (deploymentSpec) );
+    Map<String, byte[]> binaries = service.findImplentationBinaries(binaryResources, "v1");
+    assertEquals( 2, binaries.size());
+
+    binaries = service.findImplentationBinaries(binaryResources, "v2");
+    assertEquals( 4, binaries.size());
+    assertEquals("otherthing", new String (binaries.get("hello   world/v2/otherthing.txt")));
+
+
+
 
   }
 
-
-
-  @Test
-  public void testValidatorStringTypeSuccess() {
-    ObjectNode metadata = new ObjectMapper().createObjectNode();
-    metadata.put("@id", "hello/world");
-    metadata.put("@type", "koio:KnowledgeObject");
-    metadata.put("@context", "");
-
-    service.validateMetadata("test.json", metadata);
-  }
-
-  @Test
-  public void testValidatorArrayTypeSuccess() {
-    ObjectNode metadata = new ObjectMapper().createObjectNode();
-    ArrayNode type = new ObjectMapper().createArrayNode();
-    type.add("koio:KnowledgeObject");
-    type.add("something else");
-    metadata.put("@id", "hello/world");
-    metadata.set("@type", type);
-    metadata.put("@context", "");
-
-    service.validateMetadata("test.json", metadata);
-  }
-
-  @Test(expected = ShelfException.class)
-  public void testValidatorNumber() {
-    ObjectNode metadata = new ObjectMapper().createObjectNode();
-    metadata.put("@id", "hello/world");
-    metadata.put("@type", 20);
-    metadata.put("@context", "");
-
-    service.validateMetadata("test.json", metadata);
-  }
-
-  @Test(expected = ShelfException.class)
-  public void testValidatorNoData() {
-    ObjectNode metadata = new ObjectMapper().createObjectNode();
-    service.validateMetadata("test.json", metadata);
-  }
-
-  @Test(expected = ShelfException.class)
-  public void testValidatorNoContext() {
-    ObjectNode metadata = new ObjectMapper().createObjectNode();
-    metadata.put("@id", "hello/world");
-    metadata.put("@type", "koio:KnowledgeObject");
-
-    service.validateMetadata("test.json", metadata);
-  }
-
-  @Test(expected = ShelfException.class)
-  public void testValidatorNoId() {
-    ObjectNode metadata = new ObjectMapper().createObjectNode();
-    metadata.put("@context", "");
-    metadata.put("@type", "koio:KnowledgeObject");
-
-    service.validateMetadata("test.json", metadata);
-  }
-
-  @Test(expected = ShelfException.class)
-  public void testValidatorNoType() {
-    ObjectNode metadata = new ObjectMapper().createObjectNode();
-    metadata.put("@id", "hello/world");
-    metadata.put("@context", "");
-
-    service.validateMetadata("test.json", metadata);
-  }
 
 
 }

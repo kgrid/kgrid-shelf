@@ -5,7 +5,6 @@
   "title": "Implementation 0.0.1 of Hello World",
   "hasServiceSpecification": "v0.0.1/service-specification.yaml",
   "hasDeploymentSpecification": "v0.0.1/deployment-specification.yaml",
-  "hasPayload": "v0.0.1/welcome.js",
   "@context": [
     "http://kgrid.org/koio/contexts/implementation.jsonld"
   ]

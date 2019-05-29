@@ -24,7 +24,6 @@ public class FedoraZipImportServiceTest {
   public static final String IMPLEMENTATIONS_TERM = "hasImplementation";
   public static final String SERVICE_SPEC_TERM = "hasServiceSpecification";
   public static final String DEPLOYMENT_SPEC_TERM = "hasDeploymentSpecification";
-  public static final String PAYLOAD_TERM = "hasPayload";
 
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -50,9 +49,6 @@ public class FedoraZipImportServiceTest {
 
 
     metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk()+"/"+ "v0.0.1" );
-
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/welcome.js",
-        metadata.findValue(PAYLOAD_TERM).asText());
 
     assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/service-specification.yaml",
         metadata.findValue(SERVICE_SPEC_TERM).asText());

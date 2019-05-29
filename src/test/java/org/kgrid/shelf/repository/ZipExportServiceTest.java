@@ -72,7 +72,7 @@ public class ZipExportServiceTest {
       System.out.println(file.toAbsolutePath().toString());
     });
 
-    assertEquals(9,filesPaths.size());
+    assertEquals(8,filesPaths.size());
 
   }
 
@@ -124,7 +124,7 @@ public class ZipExportServiceTest {
       System.out.println(file.toAbsolutePath().toString());
     });
 
-    assertEquals(5,filesPaths.size());
+    assertEquals(4,filesPaths.size());
   }
 
   @Test

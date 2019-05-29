@@ -45,7 +45,7 @@ public class FedoraZipExportServiceTest {
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world"), new ArkId("hello", "world").getDashArk(), compoundDigitalObjectStore, true);
+        new ArkId("hello", "world"), new ArkId("hello", "world").getDashArk(), compoundDigitalObjectStore);
 
     writeZip(outputStream);
 

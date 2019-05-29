@@ -112,8 +112,6 @@ public class KnowledgeObjectRepositoryTest {
   public void getCorrectMetadata() throws Exception {
     JsonNode koMeatadata = repository.findImplementationMetadata(helloWorldArkId);
     assertTrue(koMeatadata.findValue("identifier").asText().equals("koio.v1"));
-    String resource = koMeatadata.findValue("hasPayload").asText();
-    assertEquals("koio.v1/welcome.js", resource);
   }
 
   @Test

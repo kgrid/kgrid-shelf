@@ -7,8 +7,7 @@
       "dc:identifier":"v0.0.1",
       "dc:title": "Implementation 0.0.1 of Hello Workd",
       "hasServiceSpecification":"v0.0.1/service-specification.yaml",
-      "hasDeploymentSpecification":"v0.0.1/deployment-specification.yaml",
-      "hasPayload":"v0.0.1/welcome.js"
+      "hasDeploymentSpecification":"v0.0.1/deployment-specification.yaml"
     }
   ]
 }
