@@ -1,24 +1,15 @@
 package org.kgrid.shelf.repository;
 
-import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static org.zeroturnaround.zip.ZipUtil.pack;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import com.github.jsonldjava.core.DocumentLoader;
-import com.github.jsonldjava.core.JsonLdOptions;
-import com.github.jsonldjava.core.JsonLdProcessor;
 import com.github.jsonldjava.utils.JsonUtils;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -198,11 +189,11 @@ public class ZipExportService  {
           } catch (Exception e) {
             log.info(implementationPath
                 + " has no deployment descriptor, looking for info in the service spec.");
-          }
 
-          JsonNode post = service.getValue().get("post");
-          if (post.has("x-kgrid-activation")) {
-            artifact = post.get("x-kgrid-activation").get("artifact").asText();
+            JsonNode post = service.getValue().get("post");
+            if (post.has("x-kgrid-activation")) {
+              artifact = post.get("x-kgrid-activation").get("artifact").asText();
+            }
           }
 
           binaryNodes.add(Paths.get(implementationNode.get("@id").asText(), artifact).toString());
@@ -215,7 +206,8 @@ public class ZipExportService  {
       }
     }
 
-    return binaryNodes;
+    // remove dups
+    return binaryNodes.stream().distinct().collect(Collectors.toList());
   }
 
 }
