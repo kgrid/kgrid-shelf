@@ -53,7 +53,7 @@ public class ZipImportServiceTest {
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "hello-world"), 2, FOLLOW_LINKS)
+        temporaryFolder.getRoot().toPath().toString(), "hello-world"), 3, FOLLOW_LINKS)
         .filter(Files::isRegularFile)
         .map(Path::toAbsolutePath)
         .collect(Collectors.toList());
@@ -61,7 +61,7 @@ public class ZipImportServiceTest {
     filesPaths.forEach(file -> {
       System.out.println(file.toAbsolutePath().toString());
     });
-    assertEquals(5, filesPaths.size());
+    assertEquals(10, filesPaths.size());
 
     zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
     service.importKO(zipStream, compoundDigitalObjectStore);
@@ -89,37 +89,12 @@ public class ZipImportServiceTest {
 
 
   }
-  @Test
-  public void testImportMultiDirectoryKnowledgeObject() throws IOException {
-
-    InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/99999-score.zip");
-
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "99999-score"), 3, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
-
-    filesPaths.forEach(file -> {
-      System.out.println(file.toAbsolutePath().toString());
-    });
-    assertEquals(5, filesPaths.size());
-
-    zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-  }
-
 
   @Test
   public void testImportKnowledgeObjectExtraFiles() throws IOException {
 
     InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/hello-usa-jsonld.zip");
+        .getResourceAsStream("/fixtures/koExtraFiles.zip");
 
     service.importKO(zipStream, compoundDigitalObjectStore);
 

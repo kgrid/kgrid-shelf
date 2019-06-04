@@ -1,6 +1,7 @@
 package org.kgrid.shelf.repository;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -23,6 +24,7 @@ import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
+import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 
 public class FilesystemCDOStoreTest {
@@ -47,14 +49,19 @@ public class FilesystemCDOStoreTest {
     Files.createDirectory(shelf);
     arkId = new ArkId("hello", "world");
     // Add zip file to our test shelf:
-    InputStream zipStream = FilesystemCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
+    InputStream zipStream = FilesystemCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world.zip");
     zis.importKO(zipStream, koStore);
   }
 
+  @Test(expected = ShelfResourceNotFound.class)
+  public void testMetaDataNotFound(){
+    ObjectNode koNode = koStore.getMetadata("hello-xxxxxx");
+    assertEquals("Hello  World Title", koNode.findValue("title").textValue());
+  }
   @Test
   public void testGetMetaData(){
     ObjectNode koNode = koStore.getMetadata("hello-world");
-    assertEquals("Hello  World Title", koNode.findValue("title").textValue());
+    assertEquals("Hello World Title", koNode.findValue("title").textValue());
   }
   @Test
   public void testURIPathWindows(){
@@ -95,8 +102,9 @@ public class FilesystemCDOStoreTest {
   @Test
   public void getImplementations() throws Exception {
     List<String> expectedImplementations = new ArrayList<>();
-    expectedImplementations.add("v0.0.1");
-    expectedImplementations.add("v0.0.2");
+    expectedImplementations.add("v0.1.0");
+    expectedImplementations.add("v0.2.0");
+    expectedImplementations.add("v0.3.0");
     List<String> implementations = koStore.getChildren(arkId.getDashArk()).stream().map(child -> StringUtils
         .substringAfterLast(child, FileSystems.getDefault().getSeparator())).collect(Collectors.toList());
     implementations.sort(Comparator.naturalOrder());
@@ -106,11 +114,11 @@ public class FilesystemCDOStoreTest {
   @Test
   public void getImplementationMetadata() throws Exception {
 
-    ObjectNode metadata = koStore.getMetadata(arkId.getDashArk(), "v0.0.1");
-    assertEquals("Implementation 0.0.1 of Hello World", metadata.get("title").asText());
+    ObjectNode metadata = koStore.getMetadata(arkId.getDashArk(), "v0.1.0");
+    assertTrue(metadata.get("title").asText().contains("Hello World"));
     metadata.replace("title", new TextNode("TEST"));
-    koStore.saveMetadata(metadata, arkId.getDashArk(), "v0.0.1");
-    metadata = koStore.getMetadata(arkId.getDashArk(), "v0.0.1");
+    koStore.saveMetadata(metadata, arkId.getDashArk(), "v0.1.0");
+    metadata = koStore.getMetadata(arkId.getDashArk(), "v0.1.0");
     assertEquals("TEST", metadata.get("title").asText());
   }
 
@@ -119,7 +127,7 @@ public class FilesystemCDOStoreTest {
   @Test
   public void getResource() throws Exception {
 
-      JsonNode metadata = koStore.getMetadata(arkId.getDashArk(), "v0.0.1");
+      JsonNode metadata = koStore.getMetadata(arkId.getDashArk(), "v0.1.0");
 //    ko.setModelMetadata((ObjectNode)modelMetadata);
 //    Path resourceLocation = ko.resourceLocation();
 //    byte[] resource = koStore.getBinary(resourceLocation);

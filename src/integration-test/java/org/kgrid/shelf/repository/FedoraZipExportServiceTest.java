@@ -33,7 +33,7 @@ public class FedoraZipExportServiceTest {
   @Before
   public void setUp() throws Exception {
 
-    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
+    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
 
     service.importKO(zipStream, compoundDigitalObjectStore);
 

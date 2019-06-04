@@ -3,6 +3,7 @@ package org.kgrid.shelf.repository;
 import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -14,6 +15,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,6 +29,7 @@ import org.junit.runners.JUnit4;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.KnowledgeObject;
 import org.springframework.mock.web.MockMultipartFile;
 
 @RunWith(JUnit4.class)
@@ -41,7 +44,7 @@ public class KnowledgeObjectRepositoryTest {
   ZipImportService zipImportService = new ZipImportService();
   ZipExportService zipExportService = new ZipExportService();
 
-  private ArkId helloWorldArkId = new ArkId("hello", "world", "koio.v1");
+  private ArkId helloWorldArkId = new ArkId("hello", "world", "v0.1.0");
   private ArkId helloFolderArkId = new ArkId("hello", "folder", "koio.v1");
 
   @Before
@@ -111,7 +114,25 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void getCorrectMetadata() throws Exception {
     JsonNode koMeatadata = repository.findImplementationMetadata(helloWorldArkId);
-    assertTrue(koMeatadata.findValue("identifier").asText().equals("koio.v1"));
+    assertTrue(koMeatadata.findValue("identifier").asText().equals("ark:/hello/world/v0.1.0"));
+  }
+
+  @Test
+  public void deleteImplentation() throws Exception {
+
+    ArkId arkId = new ArkId("hello","world","v0.2.0");
+    repository.deleteImpl(arkId);
+    JsonNode metadata = repository.findKnowledgeObjectMetadata(new ArkId("hello","world"));
+    assertEquals(2, metadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).size());
+
+    try{
+      metadata = repository.findImplementationMetadata(arkId);
+      assertTrue("should not find "+ arkId.getDashArkImplementation(), false);
+    } catch ( ShelfResourceNotFound e){
+      assertTrue(true);
+    }
+
+
   }
 
   @Test
@@ -145,23 +166,6 @@ public class KnowledgeObjectRepositoryTest {
 
     ArkId arkId = new ArkId("hello-world/koio.v2");
     JsonNode serviceSpecNode = repository.findServiceSpecification(arkId);
-
-  }
-  @Test
-  public void findDeploymentSpecification() throws IOException, URISyntaxException {
-
-    ArkId arkId = new ArkId("hello-world/koio.v1");
-    JsonNode serviceSpecNode = repository.findDeploymentSpecification(arkId);
-    assertNotNull( serviceSpecNode );
-
-  }
-
-  @Test
-  public void findPayload() throws IOException, URISyntaxException {
-
-    ArkId arkId = new ArkId("hello-world/koio.v1");
-    byte[] payload = repository.findPayload(arkId, "koio.v1/welcome.js");
-    assertNotNull( payload );
 
   }
 
