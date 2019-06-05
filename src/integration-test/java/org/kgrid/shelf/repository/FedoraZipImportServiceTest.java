@@ -76,33 +76,6 @@ public class FedoraZipImportServiceTest {
 
   }
 
-
-  @Test
-  public void testImportKnowledgeObjectExtraFiles()  {
-
-    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/koExtraFiles.zip");
-
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-    ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "usa").getDashArk() );
-
-    assertEquals("should have 2 implementations", 2,
-        metadata.findValue(IMPLEMENTATIONS_TERM).size());
-
-    try {
-      metadata = compoundDigitalObjectStore.getMetadata(
-          Paths.get(new ArkId("hello", "world").getDashArk(), "v0.0.3").toString());
-      assertTrue("Should throw exception", false);
-    } catch (ShelfException e){
-      assertTrue("Should not find v.0.0.3 because not defined in meatadata, not found will throw exception", true);
-
-    }
-
-    compoundDigitalObjectStore.delete("hello-usa");
-
-
-  }
-
   @Test
   public void testBadKOMetaData() throws IOException {
 

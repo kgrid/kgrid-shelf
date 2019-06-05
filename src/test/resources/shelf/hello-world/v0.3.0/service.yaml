@@ -1,11 +1,11 @@
 openapi: 3.0.0
 info:
   version: 1.0.0
-  title: 'Hello, World'
-  description: hello world
+  title: New Hello World
+  description: Hello World v0.3.0 with webpack-built payload
 servers:
-  - url: /hello/world/v0.0.1/
-    description: Hello world
+  - url: /hello/world/v0.3.0/
+    description: Hello World v0.3.0 with webpack-built payload
 tags:
   - name: KO Endpoints
     description: Hello World Endpoints
@@ -14,8 +14,8 @@ paths:
     post:
       tags:
         - KO Endpoints
-      description: Welcome.
-      operationId: welcome
+      description: Hello
+      operationId: hello
       requestBody:
         description: inputs
         required: true
@@ -35,32 +35,34 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/error'
-
+                $ref: 'https://demo.kgrid.org/schemas/basicerror.yaml'
+      x-kgrid-activation:
+        artifact: 'dist/main.js'
+        adapter: 'JAVASCRIPT'
+        entry: 'welcome'
 components:
   schemas:
     input:
       required:
         - name
+        - language
       properties:
         name:
           type: string
           x-kgrid-label: 'Please enter your name'
           x-kgrid-unit: ''
-          example: Bob
+          example: Carol
+        language:
+          type: string
+          enum: ['English','French', 'German','Italian','Portuguese','Spanish','Turkish' ]
+          x-kgrid-label: 'Please select your language'
+          x-kgrid-unit: ''
+          example: Spanish
     output:
       required:
         - result
       properties:
         result:
           type: object
-    error:
-      required:
-        - code
-        - message
-      properties:
-        code:
-          type: integer
-          format: int32
-        message:
-          type: string
+          additionalProperties:
+            type: object

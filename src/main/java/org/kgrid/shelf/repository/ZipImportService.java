@@ -2,10 +2,15 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -18,6 +23,7 @@ import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
@@ -26,7 +32,7 @@ import org.springframework.util.ObjectUtils;
 import org.zeroturnaround.zip.ZipUtil;
 
 @Service
-public class ZipImportService  {
+public class ZipImportService {
 
   private final org.slf4j.Logger log = LoggerFactory.getLogger(ZipImportService.class);
 
@@ -36,6 +42,7 @@ public class ZipImportService  {
    *
    * @param zipFileStream zip in the form of a stream
    * @param cdoStore persistence layer
+   * @return arkId imported arkId
    */
   public ArkId importKO(InputStream zipFileStream, CompoundDigitalObjectStore cdoStore) {
 
@@ -43,11 +50,12 @@ public class ZipImportService  {
     Map<String, byte[]> binaryResources = new HashMap<>();
 
     captureZipEntries(zipFileStream, containerResources, binaryResources);
-    if(containerResources.isEmpty()) {
-      throw new ShelfException("The imported zip is not a valid knowledge object, no valid metadata found");
+    if (containerResources.isEmpty()) {
+      throw new ShelfException(
+          "The imported zip is not a valid knowledge object, no valid metadata found");
     }
 
-    ArkId arkId = new ArkId( findKOMetadata(containerResources).get("identifier").asText());
+    ArkId arkId = new ArkId(findKOMetadata(containerResources).get("identifier").asText());
 
     importObject(arkId, cdoStore, containerResources, binaryResources);
 
@@ -102,24 +110,28 @@ public class ZipImportService  {
     binaryQueue.forEach((filename, bytes) ->
         binaryResources.put(FilenameUtils.normalize(filename), bytes));
   }
+
   /**
    * Finds the KO metadata in the zip resources based on @type
-   * @param containerResources
-   * @return ko metadata as jsonnode
+   *
+   * @param containerResources collection of metadata
+   * @return imported ko metadata
    */
-  public JsonNode findKOMetadata(  Map<String, JsonNode> containerResources){
+  public JsonNode findKOMetadata(Map<String, JsonNode> containerResources) {
 
     Optional<JsonNode> koMetadata =
         containerResources.entrySet()
             .stream()
             .filter(jsonNode -> jsonNode.getValue().has("@type"))
-            .filter(jsonNode -> jsonNode.getValue().get("@type").asText().equals("koio:KnowledgeObject"))
+            .filter(jsonNode -> jsonNode.getValue().get("@type").asText()
+                .equals("koio:KnowledgeObject"))
             .map(value -> value.getValue()).findFirst();
 
-    if(koMetadata.isPresent()){
+    if (koMetadata.isPresent()) {
       return koMetadata.get();
     } else {
-      throw new ShelfException("The imported zip is not a valid knowledge object, no valid metadata found");
+      throw new ShelfException(
+          "The imported zip is not a valid knowledge object, no valid metadata found");
     }
 
   }
@@ -139,9 +151,9 @@ public class ZipImportService  {
     String trxId = cdoStore.createTransaction();
     try {
 
-      JsonNode koMetaData = findKOMetadata(containerResources);
+      ObjectNode koMetaData = (ObjectNode) findKOMetadata(containerResources);
 
-      if (ObjectUtils.isEmpty(koMetaData)){
+      if (ObjectUtils.isEmpty(koMetaData)) {
         throw new ShelfException("No KO metadata found, can not import zip file");
       }
       cdoStore.createContainer(trxId, arkId.getDashArk());
@@ -150,26 +162,78 @@ public class ZipImportService  {
         importImplementation(arkId, trxId, cdoStore, containerResources, binaryResources, jsonNode);
       });
 
+      KnowledgeObjectRepository knowledgeObjectRepository =
+          new KnowledgeObjectRepository(cdoStore, null, null);
+
+      mergeImplementations(arkId, cdoStore, koMetaData);
+
       cdoStore.saveMetadata(koMetaData, trxId, arkId.getDashArk(),
           KnowledgeObject.METADATA_FILENAME);
 
-      // Remove the object if it exists before committing the transaction and copying the new one to its location
-      cdoStore.delete(arkId.getDashArk());
+      findImplemtationMetadata(containerResources).forEach(jsonNode -> {
+        knowledgeObjectRepository.deleteImpl(new ArkId(jsonNode.get("identifier").asText()));
+      });
 
       cdoStore.commitTransaction(trxId);
+
     } catch (Exception e) {
       cdoStore.rollbackTransaction(trxId);
       log.warn(e.getMessage());
-      throw e;
+      throw new ShelfException("Could not import " +arkId, e);
+    }
+  }
+
+  /**
+   * Merge the imported and existing implementations together if needed.  This allows import of a
+   * single implementation with altering existing implementations
+   *
+   * @param arkId imported ark id
+   * @param cdoStore data store instance
+   * @param koMetaData imported ko metadata
+   * @throws IOException mapper read error
+   */
+  protected void mergeImplementations(ArkId arkId, CompoundDigitalObjectStore cdoStore,
+      ObjectNode koMetaData) throws IOException {
+
+    try {
+
+      ObjectNode existingKoMetadata = cdoStore.getMetadata(arkId.getDashArk());
+      List<String> existingImplementations = new ArrayList<>();
+      List<String>  importedImplementations = new ArrayList<>();
+      ObjectMapper mapper = new ObjectMapper();
+
+      //convert everything to lists
+      if(existingKoMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()){
+        existingImplementations = mapper.readValue( existingKoMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).toString(), List.class);
+      } else {
+        existingImplementations.add( existingKoMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).asText() );
+      }
+
+      if(koMetaData.get(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()){
+        importedImplementations = mapper.readValue( koMetaData.get(KnowledgeObject.IMPLEMENTATIONS_TERM).toString(), List.class);
+      } else {
+        importedImplementations.add( koMetaData.get(KnowledgeObject.IMPLEMENTATIONS_TERM).asText() );
+      }
+
+      //remove and add to makes sure no dups in list
+      importedImplementations.removeAll(existingImplementations); // remove elements that would be duplicated
+      importedImplementations.addAll(existingImplementations);
+
+      //update ko metatdata with imported and existing implementations
+      koMetaData.set(KnowledgeObject.IMPLEMENTATIONS_TERM,mapper.valueToTree(importedImplementations));
+
+    } catch (ShelfResourceNotFound notFound) {
+      log.info("No existing ko, nothing to merge ", arkId.getDashArk());
     }
   }
 
   /**
    * Finds the Implementation metadata in the zip resources based on @type
-   * @param containerResources
-   * @return list of implementation metatdata as jsonnodes
+   *
+   * @param containerResources collection of resources being imported
+   * @return collection of implementation metadata for the imported ko
    */
-  public List<JsonNode> findImplemtationMetadata(  Map<String, JsonNode> containerResources){
+  public List<JsonNode> findImplemtationMetadata(Map<String, JsonNode> containerResources) {
 
     List<JsonNode> implemtationMetadata = containerResources.entrySet()
         .stream()
@@ -183,26 +247,26 @@ public class ZipImportService  {
 
 
   /**
-   * Checks to make sure metadata follows koio
-   *
-   * @param filename
-   * @param metadata
+   * Validate the metadata
+   * @param filename  metadata filename
+   * @param metadata jsonnode of metatdata
    */
-  protected  void validateMetadata(String filename, JsonNode metadata) {
+  protected void validateMetadata(String filename, JsonNode metadata) {
     String typeLabel = "@type", idLabel = "@id";
     String ko = "koio:KnowledgeObject", impl = "koio:Implementation";
 
-    if (!metadata.has(idLabel) || !metadata.has(typeLabel) ) {
+    if (!metadata.has(idLabel) || !metadata.has(typeLabel)) {
       throw new ShelfException("Cannot import, Missing @id in file " + filename);
     }
-    if (!metadata.has(typeLabel) ) {
+    if (!metadata.has(typeLabel)) {
       throw new ShelfException("Cannot import, Missing @type label in file " + filename);
     }
-    if (!ko.equals(metadata.get(typeLabel).asText()) && !impl.equals(metadata.get(typeLabel).asText())) {
-          throw new ShelfException(
-              "Cannot import,  Missing knowledge object or implementation @type in file "
-                  + filename);
-      }
+    if (!ko.equals(metadata.get(typeLabel).asText()) && !impl
+        .equals(metadata.get(typeLabel).asText())) {
+      throw new ShelfException(
+          "Cannot import,  Missing knowledge object or implementation @type in file "
+              + filename);
+    }
   }
 
   /**
@@ -222,12 +286,13 @@ public class ZipImportService  {
 
       String path = Paths.get(arkId.getDashArk(), metadata.get("@id").asText()).toString();
       cdoStore.createContainer(trxId, path);
-      findImplentationBinaries( binaryResources, metadata.get("@id").asText()).forEach((binaryPath, bytes) -> {
+      findImplentationBinaries(binaryResources, metadata.get("@id").asText())
+          .forEach((binaryPath, bytes) -> {
 
-        cdoStore.saveBinary(bytes, trxId, Paths.get(arkId.getDashArk(),
-            binaryPath.substring(binaryPath.indexOf(metadata.get("@id").asText()))).toString());
+            cdoStore.saveBinary(bytes, trxId, Paths.get(arkId.getDashArk(),
+                binaryPath.substring(binaryPath.indexOf(metadata.get("@id").asText()))).toString());
 
-      });
+          });
 
       cdoStore.saveMetadata(metadata, trxId, path, KnowledgeObject.METADATA_FILENAME);
 
@@ -236,18 +301,20 @@ public class ZipImportService  {
     }
 
   }
+
   /**
    * Find any binaries under the implementation
    *
    * @param binaryResources collection of binaries
    * @param implementation implementation id
-   * @return
+   * @return binaries collection of binaries and paths
    */
-  public Map<String, byte[]> findImplentationBinaries(Map<String, byte[]> binaryResources, String implementation){
+  public Map<String, byte[]> findImplentationBinaries(Map<String, byte[]> binaryResources,
+      String implementation) {
 
     Map<String, byte[]> binaries = binaryResources.entrySet()
         .stream()
-        .filter(map -> map.getKey().contains("/"+implementation+"/"))
+        .filter(map -> map.getKey().contains("/" + implementation + "/"))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
     return binaries;

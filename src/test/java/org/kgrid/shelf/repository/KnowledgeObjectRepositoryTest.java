@@ -1,9 +1,7 @@
 package org.kgrid.shelf.repository;
 
-import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -13,12 +11,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -45,7 +39,7 @@ public class KnowledgeObjectRepositoryTest {
   ZipExportService zipExportService = new ZipExportService();
 
   private ArkId helloWorldArkId = new ArkId("hello", "world", "v0.1.0");
-  private ArkId helloFolderArkId = new ArkId("hello", "folder", "koio.v1");
+  private ArkId helloFolderArkId = new ArkId("hello", "folder", "v0.1.0");
 
   @Before
   public void setUp() throws Exception {
@@ -67,9 +61,9 @@ public class KnowledgeObjectRepositoryTest {
     repository.importZip(bmiArkId, koZip);
 
     ArkId helloFolder = new ArkId("hello", "folder");
-    zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/hello world folder.zip");
+    zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/mycoolko.zip");
     zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
-    koZip = new MockMultipartFile("ko", "hello world folder.zip", "application/zip", zippedKO);;
+    koZip = new MockMultipartFile("ko", "mycoolko.zip", "application/zip", zippedKO);;
     repository.importZip(helloFolder, koZip);
 
 

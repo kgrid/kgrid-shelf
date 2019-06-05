@@ -6,6 +6,6 @@
   "contributors" : "Kgrid Team",
   "description" : "Test Hello Folder ",
   "keywords" : "test hello folder",
-  "hasImplementation" : [ "hello-folder/koio.v1" ],
+  "hasImplementation" : "hello-folder/v0.1.0",
   "@context" : [ "http://kgrid.org/koio/contexts/knowledgeobject.jsonld" ]
 }

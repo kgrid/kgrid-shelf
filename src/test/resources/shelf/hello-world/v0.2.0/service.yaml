@@ -1,14 +1,14 @@
 openapi: 3.0.0
 info:
   version: 1.0.0
-  title: 'Hello, World'
-  description: 'hello world'
+  title: Hello World Exec v1
+  description: hello world exec v1
 servers:
-  - url: '/hello/world/v0.0.1/'
+  - url: /hello/world/v0.2.0/
     description: Hello world
 tags:
   - name: KO Endpoints
-    description: Hello World Endpoints
+    description: Hello World Exec V1 Endpoints
 paths:
   /welcome:
     post:
@@ -22,36 +22,41 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/user'
+              $ref: '#/components/schemas/input'
       responses:
         '200':
           description: response
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/welcomeOutput'
+                $ref: '#/components/schemas/output'
         default:
           description: unexpected error
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/error'
+      x-kgrid-activation:
+        artifact: 'dist/main.js'
+        adapter: 'JAVASCRIPT'
+        entry: 'welcome'
 components:
   schemas:
-    user:
+    input:
       required:
         - name
       properties:
         name:
           type: string
-          example: 'Bob'
-    welcomeOutput:
+          x-kgrid-label: 'Please enter your name'
+          x-kgrid-unit: ''
+          example: Bob
+    output:
       required:
         - result
       properties:
         result:
-          type: string
-          example: 'welcome'
+          type: object
     error:
       required:
         - code

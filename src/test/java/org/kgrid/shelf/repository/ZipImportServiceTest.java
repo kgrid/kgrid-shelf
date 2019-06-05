@@ -71,7 +71,7 @@ public class ZipImportServiceTest {
   public void testImportDifferentDirectoryKnowledgeObject() throws IOException {
 
     InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/hello world folder.zip");
+        .getResourceAsStream("/fixtures/mycoolko.zip");
 
     service.importKO(zipStream, compoundDigitalObjectStore);
 
@@ -90,28 +90,6 @@ public class ZipImportServiceTest {
 
   }
 
-  @Test
-  public void testImportKnowledgeObjectExtraFiles() throws IOException {
-
-    InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/koExtraFiles.zip");
-
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "hello-usa"), 3, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
-
-    filesPaths.forEach(file -> {
-      System.out.println(file.toAbsolutePath().toString());
-    });
-    assertEquals(10, filesPaths.size());
-
-
-  }
   @Test
   public void testBadKOMetaData() throws IOException {
 

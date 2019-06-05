@@ -31,6 +31,7 @@ public class ZipExportService  {
   /**
    * @param arkId export object ark id
    * @param cdoStore digital object store
+   * @param koPath path to the ko
    * @return byte stream of the zip
    * @throws ShelfException export process exception
    */
@@ -149,12 +150,13 @@ public class ZipExportService  {
   }
 
   /**
+   * Finds all of the binaries imported in the implementation folder
    *
-   * @param koPath
-   * @param cdoStore
-   * @param implementationPath
-   * @param implementationNode
-   * @return
+   * @param koPath path to ko
+   * @param cdoStore data store
+   * @param implementationPath path to implementation
+   * @param implementationNode jsonnode of implementation
+   * @return list of binary paths for the implementation
    */
   protected List<String> findImplementationBinaries(String koPath,
       CompoundDigitalObjectStore cdoStore,
