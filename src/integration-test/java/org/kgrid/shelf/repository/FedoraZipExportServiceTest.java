@@ -33,7 +33,7 @@ public class FedoraZipExportServiceTest {
   @Before
   public void setUp() throws Exception {
 
-    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
+    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
 
     service.importKO(zipStream, compoundDigitalObjectStore);
 
@@ -45,7 +45,7 @@ public class FedoraZipExportServiceTest {
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world"), new ArkId("hello", "world").getDashArk(), compoundDigitalObjectStore, true);
+        new ArkId("hello", "world"), new ArkId("hello", "world").getDashArk(), compoundDigitalObjectStore);
 
     writeZip(outputStream);
 

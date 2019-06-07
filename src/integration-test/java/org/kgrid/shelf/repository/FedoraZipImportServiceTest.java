@@ -24,7 +24,6 @@ public class FedoraZipImportServiceTest {
   public static final String IMPLEMENTATIONS_TERM = "hasImplementation";
   public static final String SERVICE_SPEC_TERM = "hasServiceSpecification";
   public static final String DEPLOYMENT_SPEC_TERM = "hasDeploymentSpecification";
-  public static final String PAYLOAD_TERM = "hasPayload";
 
   @ClassRule
   public static TemporaryFolder temporaryFolder = new TemporaryFolder();
@@ -37,7 +36,7 @@ public class FedoraZipImportServiceTest {
   @Test
   public void testImportKnowledgeObject()  {
 
-    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
+    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
 
     service.importKO(zipStream, compoundDigitalObjectStore);
 
@@ -49,16 +48,10 @@ public class FedoraZipImportServiceTest {
         metadata.findValue(IMPLEMENTATIONS_TERM).size());
 
 
-    metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk()+"/"+ "v0.0.1" );
+    metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk()+"/"+ "v0.1.0" );
 
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/welcome.js",
-        metadata.findValue(PAYLOAD_TERM).asText());
-
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/service-specification.yaml",
+    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.1.0/service-specification.yaml",
         metadata.findValue(SERVICE_SPEC_TERM).asText());
-
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.0.1/deployment-specification.yaml",
-        metadata.findValue(DEPLOYMENT_SPEC_TERM).asText());
 
     compoundDigitalObjectStore.delete("hello-world");
 
@@ -71,7 +64,7 @@ public class FedoraZipImportServiceTest {
 
     try {
       service.importKO(zipStream, compoundDigitalObjectStore);
-      ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "folder").getDashArk() +"/"+ "koio.v1");
+      ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "folder").getDashArk() +"/"+ "v0.1.0");
       assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-folder/koio.v1/service-specification.yaml",
           metadata.findValue(SERVICE_SPEC_TERM).asText());
 
@@ -80,33 +73,6 @@ public class FedoraZipImportServiceTest {
     }
 
     compoundDigitalObjectStore.delete("hello-folder");
-
-  }
-
-
-  @Test
-  public void testImportKnowledgeObjectExtraFiles()  {
-
-    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-usa-jsonld.zip");
-
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-    ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "usa").getDashArk() );
-
-    assertEquals("should have 2 implementations", 2,
-        metadata.findValue(IMPLEMENTATIONS_TERM).size());
-
-    try {
-      metadata = compoundDigitalObjectStore.getMetadata(
-          Paths.get(new ArkId("hello", "world").getDashArk(), "v0.0.3").toString());
-      assertTrue("Should throw exception", false);
-    } catch (ShelfException e){
-      assertTrue("Should not find v.0.0.3 because not defined in meatadata, not found will throw exception", true);
-
-    }
-
-    compoundDigitalObjectStore.delete("hello-usa");
-
 
   }
 

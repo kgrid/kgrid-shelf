@@ -1,6 +1,5 @@
 package org.kgrid.shelf.repository;
 
-import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
@@ -12,11 +11,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -27,6 +23,7 @@ import org.junit.runners.JUnit4;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.KnowledgeObject;
 import org.springframework.mock.web.MockMultipartFile;
 
 @RunWith(JUnit4.class)
@@ -41,8 +38,8 @@ public class KnowledgeObjectRepositoryTest {
   ZipImportService zipImportService = new ZipImportService();
   ZipExportService zipExportService = new ZipExportService();
 
-  private ArkId helloWorldArkId = new ArkId("hello", "world", "koio.v1");
-  private ArkId helloFolderArkId = new ArkId("hello", "folder", "koio.v1");
+  private ArkId helloWorldArkId = new ArkId("hello", "world", "v0.1.0");
+  private ArkId helloFolderArkId = new ArkId("hello", "folder", "v0.1.0");
 
   @Before
   public void setUp() throws Exception {
@@ -64,9 +61,9 @@ public class KnowledgeObjectRepositoryTest {
     repository.importZip(bmiArkId, koZip);
 
     ArkId helloFolder = new ArkId("hello", "folder");
-    zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/hello world folder.zip");
+    zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/mycoolko.zip");
     zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
-    koZip = new MockMultipartFile("ko", "hello world folder.zip", "application/zip", zippedKO);;
+    koZip = new MockMultipartFile("ko", "mycoolko.zip", "application/zip", zippedKO);;
     repository.importZip(helloFolder, koZip);
 
 
@@ -111,9 +108,25 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void getCorrectMetadata() throws Exception {
     JsonNode koMeatadata = repository.findImplementationMetadata(helloWorldArkId);
-    assertTrue(koMeatadata.findValue("identifier").asText().equals("koio.v1"));
-    String resource = koMeatadata.findValue("hasPayload").asText();
-    assertEquals("koio.v1/welcome.js", resource);
+    assertTrue(koMeatadata.findValue("identifier").asText().equals("ark:/hello/world/v0.1.0"));
+  }
+
+  @Test
+  public void deleteImplentation() throws Exception {
+
+    ArkId arkId = new ArkId("hello","world","v0.2.0");
+    repository.deleteImpl(arkId);
+    JsonNode metadata = repository.findKnowledgeObjectMetadata(new ArkId("hello","world"));
+    assertEquals(2, metadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).size());
+
+    try{
+      metadata = repository.findImplementationMetadata(arkId);
+      assertTrue("should not find "+ arkId.getDashArkImplementation(), false);
+    } catch ( ShelfResourceNotFound e){
+      assertTrue(true);
+    }
+
+
   }
 
   @Test
@@ -147,23 +160,6 @@ public class KnowledgeObjectRepositoryTest {
 
     ArkId arkId = new ArkId("hello-world/koio.v2");
     JsonNode serviceSpecNode = repository.findServiceSpecification(arkId);
-
-  }
-  @Test
-  public void findDeploymentSpecification() throws IOException, URISyntaxException {
-
-    ArkId arkId = new ArkId("hello-world/koio.v1");
-    JsonNode serviceSpecNode = repository.findDeploymentSpecification(arkId);
-    assertNotNull( serviceSpecNode );
-
-  }
-
-  @Test
-  public void findPayload() throws IOException, URISyntaxException {
-
-    ArkId arkId = new ArkId("hello-world/koio.v1");
-    byte[] payload = repository.findPayload(arkId, "koio.v1/welcome.js");
-    assertNotNull( payload );
 
   }
 

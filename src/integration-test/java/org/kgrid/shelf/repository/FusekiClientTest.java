@@ -28,7 +28,7 @@ public class FusekiClientTest {
       ZipImportService zipImportService = new ZipImportService();
 
       //Load Hello-World example object
-      InputStream zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world-jsonld.zip");
+      InputStream zipStream = FedoraCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world.zip");
       zipImportService.importKO(zipStream, compoundDigitalObjectStore);
 
       //Load ri-bmicalc example object

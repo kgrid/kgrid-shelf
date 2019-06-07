@@ -36,7 +36,7 @@ public class ZipExportServiceTest {
 
     Path helloWorld = Paths.get("src/test/resources/shelf/hello-world");
     Path emptyWorld = Paths.get("src/test/resources/shelf/empty-world");
-    Path helloFolder = Paths.get("src/test/resources/shelf/this is hello folder");
+    Path helloFolder = Paths.get("src/test/resources/shelf/mycoolko");
     FileUtils.copyDirectory(helloWorld.toFile(),
         Paths.get(shelf.toString(),"hello-world").toFile());
     FileUtils.copyDirectory(emptyWorld.toFile(),
@@ -61,7 +61,7 @@ public class ZipExportServiceTest {
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(),"export","hello-world"),  2, FOLLOW_LINKS)
+        temporaryFolder.getRoot().toPath().toString(),"export","hello-world"),  3, FOLLOW_LINKS)
         .filter(Files::isRegularFile)
         .map(Path::toAbsolutePath)
         .collect(Collectors.toList());
@@ -72,7 +72,7 @@ public class ZipExportServiceTest {
       System.out.println(file.toAbsolutePath().toString());
     });
 
-    assertEquals(9,filesPaths.size());
+    assertEquals(10,filesPaths.size());
 
   }
 
@@ -107,8 +107,8 @@ public class ZipExportServiceTest {
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world", "v0.0.2"),
-        new ArkId("hello", "world", "v0.0.2").getDashArk(), compoundDigitalObjectStore);
+        new ArkId("hello", "world", "v0.2.0"),
+        new ArkId("hello", "world", "v0.2.0").getDashArk(), compoundDigitalObjectStore);
 
     writeZip(outputStream);
 
@@ -124,7 +124,7 @@ public class ZipExportServiceTest {
       System.out.println(file.toAbsolutePath().toString());
     });
 
-    assertEquals(5,filesPaths.size());
+    assertEquals(3,filesPaths.size());
   }
 
   @Test

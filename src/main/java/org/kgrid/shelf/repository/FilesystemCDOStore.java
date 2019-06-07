@@ -48,10 +48,15 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public List<String> getChildren(String... filePathParts) {
+
+    return getChildren(1, filePathParts);
+  }
+
+  public List<String> getChildren( int maxDepth, String... filePathParts) {
     Path path = Paths.get(Paths.get(localStorageURI).toString(), filePathParts);
     List<String> children = new ArrayList<>();
     try {
-      children = Files.walk(path, 1, FOLLOW_LINKS)
+      children = Files.walk(path, maxDepth, FOLLOW_LINKS)
           .filter(Files::isDirectory)
           .map(Object::toString)
           .collect(Collectors.toList());

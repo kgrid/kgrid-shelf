@@ -42,7 +42,7 @@ jobs:
       - run:
          name: Build and Test And Verify
          command: |
-            mvn clean verify -P fcrepo_it
+            mvn clean verify
 
       # save test results
       - run:

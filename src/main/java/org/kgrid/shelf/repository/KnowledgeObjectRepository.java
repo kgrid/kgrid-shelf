@@ -3,6 +3,7 @@ package org.kgrid.shelf.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import java.io.IOException;
@@ -49,21 +50,33 @@ public class KnowledgeObjectRepository {
   }
 
   public void deleteImpl(ArkId arkId) {
-    dataStore.delete(objectLocations.get(arkId.getDashArk()), arkId.getImplementation());
-    JsonNode objectMetadata = dataStore.getMetadata(objectLocations.get(arkId.getDashArk()));
-    if(objectMetadata.has(KnowledgeObject.IMPLEMENTATIONS_TERM) && objectMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()) {
-      ArrayNode impls = (ArrayNode)objectMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM);
-      for (int i = 0; i < impls.size(); i++) {
-        if(impls.get(i).asText().equals(arkId.getDashArkImplementation())) {
-          impls.remove(i);
+    if(objectLocations.get(arkId.getDashArk())!=null) {
+      dataStore.delete(objectLocations.get(arkId.getDashArk()), arkId.getImplementation());
+      JsonNode objectMetadata = dataStore.getMetadata(objectLocations.get(arkId.getDashArk()));
+      if (objectMetadata.has(KnowledgeObject.IMPLEMENTATIONS_TERM) && objectMetadata
+          .get(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()) {
+        ArrayNode impls = (ArrayNode) objectMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM);
+        for (int i = 0; i < impls.size(); i++) {
+          if (impls.get(i).asText().equals(arkId.getDashArkImplementation())) {
+            impls.remove(i);
+          }
         }
+        ((ObjectNode) objectMetadata).set(KnowledgeObject.IMPLEMENTATIONS_TERM, impls);
+        dataStore.saveMetadata(objectMetadata, objectLocations.get(arkId.getDashArk()));
       }
-      ((ObjectNode) objectMetadata).set(KnowledgeObject.IMPLEMENTATIONS_TERM, impls);
-      dataStore.saveMetadata(objectMetadata, objectLocations.get(arkId.getDashArk()));
+    } else {
+
     }
 
   }
 
+  /**
+   * Edit the KO
+   * @param arkId arkId
+   * @param path path
+   * @param metadata metadata
+   * @return metadata
+   */
   public ObjectNode editMetadata(ArkId arkId, String path, String metadata) {
     Path metadataPath;
     if (path != null && !"".equals(path)) {
