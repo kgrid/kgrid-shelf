@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.StringWriter;
@@ -314,7 +315,7 @@ public class ZipImportService {
 
     Map<String, byte[]> binaries = binaryResources.entrySet()
         .stream()
-        .filter(map -> map.getKey().contains("/" + implementation + "/"))
+        .filter(map -> map.getKey().contains(File.separator + implementation + File.separator))
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
 
     return binaries;

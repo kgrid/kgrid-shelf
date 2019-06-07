@@ -167,14 +167,14 @@ public class ZipImportServiceTest {
 
     Map<String, byte[]> binaryResources = new HashMap<>();
 
-    binaryResources.put("hello   world/koio.v1/deployment-specification.yaml","test data".getBytes());
-    binaryResources.put("hello   world/koio.v1/service-specification.yaml","service-specification.yaml".getBytes());
-    binaryResources.put("hello   world/v2/service-specification.yaml","test data".getBytes());
-    binaryResources.put("hello   world/v2/deployment-specification.yaml","v2deployment".getBytes());
-    binaryResources.put("hello   world/v2/stuff.txt","stuff.txt".getBytes());
-    binaryResources.put("hello   world/v2/otherthing.txt","otherthing".getBytes());
-    binaryResources.put("hello   world/v1/deployment-specification.yaml","test data".getBytes());
-    binaryResources.put("hello   world/v1/service-specification.yaml","service-specification.yaml".getBytes());
+    binaryResources.put(Paths.get("hello   world","koio.v1","deployment-specification.yaml").toString(),"test data".getBytes());
+    binaryResources.put(Paths.get("hello   world","koio.v1","service-specification.yaml").toString(),"service-specification.yaml".getBytes());
+    binaryResources.put(Paths.get("hello   world","v2","service-specification.yaml").toString(),"test data".getBytes());
+    binaryResources.put(Paths.get("hello   world","v2","deployment-specification.yaml").toString(),"v2deployment".getBytes());
+    binaryResources.put(Paths.get("hello   world","v2","stuff.txt").toString(),"stuff.txt".getBytes());
+    binaryResources.put(Paths.get("hello   world","v2","otherthing.txt").toString(),"otherthing".getBytes());
+    binaryResources.put(Paths.get("hello   world","v1","deployment-specification.yaml").toString(),"test data".getBytes());
+    binaryResources.put(Paths.get("hello   world","v1","service-specification.yaml").toString(),"service-specification.yaml".getBytes());
 
 
     Map<String, byte[]> binaries = service.findImplentationBinaries(binaryResources, "v1");
@@ -182,7 +182,7 @@ public class ZipImportServiceTest {
 
     binaries = service.findImplentationBinaries(binaryResources, "v2");
     assertEquals( 4, binaries.size());
-    assertEquals("otherthing", new String (binaries.get("hello   world/v2/otherthing.txt")));
+    assertEquals("otherthing", new String (binaries.get(Paths.get("hello   world","v2","otherthing.txt").toString())));
 
 
 
