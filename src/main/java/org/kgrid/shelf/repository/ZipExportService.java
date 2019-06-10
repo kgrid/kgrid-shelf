@@ -197,8 +197,11 @@ public class ZipExportService  {
               artifact = post.get("x-kgrid-activation").get("artifact").asText();
             }
           }
-
-          binaryNodes.add(Paths.get(implementationNode.get("@id").asText(), artifact).toString());
+          if(artifact != null) {
+            binaryNodes.add(Paths.get(implementationNode.get("@id").asText(), artifact).toString());
+          } else {
+            log.warn("Cannot find location of artifact in service spec or deployment descriptor for endpoint " + service.getKey());
+          }
         });
 
       } catch (IOException ioe) {
