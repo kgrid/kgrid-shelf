@@ -357,11 +357,11 @@ public class ShelfController {
   }
 
   @ExceptionHandler(ShelfException.class)
-  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(ShelfException e,
+  public ResponseEntity<Map<String, String>> handleGeneralShelfExceptions(ShelfException e,
       WebRequest request) {
 
-    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
-        HttpStatus.NOT_FOUND);
+    return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST),
+        HttpStatus.BAD_REQUEST);
   }
 
   @ExceptionHandler(Exception.class)

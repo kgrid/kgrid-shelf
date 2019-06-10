@@ -31,6 +31,7 @@ public class KnowledgeObjectRepository {
   private ZipImportService zipImportService;
   private ZipExportService zipExportService;
   private final static Map<String, String> objectLocations = new HashMap<>();
+  private boolean shelfInvalidState = true;
 
   @Autowired
   KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore,
@@ -50,7 +51,8 @@ public class KnowledgeObjectRepository {
   }
 
   public void deleteImpl(ArkId arkId) {
-    if(objectLocations.get(arkId.getDashArk())!=null) {
+    if(objectLocations.get(arkId.getDashArk())!=null &&
+        objectLocations.get(arkId.getDashArk()).equals(arkId.getDashArk()) ) {
       dataStore.delete(objectLocations.get(arkId.getDashArk()), arkId.getImplementation());
       JsonNode objectMetadata = dataStore.getMetadata(objectLocations.get(arkId.getDashArk()));
       if (objectMetadata.has(KnowledgeObject.IMPLEMENTATIONS_TERM) && objectMetadata
@@ -65,7 +67,7 @@ public class KnowledgeObjectRepository {
         dataStore.saveMetadata(objectMetadata, objectLocations.get(arkId.getDashArk()));
       }
     } else {
-
+      log.info("Can't delete readonly KO implementations "+ arkId.getDashArk() + " in " + objectLocations.get(arkId.getDashArk()));
     }
 
   }
@@ -114,6 +116,7 @@ public class KnowledgeObjectRepository {
   public Map<ArkId, JsonNode> findAll() {
     Map<ArkId, JsonNode> knowledgeObjects = new HashMap<>();
     objectLocations.clear();
+    shelfInvalidState=false;
 
     //Load KO objects and skip any KOs with exceptions like missing metadata
     for (String path : dataStore.getChildren("")) {
@@ -134,7 +137,9 @@ public class KnowledgeObjectRepository {
         }
         arkId = new ArkId(metadata.get("@id").asText());
         if(objectLocations.get(arkId.getDashArk()) != null) {
-          log.warn("Two objects on the shelf have the same ark id: " + arkId + " Check folders " + folderName + " and " + objectLocations.get(arkId.getDashArk()));
+          log.warn("Two objects on the shelf have the same ark id: " +
+              arkId + " Check folders " + folderName + " and " + objectLocations.get(arkId.getDashArk()));
+          shelfInvalidState=true;
         }
         objectLocations.put(arkId.getDashArk(), folderName);
         knowledgeObjects.put(arkId, metadata);
@@ -276,6 +281,10 @@ public class KnowledgeObjectRepository {
    * @return ark id of the import object
    */
   public ArkId importZip(ArkId arkId, MultipartFile zippedKO) {
+    if (shelfInvalidState){
+      log.warn("Shelf in an invalid state, there are duplication ark ids, import not allowed " + zippedKO.getName());
+      throw new ShelfException("Shelf in an invalid state, there are duplication ark ids, import not allowed");
+    }
     try {
       arkId= zipImportService.importKO(zippedKO.getInputStream(), dataStore);
       objectLocations.put(arkId.getDashArk(), arkId.getDashArk());
@@ -287,8 +296,14 @@ public class KnowledgeObjectRepository {
 
   public ArkId importZip(MultipartFile zippedKO) {
     try {
+
+      if (shelfInvalidState){
+        log.warn("Shelf in an invalid state, there are duplication ark ids, import not allowed " + zippedKO.getName());
+        throw new ShelfException("Shelf in an invalid state, there are duplication ark ids, import not allowed");
+      }
       ArkId arkId = zipImportService.importKO(zippedKO.getInputStream(), dataStore);
       objectLocations.put(arkId.getDashArk(),arkId.getDashArk());
+      findAll();
       return arkId;
     } catch (IOException e) {
       log.warn("Cannot load zip file with filename " + zippedKO.getName());
@@ -298,8 +313,12 @@ public class KnowledgeObjectRepository {
 
   public ArkId importZip(InputStream zipStream) {
 
+    if (shelfInvalidState){
+      throw new ShelfException("Shelf in an invalid state, there are duplication ark ids, import not allowed");
+    }
     ArkId arkId = zipImportService.importKO(zipStream, dataStore);
     objectLocations.put(arkId.getDashArk(), arkId.getDashArk());
+    findAll();
     return arkId;
   }
 
