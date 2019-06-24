@@ -46,7 +46,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @CrossOrigin(origins = "${cors.url:}")
 @RestController
-@RequestMapping("${shelf.endpoint:}")
+@RequestMapping("${kgrid.shelf.endpoint:}")
 @Api(tags = "Knowledge Object API" )
 public class ShelfController {
 
