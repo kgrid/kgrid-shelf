@@ -3,6 +3,8 @@ package org.kgrid.shelf.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import io.swagger.annotations.Api;
+import io.swagger.annotations.ApiOperation;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -45,6 +47,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @CrossOrigin(origins = "${cors.url:}")
 @RestController
 @RequestMapping("${shelf.endpoint:}")
+@Api(tags = "Knowledge Object API" )
 public class ShelfController {
 
   private final Logger log = LoggerFactory.getLogger(ShelfController.class);
@@ -58,6 +61,10 @@ public class ShelfController {
   }
 
   @GetMapping
+  @ApiOperation(value = "Finds all knowledge objects",
+      notes = "Returns a collection of knowledge objects in the from of a JSON array.  ",
+      response = JsonNode.class,
+      responseContainer = "List")
   public Map getAllObjects(@RequestHeader(value = "Prefer", required = false) String prefer,
       RequestEntity request) {
     log.info("getting all kos");
@@ -70,8 +77,52 @@ public class ShelfController {
     return koMap;
   }
 
+  @ApiOperation(value = "Find a Knowledge Object based on naan and name",
+      notes = "Returns a knowledge object based on naan and name",
+      response = JsonNode.class)
+  @GetMapping(path = "/{naan}/{name}")
+  public ResponseEntity<JsonNode> getKnowledgeObject(@PathVariable String naan,
+      @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer,
+      RequestEntity request) {
 
+    log.info("get ko " + naan + "/" + name);
+
+    // Prevent infinite loop when trying to connect to fcrepo on the same address as the library
+    if ("fcrepo".equals(naan) && "rest".equals(name)) {
+      throw new IllegalArgumentException(
+          "Cannot connect to fcrepo at the same address as the shelf. Make sure shelf and fcrepo configuration is correct.");
+    }
+    ArkId arkId = new ArkId(naan, name);
+    JsonNode results = shelf.findKnowledgeObjectMetadata(arkId);
+
+    if (results == null || results.size() == 0) {
+      throw new IllegalArgumentException("Object not found with id " + naan + "-" + name);
+    }
+
+    return new ResponseEntity<>(results, HttpStatus.OK);
+  }
+  @ApiOperation(value = "Find a Knowledge Object Implementation",
+      notes = "ulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum primis in faucibus. Etiam sagittis justo ut quam maximus, sed pharetra libero tempus.",
+      response = JsonNode.class)
+  @GetMapping(path = "/{naan}/{name}/{implementation}")
+  public JsonNode getKnowledgeObjectImplementation(@PathVariable String naan,
+      @PathVariable String name,
+      @PathVariable String implementation, RequestEntity request,
+      HttpServletRequest httpServletRequest) {
+
+    log.info("getting ko " + naan + "/" + name + "/" + implementation + " Look at this " + request
+        .getUrl());
+
+    ArkId arkId = new ArkId(naan, name, implementation);
+
+    return shelf.findImplementationMetadata(arkId);
+  }
   @PostMapping
+  @ApiOperation(value = "Imports a packaged Knowledge Object",
+      notes = "Mulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum primis in faucibus. Etiam sagittis justo ut quam maximus, sed pharetra libero tempus.",
+      response = JsonNode.class,
+      responseContainer = "List")
+
   public ResponseEntity<Map<String, String>> depositKnowledgeObject(
       @RequestParam("ko") MultipartFile zippedKo) {
 
@@ -85,7 +136,9 @@ public class ShelfController {
     return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
   }
 
-
+  @ApiOperation(value = "Import Knowledge Objects based on a list URLs to packaged Knowledge Objects",
+      notes = "Multiple status values can be provided with comma seperated strings"
+  )
   @PostMapping( consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<Map<String, Object>> depositKnowledgeObject (
       @RequestBody JsonNode requestBody) {
@@ -129,54 +182,8 @@ public class ShelfController {
     }
 
   }
-
-  private HttpHeaders addKOHeaderLocation(ArkId arkId) {
-
-    URI loc = ServletUriComponentsBuilder
-        .fromCurrentContextPath()
-        .path(arkId.getSlashArk())
-        .build().toUri();
-    HttpHeaders headers = new HttpHeaders();
-    headers.setLocation(loc);
-    return headers;
-  }
-
-  @GetMapping(path = "/{naan}/{name}")
-  public ResponseEntity<JsonNode> getKnowledgeObject(@PathVariable String naan,
-      @PathVariable String name, @RequestHeader(value = "Prefer", required = false) String prefer,
-      RequestEntity request) {
-
-    log.info("get ko " + naan + "/" + name);
-
-    // Prevent infinite loop when trying to connect to fcrepo on the same address as the library
-    if ("fcrepo".equals(naan) && "rest".equals(name)) {
-      throw new IllegalArgumentException(
-          "Cannot connect to fcrepo at the same address as the shelf. Make sure shelf and fcrepo configuration is correct.");
-    }
-    ArkId arkId = new ArkId(naan, name);
-    JsonNode results = shelf.findKnowledgeObjectMetadata(arkId);
-
-    if (results == null || results.size() == 0) {
-      throw new IllegalArgumentException("Object not found with id " + naan + "-" + name);
-    }
-
-    return new ResponseEntity<>(results, HttpStatus.OK);
-  }
-
-  @GetMapping(path = "/{naan}/{name}/{implementation}")
-  public JsonNode getKnowledgeObjectImplementation(@PathVariable String naan,
-      @PathVariable String name,
-      @PathVariable String implementation, RequestEntity request,
-      HttpServletRequest httpServletRequest) {
-
-    log.info("getting ko " + naan + "/" + name + "/" + implementation + " Look at this " + request
-        .getUrl());
-
-    ArkId arkId = new ArkId(naan, name, implementation);
-
-    return shelf.findImplementationMetadata(arkId);
-  }
-
+  @ApiOperation(value = "Export Knowledge Object Implementation",
+      notes = "ulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum")
   @GetMapping(path = "/{naan}/{name}/{implementation}", produces = "application/zip")
   public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name,
       @PathVariable String implementation, HttpServletResponse response) {
@@ -187,6 +194,8 @@ public class ShelfController {
     exportZip(response, arkId);
   }
 
+  @ApiOperation(value = "Export Knowledge Object",
+      notes = "ulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum")
   @GetMapping(path = "/{naan}/{name}", produces = "application/zip")
   public void getZippedKnowledgeObject(@PathVariable String naan, @PathVariable String name,
       HttpServletResponse response) {
@@ -215,6 +224,8 @@ public class ShelfController {
     }
   }
 
+  @ApiOperation(value = "Find Knowledge Object Implementation Open API Service specification",
+      notes = "ulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum")
   @GetMapping(path = "/{naan}/{name}/{implementation}/service")
   public Object getServiceDescription(@PathVariable String naan, @PathVariable String name,
       @PathVariable String implementation) throws NoSuchFileException, NoSuchFieldException {
@@ -227,6 +238,8 @@ public class ShelfController {
 
   }
 
+  @ApiOperation(value = "Find Knowledge Object Implementation resource",
+      notes = "ulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum")
   @GetMapping(path = "/{naan}/{name}/{implementation}/**", produces = MediaType.ALL_VALUE)
   public Object getBinary(@PathVariable String naan, @PathVariable String name,
       @PathVariable String implementation, HttpServletRequest request) throws NoSuchFileException {
@@ -249,36 +262,8 @@ public class ShelfController {
     }
   }
 
-  @PutMapping(path = "/{naan}/{name}")
-  public ResponseEntity<Map<String, String>> importKO(@PathVariable String naan,
-      @PathVariable String name,
-      @RequestParam("ko") MultipartFile zippedKo) {
-
-    Map<String, String> result = importKO(naan, name, null, zippedKo).getBody();
-
-    return new ResponseEntity<>(result, HttpStatus.CREATED);
-  }
-
-  @PutMapping(path = "/{naan}/{name}/{implementation}")
-  public ResponseEntity<Map<String, String>> importKO(@PathVariable String naan,
-      @PathVariable String name,
-      @PathVariable String implementation, @RequestParam("ko") MultipartFile zippedKo) {
-
-    log.info("add ko " + naan + "/" + name + (implementation == null ? "" : "/" + implementation)
-        + " zip file " + zippedKo.getOriginalFilename());
-
-    ArkId pathArk = new ArkId(naan, name);
-    ArkId arkId = shelf.importZip(pathArk, zippedKo);
-
-    Map<String, String> response = new HashMap<>();
-    response.put("Added", arkId.toString());
-
-    return new ResponseEntity<>(response, HttpStatus.CREATED);
-
-  }
-
-
-
+  @ApiOperation(value = "Update Knowledge Object ",
+      notes = "ulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum")
   @PutMapping(path = "/{naan}/{name}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<JsonNode> editKnowledgeObjectOMetadata(@PathVariable String naan,
       @PathVariable String name, @RequestBody String data) {
@@ -287,7 +272,8 @@ public class ShelfController {
     return new ResponseEntity<>(shelf.findKnowledgeObjectMetadata(arkId),
         HttpStatus.OK);
   }
-
+  @ApiOperation(value = "Update Knowledge Object Implementation",
+      notes = "ulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum")
   @PutMapping(path = "/{naan}/{name}/{implementation}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<JsonNode> editImplmentaionMetadata(@PathVariable String naan,
       @PathVariable String name, @PathVariable String implementation, @RequestBody String data) {
@@ -296,7 +282,8 @@ public class ShelfController {
     return new ResponseEntity<>(shelf.findImplementationMetadata(arkId),
         HttpStatus.OK);
   }
-
+  @ApiOperation(value = "Delete Knowledge Object ",
+      notes = "ulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum")
   @DeleteMapping(path = "/{naan}/{name}")
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan,
       @PathVariable String name) {
@@ -305,7 +292,8 @@ public class ShelfController {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
   }
-
+  @ApiOperation(value = "Delete Knowledge Object Implementation",
+      notes = "ulla nibh velit, porttitor sit amet viverra at, rhoncus vitae sapien. Fusce non eleifend mauris. Interdum et malesuada fames ac ante ipsum")
   @DeleteMapping(path = "/{naan}/{name}/{implementation}")
   public ResponseEntity<String> deleteKnowledgeObject(@PathVariable String naan,
       @PathVariable String name, @PathVariable String implementation) {
@@ -313,6 +301,17 @@ public class ShelfController {
     shelf.deleteImpl(arkId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
+  }
+
+  private HttpHeaders addKOHeaderLocation(ArkId arkId) {
+
+    URI loc = ServletUriComponentsBuilder
+        .fromCurrentRequestUri()
+        .pathSegment(arkId.getSlashArk())
+        .build().toUri();
+    HttpHeaders headers = new HttpHeaders();
+    headers.setLocation(loc);
+    return headers;
   }
 
   //Exception handling:

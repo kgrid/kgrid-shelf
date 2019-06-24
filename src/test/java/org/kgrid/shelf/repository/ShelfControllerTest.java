@@ -54,17 +54,6 @@ public class ShelfControllerTest {
     }
 
     @Test
-    public void addZippedKO() throws Exception {
-
-        MockMultipartFile file = new MockMultipartFile("ko", "hello-world.zip",
-            "application/zip", new ClassPathResource("/fixtures/hello-world.zip").getInputStream());
-
-        mockMvc.perform(putWithFileUpload("/hello/world").file(file))
-            .andExpect(status().isCreated());
-
-    }
-
-    @Test
     public void addZippedKoNoPath() throws Exception {
 
         MockMultipartFile file = new MockMultipartFile("ko", "hello-world.zip",
