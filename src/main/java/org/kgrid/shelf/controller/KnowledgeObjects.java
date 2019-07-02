@@ -288,6 +288,7 @@ public class KnowledgeObjects extends KOSController {
 
   protected void exportZip(HttpServletResponse response, ArkId arkId) {
 
+    response.setHeader("Content-Type","application/octet-stream");
     response.addHeader("Content-Disposition",
         "attachment; filename=\"" + (arkId.isImplementation() ?
             arkId.getDashArk() + "-" + arkId.getImplementation() : arkId.getDashArk()) + ".zip\"");
