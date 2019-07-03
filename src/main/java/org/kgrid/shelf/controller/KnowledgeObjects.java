@@ -3,9 +3,6 @@ package org.kgrid.shelf.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import io.swagger.annotations.Api;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -35,7 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
-@Api(tags = {"Knowledge Object API"} )
 public class KnowledgeObjects extends KOSController {
 
   public KnowledgeObjects(KnowledgeObjectRepository shelf,
@@ -44,11 +40,6 @@ public class KnowledgeObjects extends KOSController {
   }
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-  @ApiOperation(value = "Finds all knowledge objects",
-      notes = "Returns a collection of knowledge objects in the from of a JSON array. The JSON objects"
-              + " will follow the <a href=\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\">KOIO "
-          + "scheme</a> for knowledge objects"
-  )
   public Map getAllObjects() {
     log.info("getting all kos");
     Map koMap = shelf.findAll();
@@ -66,13 +57,9 @@ public class KnowledgeObjects extends KOSController {
   }
 
   @GetMapping(path = "/{naan}/{name}",  produces = MediaType.APPLICATION_JSON_VALUE)
-  @ApiOperation(value = "Find a Knowledge Object based on naan and name and returns JSON or Zip",
-      notes = "Finds and returns a knowledge object based on naan and name. Can response with a JSON object defined but "
-          + "<a href=\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\">KOIO scheme</a>  or can package the knowledge object into a zip file",
-      produces = "application/json, application/zip")
     public ResponseEntity<JsonNode> findKnowledgeObject(
-      @ApiParam(value="Name Assigning Authority unique number", example="hello") @PathVariable String naan,
-      @ApiParam(value="Ark Name", example="world") @PathVariable String name) {
+       @PathVariable String naan,
+       @PathVariable String name) {
 
     log.info("get ko " + naan + "/" + name);
 
@@ -93,14 +80,11 @@ public class KnowledgeObjects extends KOSController {
 
 
   @GetMapping(path = "/{naan}/{name}/{implementation}", produces = MediaType.APPLICATION_JSON_VALUE)
-  @ApiOperation(value = "Find a Knowledge Object Implementation based on naan, name and implementation and returns JSON or Zip",
-      notes = "Finds and returns a knowledge object Implementation based on naan and name and implementation. Can response with a JSON object defined but "
-          + "<a href=\"http://kgrid.org/koio/contexts/implementation.jsonld\">KOIO scheme</a> or can package the knowledge object implementation into a zip file",
-      produces = "application/json, application/zip")
+
   public JsonNode getKnowledgeObjectImplementation(
-      @ApiParam(value="Name Assigning Authority unique number", example="hello") @PathVariable String naan,
-      @ApiParam(value="Ark Name", example="world") @PathVariable String name,
-      @ApiParam(value="Ark Implementation", example="v0.1.0")  @PathVariable String implementation) {
+      @PathVariable String naan,
+      @PathVariable String name,
+      @PathVariable String implementation) {
 
     log.info("getting ko " + naan + "/" + name + "/" + implementation);
 
@@ -121,12 +105,10 @@ public class KnowledgeObjects extends KOSController {
 
 
   @GetMapping(path = "/{naan}/{name}/{implementation}/service", produces = MediaType.APPLICATION_JSON_VALUE)
-  @ApiOperation(value = "Find a Knowledge Object Implementation's Open API Service specification",
-      notes = "")
   public Object getServiceDescription(
-      @ApiParam(value="Name Assigning Authority unique number", example="hello") @PathVariable String naan,
-      @ApiParam(value="Ark Name", example="world") @PathVariable String name,
-      @ApiParam(value="Ark Implementation", example="v0.1.0")  @PathVariable String implementation) {
+      @PathVariable String naan,
+      @PathVariable String name,
+      @PathVariable String implementation) {
 
     log.info("getting ko service  " + naan + "/" + name + "/" + implementation);
 
@@ -137,12 +119,10 @@ public class KnowledgeObjects extends KOSController {
   }
 
   @GetMapping(path = "/{naan}/{name}/{implementation}/**", produces = MediaType.ALL_VALUE)
-  @ApiOperation(value = "Find a Knowledge Object Implementation based on on naan, name,  implementation and path to resource",
-      notes = "")
   public Object getBinary(
-      @ApiParam(value="Name Assigning Authority unique number", example="hello") @PathVariable String naan,
-      @ApiParam(value="Ark Name", example="world") @PathVariable String name,
-      @ApiParam(value="Ark Implementation", example="v0.1.0")  @PathVariable String implementation, HttpServletRequest request) throws NoSuchFileException {
+      @PathVariable String naan,
+      @PathVariable String name,
+      @PathVariable String implementation, HttpServletRequest request) throws NoSuchFileException {
 
     log.info("getting ko resource " + naan + "/" + name + "/" + implementation);
 
@@ -164,11 +144,10 @@ public class KnowledgeObjects extends KOSController {
 
 
   @PutMapping(path = "/{naan}/{name}", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-  @ApiOperation(value = "Update Knowledge Object ",
-      notes = "")
+
   public ResponseEntity<JsonNode> editKnowledgeObjectOMetadata(
-      @ApiParam(value="Name Assigning Authority unique number", example="hello") @PathVariable String naan,
-      @ApiParam(value="Ark Name", example="world") @PathVariable String name,
+      @PathVariable String naan,
+      @PathVariable String name,
       @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
     shelf.editMetadata(arkId, null, data);
@@ -177,8 +156,6 @@ public class KnowledgeObjects extends KOSController {
   }
 
   @PutMapping(path = "/{naan}/{name}/{implementation}", consumes = MediaType.APPLICATION_JSON_VALUE)
-  @ApiOperation(value = "Update Knowledge Object Implementation",
-      notes = "")
   public ResponseEntity<JsonNode> editImplmentaionMetadata(@PathVariable String naan,
       @PathVariable String name,
       @PathVariable String implementation,
@@ -190,11 +167,10 @@ public class KnowledgeObjects extends KOSController {
   }
 
   @DeleteMapping(path = "/{naan}/{name}")
-  @ApiOperation(value = "Delete Knowledge Object ",
-      notes = "")
+
   public ResponseEntity<String> deleteKnowledgeObject(
-      @ApiParam(value="Name Assigning Authority unique number", example="hello") @PathVariable String naan,
-      @ApiParam(value="Ark Name", example="world") @PathVariable String name) {
+      @PathVariable String naan,
+      @PathVariable String name) {
     ArkId arkId = new ArkId(naan, name);
     shelf.delete(arkId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
@@ -202,20 +178,16 @@ public class KnowledgeObjects extends KOSController {
   }
 
   @DeleteMapping(path = "/{naan}/{name}/{implementation}")
-  @ApiOperation(value = "Delete Knowledge Object Implementation",
-      notes = "")
   public ResponseEntity<String> deleteKnowledgeObject(
-      @ApiParam(value="Name Assigning Authority unique number", example="hello") @PathVariable String naan,
-      @ApiParam(value="Ark Name", example="world") @PathVariable String name,
-      @ApiParam(value="Ark Implementation", example="v0.1.0")  @PathVariable String implementation) {
+      @PathVariable String naan,
+      @PathVariable String name,
+      @PathVariable String implementation) {
     ArkId arkId = new ArkId(naan, name, implementation);
     shelf.deleteImpl(arkId);
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
 
   }
 
-  @ApiOperation(value = "Imports a packaged Knowledge Object as a zip file",
-      notes = "Takes a packaged Knowledge Object as a zip file in a ko form field")
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
   public ResponseEntity<Map<String, String>> depositKnowledgeObject(
      @RequestParam("ko") MultipartFile zippedKo) {
@@ -231,19 +203,7 @@ public class KnowledgeObjects extends KOSController {
   }
 
   @PostMapping( path = "/manifest", consumes = MediaType.APPLICATION_JSON_VALUE)
-  @ApiOperation(value = "Imports a packaged Knowledge Object as a list URLs to "
-      + "packaged Knowledge Objects",
-      notes = "JSON Manifest example"
-          + "{\n"
-          + "    \"manifest\": [\n"
-          + "        \"https://github.com/kgrid-objects/example-collection/releases/download/1.4.0/hello-world.zip\",\n"
-          + "        \"https://github.com/kgrid-objects/example-collection/releases/download/1.4.0/score-calc.zip\",\n"
-          + "    ]\n"
-          + "}",
-      consumes = "application/json", nickname = "Import")
   public ResponseEntity<Map<String, Object>> depositKnowledgeObject (
-      @ApiParam(value="JSON Manifest with URLs to packaged Knowledge Objects")
-
       @RequestBody JsonNode requestBody) {
 
     log.info("Add kos from manifest {}", requestBody.asText());
