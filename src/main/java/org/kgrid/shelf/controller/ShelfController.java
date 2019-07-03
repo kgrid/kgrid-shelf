@@ -21,18 +21,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.WebRequest;
 
-
-@CrossOrigin(origins = "${cors.url:}")
 @RestController
-@RequestMapping("${kgrid.shelf.endpoint:}")
-public abstract class KOSController {
+public abstract class ShelfController {
 
   protected Logger log = LoggerFactory.getLogger(this.getClass().getName());
   protected Optional<KnowledgeObjectDecorator> kod;
   protected KnowledgeObjectRepository shelf;
 
   @Autowired
-  public KOSController(KnowledgeObjectRepository shelf, Optional<KnowledgeObjectDecorator> kod) {
+  public ShelfController(KnowledgeObjectRepository shelf, Optional<KnowledgeObjectDecorator> kod) {
     this.shelf = shelf;
     this.kod = kod;
   }
