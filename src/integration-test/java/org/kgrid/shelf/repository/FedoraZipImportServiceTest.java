@@ -44,13 +44,13 @@ public class FedoraZipImportServiceTest {
 
     assertNotNull(metadata);
 
-    assertEquals("should have 2 implementations", 2,
+    assertEquals("should have 2 implementations", 3,
         metadata.findValue(IMPLEMENTATIONS_TERM).size());
 
 
     metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "world").getDashArk()+"/"+ "v0.1.0" );
 
-    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.1.0/service-specification.yaml",
+    assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-world/v0.1.0/service.yaml",
         metadata.findValue(SERVICE_SPEC_TERM).asText());
 
     compoundDigitalObjectStore.delete("hello-world");
@@ -60,12 +60,12 @@ public class FedoraZipImportServiceTest {
   @Test
   public void testImportKnowledgeObjectFolder()  {
 
-    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/hello world folder.zip");
+    InputStream zipStream = FedoraZipImportServiceTest.class.getResourceAsStream("/fixtures/mycoolko.zip");
 
     try {
       service.importKO(zipStream, compoundDigitalObjectStore);
       ObjectNode metadata = compoundDigitalObjectStore.getMetadata( new ArkId("hello", "folder").getDashArk() +"/"+ "v0.1.0");
-      assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-folder/koio.v1/service-specification.yaml",
+      assertEquals("should have ", "http://localhost:8080/fcrepo/rest/hello-folder/v0.1.0/service-specification.yaml",
           metadata.findValue(SERVICE_SPEC_TERM).asText());
 
     } catch (ShelfException e) {

@@ -408,6 +408,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
         .contentType(new MediaType("application", "ld+json", StandardCharsets.UTF_8))
         .body("{}");
     ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+    log.info(" metadata container created " + response);
 
   }
 

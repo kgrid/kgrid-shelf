@@ -204,13 +204,13 @@ public class ZipImportService {
       ObjectMapper mapper = new ObjectMapper();
 
       //convert everything to lists
-      if(existingKoMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()){
+      if(existingKoMetadata.findValue(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()){
         existingImplementations = mapper.readValue( existingKoMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).toString(), List.class);
       } else {
         existingImplementations.add( existingKoMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).asText() );
       }
 
-      if(koMetaData.get(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()){
+      if(koMetaData.findValue(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()){
         importedImplementations = mapper.readValue( koMetaData.get(KnowledgeObject.IMPLEMENTATIONS_TERM).toString(), List.class);
       } else {
         importedImplementations.add( koMetaData.get(KnowledgeObject.IMPLEMENTATIONS_TERM).asText() );

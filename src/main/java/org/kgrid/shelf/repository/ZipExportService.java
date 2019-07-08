@@ -118,14 +118,17 @@ public class ZipExportService  {
       List<String> binaryNodes =
           findImplementationBinaries(koPath, cdoStore, implementationPath, implementationNode);
 
+
       binaryNodes.forEach((binaryPath) -> {
+        try{
 
-        String uriPath = ResourceUtils.isUrl(binaryPath) ?
-            binaryPath : Paths.get(koPath, binaryPath).toString();
+          String uriPath = ResourceUtils.isUrl(binaryPath) ?
+            Paths.get(ResourceUtils.toURI(binaryPath).getPath().substring(
+                ResourceUtils.toURI(binaryPath).getPath().indexOf(arkId.getDashArk()))).toString() :
+            Paths.get(koPath, binaryPath).toString();
 
-        byte[] bytes = cdoStore.getBinary(uriPath);
+          byte[] bytes = cdoStore.getBinary(uriPath);
 
-        try {
           //handle absolute and relative IRIs for binary filesdoc
           String binaryFileName = ResourceUtils.isUrl(binaryPath) ?
               Paths.get(ResourceUtils.toURI(binaryPath).getPath().substring(
@@ -177,8 +180,16 @@ public class ZipExportService  {
       try {
 
         JsonNode serviceDescription = yamlMapper
-            .readTree(cdoStore.getBinary(koPath, implementationNode
-                .findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()));
+            .readTree(cdoStore.getBinary(koPath,
+                ResourceUtils.isUrl(implementationNode
+                .findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText())?
+                    Paths.get(ResourceUtils.toURI(implementationNode
+                        .findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()).getPath().substring(
+                        ResourceUtils.toURI(implementationNode
+                            .findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()).getPath().indexOf(koPath)+koPath.length()+1)).toString():
+                    implementationNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()));
+
+
 
         serviceDescription.get("paths").fields().forEachRemaining(service -> {
           String artifact = null;
@@ -208,6 +219,8 @@ public class ZipExportService  {
 
         log.info(implementationPath, " has no service descriptor, can't export");
 
+      } catch (URISyntaxException urie) {
+        log.info(implementationPath, " issue handling URI process of path");
       }
     }
 

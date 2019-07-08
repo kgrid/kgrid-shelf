@@ -56,7 +56,7 @@ public class FedoraCDOStoreTest {
   @Test
   public void getImplementations() throws Exception {
     List<String> impList = compoundDigitalObjectStore.getChildren("hello-world");
-    assertEquals(2, impList.size());
+    assertEquals(3, impList.size());
   }
 
   @Test
@@ -64,7 +64,7 @@ public class FedoraCDOStoreTest {
 
     ObjectNode koNode = compoundDigitalObjectStore.getMetadata("hello-world");
 
-    assertEquals("Hello  World Title", koNode.findValue("title").asText());
+    assertEquals("Hello World Title", koNode.findValue("title").asText());
 
   }
 
@@ -96,7 +96,7 @@ public class FedoraCDOStoreTest {
   public void findBinary() {
 
     assertNotNull(
-        compoundDigitalObjectStore.getBinary("hello-world/v0.0.1/welcome.js"));
+        compoundDigitalObjectStore.getBinary("hello-world/v0.1.0/src/index.js"));
   }
 
   @Test(expected = ShelfException.class)

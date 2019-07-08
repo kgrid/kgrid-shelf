@@ -51,7 +51,7 @@ public class FedoraZipExportServiceTest {
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(),"export","hello-world"),  2, FOLLOW_LINKS)
+        temporaryFolder.getRoot().toPath().toString(),"export","hello-world"),  3, FOLLOW_LINKS)
         .filter(Files::isRegularFile)
         .map(Path::toAbsolutePath)
         .collect(Collectors.toList());
@@ -61,7 +61,7 @@ public class FedoraZipExportServiceTest {
 
     });
 
-    assertEquals(9,filesPaths.size());
+    assertEquals(10,filesPaths.size());
 
   }
 
