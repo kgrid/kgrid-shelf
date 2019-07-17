@@ -2,8 +2,6 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.File;
 import java.io.IOException;
@@ -14,11 +12,9 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import org.apache.commons.io.FilenameUtils;
@@ -256,6 +252,7 @@ public class ZipImportService {
     String typeLabel = "@type", idLabel = "@id";
     String ko = "koio:KnowledgeObject", impl = "koio:Implementation";
 
+
     if (!metadata.has(idLabel) || !metadata.has(typeLabel)) {
       throw new ShelfException("Cannot import, Missing @id in file " + filename);
     }
@@ -268,6 +265,13 @@ public class ZipImportService {
           "Cannot import,  Missing knowledge object or implementation @type in file "
               + filename);
     }
+    if (ko.equals(metadata.get(typeLabel).asText()) &&
+        !filename.startsWith(metadata.get("@id").asText())) {
+      throw new ShelfException(
+          "Cannot import,  doesn't not follow packing specifications, base directory must match ark id structure "
+              + filename);
+    }
+
   }
 
   /**
@@ -290,8 +294,7 @@ public class ZipImportService {
       findImplentationBinaries(binaryResources, metadata.get("@id").asText())
           .forEach((binaryPath, bytes) -> {
 
-            cdoStore.saveBinary(bytes, trxId, Paths.get(arkId.getDashArk(),
-                binaryPath.substring(binaryPath.indexOf(metadata.get("@id").asText()))).toString());
+            cdoStore.saveBinary(bytes, trxId, binaryPath);
 
           });
 

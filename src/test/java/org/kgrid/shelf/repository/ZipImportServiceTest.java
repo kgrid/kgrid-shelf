@@ -22,6 +22,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.ShelfException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.zeroturnaround.zip.ZipUtil;
 
 public class ZipImportServiceTest {
 
@@ -68,16 +69,20 @@ public class ZipImportServiceTest {
 
   }
   @Test
-  public void testImportDifferentDirectoryKnowledgeObject() throws IOException {
+  public void testImportDupArkIdKnowledgeObject() throws IOException {
+
+    ZipUtil.unpack( ZipImportServiceTest.class
+        .getResourceAsStream("/fixtures/hello.zip"), temporaryFolder.getRoot());
 
     InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/mycoolko.zip");
+        .getResourceAsStream("/fixtures/hello-world.zip");
 
     service.importKO(zipStream, compoundDigitalObjectStore);
 
     List<Path> filesPaths;
+
     filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "hello-folder"), 2, FOLLOW_LINKS)
+        temporaryFolder.getRoot().toPath().toString(), "hello-world"), 3, FOLLOW_LINKS)
         .filter(Files::isRegularFile)
         .map(Path::toAbsolutePath)
         .collect(Collectors.toList());
@@ -85,8 +90,35 @@ public class ZipImportServiceTest {
     filesPaths.forEach(file -> {
       System.out.println(file.toAbsolutePath().toString());
     });
-    assertEquals(5, filesPaths.size());
 
+    assertEquals(10, filesPaths.size());
+
+    filesPaths = Files.walk(Paths.get(
+        temporaryFolder.getRoot().toPath().toString(), "helloko"), 3, FOLLOW_LINKS)
+        .filter(Files::isRegularFile)
+        .map(Path::toAbsolutePath)
+        .collect(Collectors.toList());
+
+    filesPaths.forEach(file -> {
+      System.out.println(file.toAbsolutePath().toString());
+    });
+
+    assertEquals(10, filesPaths.size());
+
+    zipStream = ZipImportServiceTest.class
+        .getResourceAsStream("/fixtures/hello-world.zip");
+
+    service.importKO(zipStream, compoundDigitalObjectStore);
+
+  }
+
+  @Test( expected = ShelfException.class)
+  public void testImportDifferentDirectoryKnowledgeObject()  {
+
+    InputStream zipStream = ZipImportServiceTest.class
+        .getResourceAsStream("/fixtures/mycoolko.zip");
+
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
   }
 

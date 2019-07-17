@@ -25,6 +25,7 @@ import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.springframework.mock.web.MockMultipartFile;
+import org.zeroturnaround.zip.ZipUtil;
 
 @RunWith(JUnit4.class)
 public class KnowledgeObjectRepositoryTest {
@@ -45,6 +46,7 @@ public class KnowledgeObjectRepositoryTest {
   public void setUp() throws Exception {
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
     compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
+
     repository = new KnowledgeObjectRepository(compoundDigitalObjectStore, zipImportService, zipExportService);
 
     //Load Hello-World example object
@@ -60,15 +62,11 @@ public class KnowledgeObjectRepositoryTest {
     koZip = new MockMultipartFile("ko", "ri-bmicalc.zip", "application/zip", zippedKO);;
     repository.importZip(bmiArkId, koZip);
 
-    ArkId helloFolder = new ArkId("hello", "folder");
-    zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/mycoolko.zip");
-    zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
-    koZip = new MockMultipartFile("ko", "mycoolko.zip", "application/zip", zippedKO);;
-    repository.importZip(helloFolder, koZip);
+    ZipUtil.unpack(
+        KnowledgeObjectRepositoryTest.class.getResourceAsStream("/fixtures/mycoolko.zip"),
+        folder.getRoot() );
 
-
-
-
+    repository.findAll();
   }
 
   @After
@@ -178,7 +176,7 @@ public class KnowledgeObjectRepositoryTest {
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "folder"),  new ArkId("hello", "folder").getDashArk(), compoundDigitalObjectStore);
+        new ArkId("hello", "folder"),  "mycoolko", compoundDigitalObjectStore);
 
 
   }

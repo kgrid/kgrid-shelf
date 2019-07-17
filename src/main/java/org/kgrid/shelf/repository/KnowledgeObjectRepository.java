@@ -297,10 +297,6 @@ public class KnowledgeObjectRepository {
   public ArkId importZip(MultipartFile zippedKO) {
     try {
 
-      if (shelfInvalidState){
-        log.warn("Shelf in an invalid state, there are duplication ark ids, import not allowed " + zippedKO.getName());
-        throw new ShelfException("Shelf in an invalid state, there are duplication ark ids, import not allowed");
-      }
       ArkId arkId = zipImportService.importKO(zippedKO.getInputStream(), dataStore);
       objectLocations.put(arkId.getDashArk(),arkId.getDashArk());
       findAll();
@@ -313,9 +309,6 @@ public class KnowledgeObjectRepository {
 
   public ArkId importZip(InputStream zipStream) {
 
-    if (shelfInvalidState){
-      throw new ShelfException("Shelf in an invalid state, there are duplication ark ids, import not allowed");
-    }
     ArkId arkId = zipImportService.importKO(zipStream, dataStore);
     objectLocations.put(arkId.getDashArk(), arkId.getDashArk());
     findAll();
