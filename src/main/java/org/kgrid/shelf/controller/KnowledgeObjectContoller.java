@@ -34,7 +34,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @RestController
-@RequestMapping("${kgrid.shelf.endpoint:}")
+@RequestMapping("${kgrid.shelf.endpoint:kos}")
 @CrossOrigin(origins = "${cors.url:}")
 public class KnowledgeObjectContoller extends ShelfController {
 
