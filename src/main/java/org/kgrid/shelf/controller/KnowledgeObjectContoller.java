@@ -1,8 +1,10 @@
 package org.kgrid.shelf.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
@@ -109,7 +111,7 @@ public class KnowledgeObjectContoller extends ShelfController {
 
 
   @GetMapping(path = "/{naan}/{name}/{implementation}/service", produces = MediaType.APPLICATION_JSON_VALUE)
-  public Object getServiceDescription(
+  public Object getServiceDescriptionJson(
       @PathVariable String naan,
       @PathVariable String name,
       @PathVariable String implementation) {
@@ -119,8 +121,22 @@ public class KnowledgeObjectContoller extends ShelfController {
     ArkId arkId = new ArkId(naan, name, implementation);
 
     return shelf.findServiceSpecification(arkId);
-
   }
+
+
+  @GetMapping(path = "/{naan}/{name}/{implementation}/service", produces = MediaType.ALL_VALUE)
+  public Object getServiceDescriptionYaml(
+      @PathVariable String naan,
+      @PathVariable String name,
+      @PathVariable String implementation) throws JsonProcessingException {
+
+    log.info("getting ko service  " + naan + "/" + name + "/" + implementation);
+
+    ArkId arkId = new ArkId(naan, name, implementation);
+
+    return new YAMLMapper().writeValueAsString(shelf.findServiceSpecification(arkId));
+  }
+
 
   @GetMapping(path = "/{naan}/{name}/{implementation}/**", produces = MediaType.ALL_VALUE)
   public Object getBinary(
