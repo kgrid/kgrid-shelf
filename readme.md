@@ -1,6 +1,7 @@
 # KGrid Shelf
 [![CircleCI](https://circleci.com/gh/kgrid/kgrid-shelf/tree/master.svg?style=shield)](https://circleci.com/gh/kgrid/kgrid-shelf/tree/master)
 [![GitHub release](https://img.shields.io/github/release/kgrid/kgrid-shelf.svg)](https://github.com/kgrid/kgrid-shelf/releases/)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 KGrid Shelf - (access, acquisition) view Knowledge Objects  (and sets of Knowledge Objects ) & their components; deposit & remove published versions of Knowledge Objects; copy versions of Knowledge Objects
 s between Libraries & Activators (Knowledge Objects are immutable).
