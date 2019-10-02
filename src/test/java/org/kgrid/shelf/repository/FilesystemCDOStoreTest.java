@@ -6,6 +6,7 @@ import static org.junit.Assert.assertTrue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.FileSystems;
@@ -18,6 +19,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.After;
 import org.junit.Before;
@@ -39,18 +41,12 @@ public class FilesystemCDOStoreTest {
 
   @Before
   public void setUp() throws Exception {
+    FileUtils.copyDirectory(
+        new File("src/test/resources/shelf"),
+        new File(folder.getRoot().getPath()));
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
-    koStore = new FilesystemCDOStore(connectionURL);
-    zis = new ZipImportService();
-    Path shelf = Paths.get(koStore.getAbsoluteLocation(""));
-    if(Files.isDirectory(shelf)) {
-      nukeTestShelf(shelf);
-    }
-    Files.createDirectory(shelf);
     arkId = new ArkId("hello", "world");
-    // Add zip file to our test shelf:
-    InputStream zipStream = FilesystemCDOStoreTest.class.getResourceAsStream("/fixtures/hello-world.zip");
-    zis.importKO(zipStream, koStore);
+    koStore = new FilesystemCDOStore(connectionURL);
   }
 
   @Test(expected = ShelfResourceNotFound.class)
@@ -96,7 +92,7 @@ public class FilesystemCDOStoreTest {
         Objects::nonNull).collect(Collectors.toList());
     List<ArkId> expectedIds = Collections.singletonList(arkId);
 
-    assertEquals(expectedIds, shelfIds);
+    assertTrue(shelfIds.size()>1);
   }
 
   @Test

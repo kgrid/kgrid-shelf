@@ -43,18 +43,21 @@ public class ZipImportServiceTest {
 
 
   }
-
+  /**
+   * Happy Day test, unzips into folder with all the stuff in the zip
+   * @throws IOException
+   */
   @Test
   public void testImportKnowledgeObject() throws IOException {
 
     InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/hello-world.zip");
+        .getResourceAsStream("/fixtures/import-export/hello-world-v3.zip");
 
     service.importKO(zipStream, compoundDigitalObjectStore);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "hello-world"), 3, FOLLOW_LINKS)
+        temporaryFolder.getRoot().toPath().toString(), "hello-world-v3"), 3, FOLLOW_LINKS)
         .filter(Files::isRegularFile)
         .map(Path::toAbsolutePath)
         .collect(Collectors.toList());
@@ -62,63 +65,33 @@ public class ZipImportServiceTest {
     filesPaths.forEach(file -> {
       System.out.println(file.toAbsolutePath().toString());
     });
-    assertEquals(10, filesPaths.size());
+    assertEquals(3, filesPaths.size());
 
-    zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/hello-world.zip");
+    zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/import-export/hello-world-v3.zip");
     service.importKO(zipStream, compoundDigitalObjectStore);
 
   }
-  @Test
-  public void testImportDupArkIdKnowledgeObject() throws IOException {
 
-    ZipUtil.unpack( ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/hello.zip"), temporaryFolder.getRoot());
-
-    InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/hello-world.zip");
-
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-    List<Path> filesPaths;
-
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "hello-world"), 3, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
-
-    filesPaths.forEach(file -> {
-      System.out.println(file.toAbsolutePath().toString());
-    });
-
-    assertEquals(10, filesPaths.size());
-
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "helloko"), 3, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
-
-    filesPaths.forEach(file -> {
-      System.out.println(file.toAbsolutePath().toString());
-    });
-
-    assertEquals(10, filesPaths.size());
-
-    zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/hello-world.zip");
-
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-  }
 
   @Test( expected = ShelfException.class)
-  public void testImportDifferentDirectoryKnowledgeObject()  {
+  public void testImportDifferentDirectoryKnowledgeObject() throws IOException {
 
     InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/mycoolko.zip");
+        .getResourceAsStream("/fixtures/import-export/bad-package.zip");
 
     service.importKO(zipStream, compoundDigitalObjectStore);
+
+    List<Path> filesPaths;
+    filesPaths = Files.walk(Paths.get(
+        temporaryFolder.getRoot().toPath().toString(), "hello-world-v3"), 3, FOLLOW_LINKS)
+        .filter(Files::isRegularFile)
+        .map(Path::toAbsolutePath)
+        .collect(Collectors.toList());
+
+    filesPaths.forEach(file -> {
+      System.out.println(file.toAbsolutePath().toString());
+    });
+    assertEquals(3, filesPaths.size());
 
   }
 
@@ -126,7 +99,7 @@ public class ZipImportServiceTest {
   public void testBadKOMetaData() throws IOException {
 
     InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/bad-kometadata.zip");
+        .getResourceAsStream("/fixtures/import-export/bad-kometadata.zip");
 
     try{
 
@@ -142,7 +115,6 @@ public class ZipImportServiceTest {
     }
 
   }
-
 
   @Test
   public void testfindKOMetadata() {
@@ -165,61 +137,7 @@ public class ZipImportServiceTest {
     assertEquals("koio:KnowledgeObject", metadata.get("@type").asText());
   }
 
-  @Test
-  public void testfindImplMetadata() {
-    Map<String, JsonNode> containerResources = new HashMap<>();
 
-    ObjectNode koMetadata = new ObjectMapper().createObjectNode();
-    koMetadata.put("@id", "hello-world");
-    koMetadata.put("@type", "koio:KnowledgeObject");
-
-    containerResources.put("hello-world", koMetadata);
-
-    ObjectNode implMetadataV1 = new ObjectMapper().createObjectNode();
-    implMetadataV1 = new ObjectMapper().createObjectNode();
-    implMetadataV1.put("@id", "v1");
-    implMetadataV1.put("@type", "koio:Implementation");
-    containerResources.put("v1", implMetadataV1);
-
-    ObjectNode implMetadatav2 = new ObjectMapper().createObjectNode();
-    implMetadatav2 = new ObjectMapper().createObjectNode();
-    implMetadatav2.put("@id", "v2");
-    implMetadatav2.put("@type", "koio:Implementation");
-    containerResources.put("v2", implMetadatav2);
-
-
-    List<JsonNode> metadata = service.findImplemtationMetadata(containerResources);
-    assertEquals(2, metadata.size());
-    assertTrue(metadata.contains( implMetadataV1 ));
-    assertTrue(metadata.contains( implMetadatav2 ));
-  }
-
-  @Test
-  public void testFindImplBinaries(){
-
-    Map<String, byte[]> binaryResources = new HashMap<>();
-
-    binaryResources.put(Paths.get("hello   world","koio.v1","deployment-specification.yaml").toString(),"test data".getBytes());
-    binaryResources.put(Paths.get("hello   world","koio.v1","service-specification.yaml").toString(),"service-specification.yaml".getBytes());
-    binaryResources.put(Paths.get("hello   world","v2","service-specification.yaml").toString(),"test data".getBytes());
-    binaryResources.put(Paths.get("hello   world","v2","deployment-specification.yaml").toString(),"v2deployment".getBytes());
-    binaryResources.put(Paths.get("hello   world","v2","stuff.txt").toString(),"stuff.txt".getBytes());
-    binaryResources.put(Paths.get("hello   world","v2","otherthing.txt").toString(),"otherthing".getBytes());
-    binaryResources.put(Paths.get("hello   world","v1","deployment-specification.yaml").toString(),"test data".getBytes());
-    binaryResources.put(Paths.get("hello   world","v1","service-specification.yaml").toString(),"service-specification.yaml".getBytes());
-
-
-    Map<String, byte[]> binaries = service.findImplentationBinaries(binaryResources, "v1");
-    assertEquals( 2, binaries.size());
-
-    binaries = service.findImplentationBinaries(binaryResources, "v2");
-    assertEquals( 4, binaries.size());
-    assertEquals("otherthing", new String (binaries.get(Paths.get("hello   world","v2","otherthing.txt").toString())));
-
-
-
-
-  }
 
 
 
