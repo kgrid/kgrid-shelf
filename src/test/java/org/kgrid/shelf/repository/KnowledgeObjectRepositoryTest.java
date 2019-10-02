@@ -10,9 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -26,8 +23,6 @@ import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
-import org.springframework.mock.web.MockMultipartFile;
-import org.zeroturnaround.zip.ZipUtil;
 
 @RunWith(JUnit4.class)
 public class KnowledgeObjectRepositoryTest {
