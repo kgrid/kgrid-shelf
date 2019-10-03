@@ -38,7 +38,6 @@ public class FilesystemCDOStoreTest {
   @Rule
   public TemporaryFolder folder = new TemporaryFolder();
 
-
   @Before
   public void setUp() throws Exception {
     FileUtils.copyDirectory(
@@ -85,6 +84,7 @@ public class FilesystemCDOStoreTest {
           }
         });
   }
+
 
   @Test
   public void getObjectsOnShelf() throws Exception {
