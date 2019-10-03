@@ -366,7 +366,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       }
       return (ObjectNode) node;
 
-    } catch (HttpClientErrorException | ResourceAccessException | URISyntaxException | IOException ex) {
+    } catch (HttpClientErrorException | ResourceAccessException | NullPointerException | URISyntaxException | IOException ex) {
       throw new ShelfResourceNotFound("Metadata resource not found  " + objectURI, ex);
     }
   }
