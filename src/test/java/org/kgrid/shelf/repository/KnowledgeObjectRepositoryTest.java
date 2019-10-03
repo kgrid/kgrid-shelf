@@ -7,12 +7,14 @@ import static org.junit.Assert.assertTrue;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Map;
+import org.apache.commons.io.FileUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -44,36 +46,19 @@ public class KnowledgeObjectRepositoryTest {
 
   @Before
   public void setUp() throws Exception {
+    FileUtils.copyDirectory(
+        new File("src/test/resources/shelf"), new File(folder.getRoot().getPath()));
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
     compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
 
     repository = new KnowledgeObjectRepository(compoundDigitalObjectStore, zipImportService, zipExportService);
+    assertTrue(repository.findAll().size() > 0);
 
-    //Load Hello-World example object
-    URL zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/hello-world.zip");
-    byte[] zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
-    MockMultipartFile koZip = new MockMultipartFile("ko", "hello-world.zip", "application/zip", zippedKO);;
-    repository.importZip(helloWorldArkId, koZip);
-    assertNotNull(repository.findImplementationMetadata(helloWorldArkId));
-
-    ArkId bmiArkId = new ArkId("ri", "bmicalc");
-    zipStream = KnowledgeObjectRepositoryTest.class.getResource("/fixtures/ri-bmicalc.zip");
-    zippedKO = Files.readAllBytes(Paths.get(zipStream.toURI()));
-    koZip = new MockMultipartFile("ko", "ri-bmicalc.zip", "application/zip", zippedKO);;
-    repository.importZip(bmiArkId, koZip);
-
-    ZipUtil.unpack(
-        KnowledgeObjectRepositoryTest.class.getResourceAsStream("/fixtures/mycoolko.zip"),
-        folder.getRoot() );
-
-    repository.findAll();
   }
 
   @After
   public void clearShelf() throws Exception {
     repository.delete(new ArkId("hello-world"));
-    repository.delete(new ArkId("ri-bmicalc"));
-
   }
 
   @Test
@@ -132,7 +117,6 @@ public class KnowledgeObjectRepositoryTest {
     Map<ArkId, JsonNode>  objects = repository.findAll();
     assertEquals(3,objects.size());
     assertEquals("hello-world", objects.get(new ArkId("hello", "world")).get("@id").asText());
-    assertEquals("ri-bmicalc", objects.get(new ArkId("ri", "bmicalc")).get("@id").asText());
     assertEquals("hello-folder", objects.get(new ArkId("hello", "folder")).get("@id").asText());
   }
 
