@@ -72,8 +72,11 @@ public class ZipImportServiceTest {
 
   }
 
-
-  @Test( expected = ShelfException.class)
+  /**
+   * Packaged KO with different directory structure
+   * @throws IOException
+   */
+  @Test
   public void testImportDifferentDirectoryKnowledgeObject() throws IOException {
 
     InputStream zipStream = ZipImportServiceTest.class
@@ -95,24 +98,14 @@ public class ZipImportServiceTest {
 
   }
 
-  @Test
+  @Test( expected = ShelfException.class)
   public void testBadKOMetaData() throws IOException {
 
     InputStream zipStream = ZipImportServiceTest.class
         .getResourceAsStream("/fixtures/import-export/bad-kometadata.zip");
 
-    try{
 
-      service.importKO(zipStream, compoundDigitalObjectStore);
-
-      fail("should throw exception");
-
-    } catch (ShelfException se){
-
-      assertFalse(Files.exists(
-          Paths.get(temporaryFolder.getRoot().toPath().toString(),
-              "bad-kometadata")));
-    }
+    service.importKO(zipStream, compoundDigitalObjectStore);
 
   }
 
@@ -138,7 +131,34 @@ public class ZipImportServiceTest {
   }
 
 
+  /**
+   * Happy Day test, unzips into folder with all the stuff in the zip
+   * @throws IOException
+   */
+  @Test
+  public void testZipOfZipsImport() throws IOException {
 
+    InputStream zipStream = ZipImportServiceTest.class
+        .getResourceAsStream("/fixtures/import-export/ko-all.zip");
+
+    service.importKO(zipStream, compoundDigitalObjectStore);
+
+    List<Path> filesPaths;
+    filesPaths = Files.walk(Paths.get(
+        temporaryFolder.getRoot().toPath().toString(), "hello-world-v3"), 3, FOLLOW_LINKS)
+        .filter(Files::isRegularFile)
+        .map(Path::toAbsolutePath)
+        .collect(Collectors.toList());
+
+    filesPaths.forEach(file -> {
+      System.out.println(file.toAbsolutePath().toString());
+    });
+    assertEquals(3, filesPaths.size());
+
+    zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/import-export/hello-world-v3.zip");
+    service.importKO(zipStream, compoundDigitalObjectStore);
+
+  }
 
 
 }

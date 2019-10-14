@@ -5,6 +5,7 @@
   "title":"Empty World Title",
   "contributors": "Kgrid Team",
   "description": "Test Empty World ",
+  "version":"v1",
   "keywords": "test empty world",
   "@context" : ["http://kgrid.org/koio/contexts/knowledgeobject.jsonld" ]
 }
