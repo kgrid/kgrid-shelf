@@ -34,15 +34,10 @@ public class ZipExportServiceTest {
     compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
     Path shelf = Paths.get(compoundDigitalObjectStore.getAbsoluteLocation(""));
 
-    Path helloWorld = Paths.get("src/test/resources/shelf/hello-world");
-    Path emptyWorld = Paths.get("src/test/resources/shelf/empty-world");
-    Path helloFolder = Paths.get("src/test/resources/shelf/mycoolko");
-    FileUtils.copyDirectory(helloWorld.toFile(),
-        Paths.get(shelf.toString(),"hello-world").toFile());
-    FileUtils.copyDirectory(emptyWorld.toFile(),
-        Paths.get(shelf.toString(),"empty-world").toFile());
-    FileUtils.copyDirectory(helloFolder.toFile(),
-        Paths.get(shelf.toString(),"hello-folder").toFile());
+    ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/hello-world-v1.zip").toFile(), temporaryFolder.getRoot() );
+    ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/hello-world-v2.zip").toFile(), temporaryFolder.getRoot() );
+    ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/hello-world-v3.zip").toFile(), temporaryFolder.getRoot() );
+    ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/kozip.zip").toFile(), temporaryFolder.getRoot() );
 
     temporaryFolder.newFolder("export");
 
@@ -127,31 +122,6 @@ public class ZipExportServiceTest {
     assertEquals(3,filesPaths.size());
   }
 
-  @Test
-  public void exportNoImplementation() throws IOException {
-
-    ZipExportService zipExportService = new ZipExportService();
-
-    ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("empty", "world"),  new ArkId("empty", "world").getDashArk(), compoundDigitalObjectStore);
-
-    writeZip(outputStream);
-
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(),"export","empty-world"),  2, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
-
-    System.out.println("exportNoImplentation");
-    filesPaths.forEach(file ->{
-      System.out.println(file.toAbsolutePath().toString());
-    });
-
-    assertEquals(1,filesPaths.size());
-
-  }
 
   protected void writeZip(ByteArrayOutputStream zipOutputStream) {
 

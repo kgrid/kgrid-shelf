@@ -188,9 +188,8 @@ public class ZipImportService {
    * @param metadata jsonnode of metatdata
    */
   protected void validateMetadata(String filename, JsonNode metadata) {
-    String typeLabel = "@type", idLabel = "@id", identifier="identifier", vesrsion="identifier";
+    String typeLabel = "@type", idLabel = "@id";
     String ko = "koio:KnowledgeObject";
-
 
     if (!metadata.has(idLabel) || !metadata.has(typeLabel)) {
       throw new ShelfException("Cannot import, Missing @id in file " + filename);
@@ -203,13 +202,6 @@ public class ZipImportService {
           "Cannot import,  Missing knowledge object @type in file "
               + filename);
     }
-    if (ko.equals(metadata.get(typeLabel).asText()) &&
-        !filename.startsWith(metadata.get("@id").asText())) {
-      throw new ShelfException(
-          "Cannot import, doesn't not follow packing specifications, base directory must match ark id structure "
-              + filename);
-    }
-
   }
 
 }
