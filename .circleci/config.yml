@@ -20,9 +20,6 @@ jobs:
   # Build job
   ##############
   build:
-    branches:
-      only:
-        - master
     docker:
       - image: circleci/openjdk:11.0.1-jdk
       - image: yinlinchen/fcrepo4-docker:4.7.5
