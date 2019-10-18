@@ -81,10 +81,10 @@ jobs:
 
     steps:
 
-      - attach_workspace:
+        - attach_workspace:
           at: ~/project
 
-      - run: ls
+        - run: ls
 
         # Will normally run deploy but if triggered with Release will prepare and perform maven release
         - run:
