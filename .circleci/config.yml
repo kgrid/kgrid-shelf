@@ -82,7 +82,7 @@ jobs:
     steps:
 
         - attach_workspace:
-          at: ~/project
+             at: ~/project
 
         - run: ls
 
