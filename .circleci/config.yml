@@ -47,13 +47,13 @@ jobs:
             - ~/.m2
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
-      - setup_remote_docker
+     # - setup_remote_docker
 
       # run build and test
       - run:
          name: Build and Test And Verify
          command: |
-           mvn clean verify -P fcrepo_it
+           mvn clean verify
 
       # save test results
       - run:
@@ -80,6 +80,11 @@ jobs:
       MAVEN_OPTS: -Xmx3200m
 
     steps:
+
+      - attach_workspace:
+          at: ~/project
+
+      - run: ls
 
         # Will normally run deploy but if triggered with Release will prepare and perform maven release
         - run:
