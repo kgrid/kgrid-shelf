@@ -47,13 +47,29 @@ jobs:
             - ~/.m2
           key: v1-dependencies-{{ checksum "pom.xml" }}
 
-     # - setup_remote_docker
 
       # run build and test
       - run:
          name: Build and Test And Verify
          command: |
            mvn clean verify
+
+      #  if triggered with Release will prepare and perform maven release
+      - run:
+         name: Release
+         command: |
+           if [ $RELEASE ]; then
+               git config --global user.email "$GIT_USER_EMAIL"
+               git config --global user.name "$GIT_USER_NAME"
+               mvn release:clean release:prepare  -DreleaseVersion=$RELEASE -DdevelopmentVersion=$NEXT release:perform -P ci -s .circleci/settings.xml
+               TAG_NAME="shelf-api-$RELEASE"
+               curl POST "https://api.github.com/repos/kgrid/kgrid-shelf/releases?access_token=$GITHUB_TOKEN" \
+                 -H 'Content-Type: application/json' -d "{\"tag_name\":\"$TAG_NAME\"}"
+               RELEASE_ID=$(curl -s https://api.github.com/repos/kgrid/kgrid-shelf/releases/latest | jq -r ".id")
+               curl POST "https://uploads.github.com/repos/kgrid/kgrid-shelf/releases/$RELEASE_ID/assets?access_token=$GITHUB_TOKEN&name=$TAG_NAME.jar" \
+                 -H "Content-Type: application/octet-stream" \
+                 --data-binary "@target/$TAG_NAME.jar"
+           fi
 
       # save test results
       - run:
@@ -90,20 +106,7 @@ jobs:
             name: Deploy/Release
             command: |
               echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
-              if [ $RELEASE ]; then
-                  git config --global user.email "$GIT_USER_EMAIL"
-                  git config --global user.name "$GIT_USER_NAME"
-                  mvn release:clean release:prepare  -DreleaseVersion=$RELEASE -DdevelopmentVersion=$NEXT release:perform -P ci -s .circleci/settings.xml
-                  TAG_NAME="shelf-api-$RELEASE"
-                  curl POST "https://api.github.com/repos/kgrid/kgrid-shelf/releases?access_token=$GITHUB_TOKEN" \
-                    -H 'Content-Type: application/json' -d "{\"tag_name\":\"$TAG_NAME\"}"
-                  RELEASE_ID=$(curl -s https://api.github.com/repos/kgrid/kgrid-shelf/releases/latest | jq -r ".id")
-                  curl POST "https://uploads.github.com/repos/kgrid/kgrid-shelf/releases/$RELEASE_ID/assets?access_token=$GITHUB_TOKEN&name=$TAG_NAME.jar" \
-                    -H "Content-Type: application/octet-stream" \
-                    --data-binary "@target/$TAG_NAME.jar"
-              else
-                  mvn clean deploy -Dmaven.test.skip=true -P ci -s .circleci/settings.xml
-              fi
+              mvn clean deploy -Dmaven.test.skip=true -P ci -s .circleci/settings.xml
 
         # Tigger Builds of Activator and Library so the newest snapshot gets used
         - run:
