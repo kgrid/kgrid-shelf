@@ -139,7 +139,7 @@ public class ZipImportServiceTest {
   public void testZipOfZipsImport() throws IOException {
 
     InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/import-export/ko-all.zip");
+        .getResourceAsStream("/fixtures/import-export/kozip.zip");
 
     service.importKO(zipStream, compoundDigitalObjectStore);
 

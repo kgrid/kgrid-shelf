@@ -149,14 +149,4 @@ public class KnowledgeObjectRepositoryTest {
 
   }
 
-  @Test
-  public void exportKnowledgeObjectWackyFolderName() throws IOException {
-
-    ZipExportService zipExportService = new ZipExportService();
-
-    ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "folder"),  "mycoolko", compoundDigitalObjectStore);
-
-
-  }
 }
