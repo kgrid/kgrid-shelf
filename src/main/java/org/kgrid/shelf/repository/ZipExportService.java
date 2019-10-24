@@ -44,32 +44,14 @@ public class ZipExportService  {
     //Get KO and add to export zip entries
     ObjectNode koMetaData = cdoStore.getMetadata(koPath);
 
-    //Get KO Implementations
-    JsonNode implementations = koMetaData.findPath(KnowledgeObject.IMPLEMENTATIONS_TERM);
 
-    if (arkId.isImplementation()) {
-
-      extractImplementation(arkId, koPath, cdoStore, entries, arkId.getDashArkImplementation());
-      koMetaData.put(KnowledgeObject.IMPLEMENTATIONS_TERM, arkId.getDashArkImplementation());
-
-    } else if (implementations.isTextual()) {
-
-      extractImplementation(arkId, koPath, cdoStore, entries, implementations.asText());
-
-    } else {
-
-      implementations.forEach(jsonNode -> {
-
-        extractImplementation(arkId, koPath, cdoStore, entries, jsonNode.asText());
-
-      });
-
-    }
+    //Add Implementation binary files to export zip entries
+    extractImplementation(arkId, koPath, koMetaData,cdoStore, entries);
 
     try {
       entries.add(new ByteSource(
           FilenameUtils.normalize(
-              Paths.get(arkId.getDashArk(), KnowledgeObject.METADATA_FILENAME).toString(), true),
+              Paths.get(arkId.getDashArk()+"-"+koMetaData.get("version").asText() , KnowledgeObject.METADATA_FILENAME).toString(), true),
           JsonUtils.toPrettyString(koMetaData).getBytes()));
     } catch (IOException e) {
       throw new ShelfException("Issue extracting KO metadata for " + arkId, e);
@@ -87,39 +69,19 @@ public class ZipExportService  {
    * @param arkId Ark ID
    * @param cdoStore CDO Store
    * @param entries List of all of the zip entries
-   * @param implementationPath the implementation path absolute and relative IR
+   * @param koNode
+   * @param koPath
    */
-  private void extractImplementation(ArkId arkId, String koPath,
+  private void extractImplementation(ArkId arkId, String koPath, JsonNode koNode,
       CompoundDigitalObjectStore cdoStore,
-      List<ZipEntrySource> entries, String implementationPath) {
-
-    //Get and add KO Implementation metadata export zip entries
-    JsonNode implementationNode = cdoStore
-        .getMetadata(implementationPath.replace(arkId.getDashArk(), koPath));
-
-    try {
-
-      //handle absolute and relative IRIs for metadata
-      String metadataFileName = ResourceUtils.isUrl(implementationPath) ?
-          Paths.get(ResourceUtils.toURI(implementationPath).getPath().substring(
-              ResourceUtils.toURI(implementationPath).getPath().indexOf(arkId.getDashArk())),
-              KnowledgeObject.METADATA_FILENAME).toString() :
-          FilenameUtils.normalize(Paths.get(implementationPath,
-              KnowledgeObject.METADATA_FILENAME).toString(), true);
-
-      try {
-        entries.add(new ByteSource(metadataFileName,
-            JsonUtils.toPrettyString(implementationNode).getBytes()));
-      } catch (IOException e) {
-        throw new ShelfException("Issue extracting Implementation metadata for " + arkId, e);
-      }
+      List<ZipEntrySource> entries) {
 
       //Add Implementation binary files to export zip entries
       List<String> binaryNodes =
-          findImplementationBinaries(koPath, cdoStore, implementationPath, implementationNode);
-
+          findImplementationBinaries(koPath, cdoStore, koPath, koNode);
 
       binaryNodes.forEach((binaryPath) -> {
+
         try{
 
           String uriPath = ResourceUtils.isUrl(binaryPath) ?
@@ -135,21 +97,17 @@ public class ZipExportService  {
                   ResourceUtils.toURI(binaryPath).getPath().indexOf(arkId.getDashArk()))).toString()
               :
                   FilenameUtils
-                      .normalize(Paths.get(arkId.getDashArk(), binaryPath).toString(), true);
+                      .normalize(Paths.get(arkId.getDashArk()+"-"+koNode.get("version").asText(), binaryPath).toString(), true);
 
           entries.add(new ByteSource(binaryFileName, bytes));
 
         } catch (URISyntaxException ex) {
           throw new ShelfException(
-              "Issue creating metadata file name for extract " + implementationPath, ex);
+              "Issue creating metadata file name for extract " + koPath, ex);
         }
 
       });
 
-    } catch (URISyntaxException ex) {
-      throw new ShelfException(
-          "Issue creating metadata file name for extract " + implementationPath, ex);
-    }
   }
 
   /**
@@ -209,7 +167,7 @@ public class ZipExportService  {
             }
           }
           if(artifact != null) {
-            binaryNodes.add(Paths.get(implementationNode.get("@id").asText(), artifact).toString());
+            binaryNodes.add(Paths.get(artifact).toString());
           } else {
             log.warn("Cannot find location of artifact in service spec or deployment descriptor for endpoint " + service.getKey());
           }

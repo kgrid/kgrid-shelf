@@ -34,15 +34,12 @@ public class ZipExportServiceTest {
     compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
     Path shelf = Paths.get(compoundDigitalObjectStore.getAbsoluteLocation(""));
 
-    ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/hello-world-v1.zip").toFile(), temporaryFolder.getRoot() );
     ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/hello-world-v2.zip").toFile(), temporaryFolder.getRoot() );
-    ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/hello-world-v3.zip").toFile(), temporaryFolder.getRoot() );
     ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/kozip.zip").toFile(), temporaryFolder.getRoot() );
 
     temporaryFolder.newFolder("export");
 
   }
-
 
   @Test
   public void exportKnowledgeObject() throws IOException {
@@ -50,13 +47,13 @@ public class ZipExportServiceTest {
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world"), new ArkId("hello", "world").getDashArk(), compoundDigitalObjectStore);
+        new ArkId("hello", "world", "v2"), "hello-world-v2", compoundDigitalObjectStore);
 
     writeZip(outputStream);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(),"export","hello-world"),  3, FOLLOW_LINKS)
+        temporaryFolder.getRoot().toPath().toString(),"export","hello-world-v2"),  3, FOLLOW_LINKS)
         .filter(Files::isRegularFile)
         .map(Path::toAbsolutePath)
         .collect(Collectors.toList());
@@ -67,7 +64,7 @@ public class ZipExportServiceTest {
       System.out.println(file.toAbsolutePath().toString());
     });
 
-    assertEquals(10,filesPaths.size());
+    assertEquals(3,filesPaths.size());
 
   }
 
@@ -77,53 +74,26 @@ public class ZipExportServiceTest {
     ZipExportService zipExportService = new ZipExportService();
 
     ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "folder"),  new ArkId("hello", "folder").getDashArk(), compoundDigitalObjectStore);
+        new ArkId("hello", "world", "v3"), "mycoolko", compoundDigitalObjectStore);
 
     writeZip(outputStream);
 
     List<Path> filesPaths;
     filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(),"export","hello-folder"),  2, FOLLOW_LINKS)
+        temporaryFolder.getRoot().toPath().toString(),"export","hello-world-v3"),  3, FOLLOW_LINKS)
         .filter(Files::isRegularFile)
         .map(Path::toAbsolutePath)
         .collect(Collectors.toList());
 
-    filesPaths.forEach(file ->{
-      System.out.println(file.toAbsolutePath().toString());
-    });
-
-    assertEquals(5,filesPaths.size());
-
-  }
-
-  @Test
-  public void exportImplementation() throws IOException {
-
-    ZipExportService zipExportService = new ZipExportService();
-
-    ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world", "v0.2.0"),
-        new ArkId("hello", "world", "v0.2.0").getDashArk(), compoundDigitalObjectStore);
-
-    writeZip(outputStream);
-
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(),"export","hello-world"),  2, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
-
-    System.out.println("extractImplementation");
     filesPaths.forEach(file ->{
       System.out.println(file.toAbsolutePath().toString());
     });
 
     assertEquals(3,filesPaths.size());
+
   }
 
-
-  protected void writeZip(ByteArrayOutputStream zipOutputStream) {
+    protected void writeZip(ByteArrayOutputStream zipOutputStream) {
 
     try {
 
