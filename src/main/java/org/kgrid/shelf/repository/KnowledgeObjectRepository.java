@@ -2,19 +2,22 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.TreeMap;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
 import org.slf4j.LoggerFactory;
@@ -30,7 +33,7 @@ public class KnowledgeObjectRepository {
   private CompoundDigitalObjectStore dataStore;
   private ZipImportService zipImportService;
   private ZipExportService zipExportService;
-  private final static Map<String, String> objectLocations = new HashMap<>();
+  private final static Map<ArkId, String> objectLocations = new TreeMap<>(Collections.reverseOrder());
   private boolean shelfInvalidState = true;
 
   @Autowired
@@ -46,30 +49,8 @@ public class KnowledgeObjectRepository {
 
   public void delete(ArkId arkId) {
 
-    dataStore.delete(objectLocations.get(arkId.getDashArk()));
+    dataStore.delete(getUnspecifiedVersion(arkId));
     log.info("Deleted ko with ark id " + arkId);
-  }
-
-  public void deleteImpl(ArkId arkId) {
-    if(objectLocations.get(arkId.getDashArk())!=null &&
-        objectLocations.get(arkId.getDashArk()).equals(arkId.getDashArk()) ) {
-      dataStore.delete(objectLocations.get(arkId.getDashArk()), arkId.getImplementation());
-      JsonNode objectMetadata = dataStore.getMetadata(objectLocations.get(arkId.getDashArk()));
-      if (objectMetadata.has(KnowledgeObject.IMPLEMENTATIONS_TERM) && objectMetadata
-          .get(KnowledgeObject.IMPLEMENTATIONS_TERM).isArray()) {
-        ArrayNode impls = (ArrayNode) objectMetadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM);
-        for (int i = 0; i < impls.size(); i++) {
-          if (impls.get(i).asText().equals(arkId.getDashArkImplementation())) {
-            impls.remove(i);
-          }
-        }
-        ((ObjectNode) objectMetadata).set(KnowledgeObject.IMPLEMENTATIONS_TERM, impls);
-        dataStore.saveMetadata(objectMetadata, objectLocations.get(arkId.getDashArk()));
-      }
-    } else {
-      log.info("Can't delete readonly KO implementations "+ arkId.getDashArk() + " in " + objectLocations.get(arkId.getDashArk()));
-    }
-
   }
 
   /**
@@ -82,11 +63,11 @@ public class KnowledgeObjectRepository {
   public ObjectNode editMetadata(ArkId arkId, String path, String metadata) {
     Path metadataPath;
     if (path != null && !"".equals(path)) {
-      metadataPath = Paths.get(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(), path,
+      metadataPath = Paths.get(getUnspecifiedVersion(arkId), path,
           KnowledgeObject.METADATA_FILENAME);
     } else {
       metadataPath = Paths
-          .get(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(), KnowledgeObject.METADATA_FILENAME);
+          .get(getUnspecifiedVersion(arkId), KnowledgeObject.METADATA_FILENAME);
     }
     try {
       JsonNode jsonMetadata = new ObjectMapper().readTree(metadata);
@@ -108,7 +89,7 @@ public class KnowledgeObjectRepository {
    */
   public void extractZip(ArkId arkId, OutputStream outputStream) throws IOException {
 
-    String koPath = objectLocations.get(arkId.getDashArk());
+    String koPath = getUnspecifiedVersion(arkId);
     outputStream
         .write(zipExportService.exportObject(arkId, koPath, dataStore).toByteArray());
   }
@@ -123,26 +104,36 @@ public class KnowledgeObjectRepository {
       try {
         ArkId arkId;
         String folderName;
-        if (path.contains("/")) {
-          folderName = StringUtils.substringAfterLast(path, "/");
-        } else if (path.contains("\\")) {
-          folderName = StringUtils.substringAfterLast(path, "\\");
+
+        if(path.contains(File.separator)) {
+          folderName = StringUtils.substringAfterLast(path, File.separator);
         } else {
           folderName = path;
         }
+
         JsonNode metadata = dataStore.getMetadata(folderName);
         if(!metadata.has("@id")) {
           log.warn("Folder with metadata " + folderName + " is missing an @id field, cannot load.");
           continue;
         }
-        arkId = new ArkId(metadata.get("@id").asText());
-        if(objectLocations.get(arkId.getDashArk()) != null) {
+
+        if(!metadata.has("version")) {
+          log.warn("Folder with metadata " + folderName + " is missing a version field, will default to reverse alphabetical lookup");
+          arkId = new ArkId(metadata.get("@id").asText());
+        } else {
+          arkId = new ArkId(metadata.get("@id").asText() + "/" + metadata.get("version").asText());
+        }
+
+        if(getUnspecifiedVersion(arkId) != null) {
           log.warn("Two objects on the shelf have the same ark id: " +
-              arkId + " Check folders " + folderName + " and " + objectLocations.get(arkId.getDashArk()));
+              arkId + " Check folders " + folderName + " and " + getUnspecifiedVersion(arkId));
           shelfInvalidState=true;
         }
-        objectLocations.put(arkId.getDashArk(), folderName);
+
+        objectLocations.put(arkId, folderName);
+
         knowledgeObjects.put(arkId, metadata);
+
       } catch (Exception illegalArgument) {
         log.warn("Unable to load KO " + illegalArgument.getMessage());
       }
@@ -158,9 +149,9 @@ public class KnowledgeObjectRepository {
    */
   public JsonNode findDeploymentSpecification(ArkId arkId) {
 
-    log.info("find deployment specification for  " + arkId.getDashArkImplementation());
+    log.info("find deployment specification for  " + arkId.getDashArkVersion());
 
-    return findDeploymentSpecification(arkId, findImplementationMetadata(arkId));
+    return findDeploymentSpecification(arkId, findKnowledgeObjectMetadata(arkId));
 
   }
 
@@ -180,7 +171,7 @@ public class KnowledgeObjectRepository {
           KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText();
 
     String uriPath = ResourceUtils.isUrl(deploymentSpecPath) ?
-        deploymentSpecPath : Paths.get(objectLocations.get(arkId.getDashArk()), deploymentSpecPath).toString();
+        deploymentSpecPath : Paths.get(getUnspecifiedVersion(arkId), deploymentSpecPath).toString();
 
       return loadSpecificationNode(arkId, uriPath);
 
@@ -193,23 +184,18 @@ public class KnowledgeObjectRepository {
 
   }
 
-  public JsonNode findImplementationMetadata(ArkId arkId) {
-    ObjectNode metadataNode = dataStore.getMetadata(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(),
-        KnowledgeObject.METADATA_FILENAME);
-    if (!metadataNode.has("title")) {
-      log.warn("Metadata for ko " + arkId.getSlashArkImplementation() + " is missing a title");
-    }
-    return metadataNode;
-  }
-
   public JsonNode findKnowledgeObjectMetadata(ArkId arkId) {
-    return dataStore.getMetadata(objectLocations.get(arkId.getDashArk()));
+    String nodeLoc = getUnspecifiedVersion(arkId);
+    if(nodeLoc == null) {
+      throw new ShelfResourceNotFound("Cannot load metadata, " + arkId.getDashArkVersion() + " not found on shelf");
+    }
+    return dataStore.getMetadata(nodeLoc);
   }
 
 
   public byte[] findPayload(ArkId arkId, String implementationPath) {
 
-    String payloadPath = Paths.get(objectLocations.get(arkId.getDashArk()),
+    String payloadPath = Paths.get(getUnspecifiedVersion(arkId),
         implementationPath).toString();
 
     log.info("find payload for  " + payloadPath);
@@ -233,7 +219,7 @@ public class KnowledgeObjectRepository {
     log.info("find service specification at " + serviceSpecPath);
 
     String uriPath = ResourceUtils.isUrl(serviceSpecPath) ?
-        serviceSpecPath : Paths.get(objectLocations.get(arkId.getDashArk()), serviceSpecPath).toString();
+        serviceSpecPath : Paths.get(getUnspecifiedVersion(arkId), serviceSpecPath).toString();
 
     return loadSpecificationNode(arkId, uriPath);
 
@@ -247,14 +233,13 @@ public class KnowledgeObjectRepository {
    */
   public JsonNode findServiceSpecification(ArkId arkId) {
 
-    log.info("find service specification for  " + arkId.getDashArkImplementation());
+    log.info("find service specification for " + arkId.getDashArkVersion());
 
-    return findServiceSpecification(arkId, findImplementationMetadata(arkId));
-
+    return findServiceSpecification(arkId, findKnowledgeObjectMetadata(arkId));
   }
 
   public byte[] getBinaryOrMetadata(ArkId arkId, String childPath) {
-    String filepath = Paths.get(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(), childPath)
+    String filepath = Paths.get(objectLocations.get(arkId), arkId.getVersion(), childPath)
         .toString();
     if (this.dataStore.isMetadata(filepath)) {
 
@@ -270,7 +255,7 @@ public class KnowledgeObjectRepository {
   }
 
   public JsonNode getMetadataAtPath(ArkId arkId, String path) {
-    return dataStore.getMetadata(objectLocations.get(arkId.getDashArk()), arkId.getImplementation(), path);
+    return dataStore.getMetadata(objectLocations.get(arkId), path);
   }
 
   /**
@@ -287,7 +272,7 @@ public class KnowledgeObjectRepository {
     }
     try {
       arkId= zipImportService.importKO(zippedKO.getInputStream(), dataStore);
-      objectLocations.put(arkId.getDashArk(), arkId.getDashArk());
+      objectLocations.put(arkId, arkId.getDashArk());
     } catch (IOException e) {
       log.warn("Cannot load full zip file for ark id " + arkId);
     }
@@ -298,7 +283,7 @@ public class KnowledgeObjectRepository {
     try {
 
       ArkId arkId = zipImportService.importKO(zippedKO.getInputStream(), dataStore);
-      objectLocations.put(arkId.getDashArk(),arkId.getDashArk());
+      objectLocations.put(arkId,arkId.getDashArk());
       findAll();
       return arkId;
     } catch (IOException e) {
@@ -310,17 +295,31 @@ public class KnowledgeObjectRepository {
   public ArkId importZip(InputStream zipStream) {
 
     ArkId arkId = zipImportService.importKO(zipStream, dataStore);
-    objectLocations.put(arkId.getDashArk(), arkId.getDashArk());
+    objectLocations.put(arkId, arkId.getDashArk());
     findAll();
     return arkId;
   }
 
   public String getObjectLocation(ArkId arkId) {
     // Reload for activation use cases
-    if(objectLocations.get(arkId.getDashArk()) == null) {
+    if(objectLocations.get(arkId) == null) {
       findAll();
     }
-    return objectLocations.get(arkId.getDashArk());
+    return objectLocations.get(arkId);
+  }
+
+  private String getUnspecifiedVersion(ArkId arkId) {
+    if(arkId.getVersion() == null || "".equals(arkId.getVersion())) {
+      for(Entry<ArkId, String> entry : objectLocations.entrySet()) {
+        if(entry.getKey().getSlashArk().equals(arkId.getSlashArk())) {
+          return entry.getValue();
+        }
+      }
+    }
+
+    String filePath = objectLocations.get(arkId);
+
+    return filePath;
   }
 
   /**
@@ -340,7 +339,7 @@ public class KnowledgeObjectRepository {
 
     } catch (IOException exception) {
       throw new ShelfException("Could not parse service specification for " +
-          arkId.getDashArkImplementation(), exception);
+          arkId.getDashArkVersion(), exception);
     }
   }
 }

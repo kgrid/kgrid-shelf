@@ -13,8 +13,8 @@ public class ArkIdTest {
     ArkId arkId = new ArkId("hello-world/v1");
     assertEquals("hello", arkId.getNaan());
     assertEquals("world", arkId.getName());
-    assertEquals("v1", arkId.getImplementation());
-    assertEquals("hello-world/v1", arkId.getDashArkImplementation());
+    assertEquals("v1", arkId.getVersion());
+    assertEquals("hello-world/v1", arkId.getDashArkVersion());
 
     arkId = new ArkId("hello-world");
     assertEquals("hello", arkId.getNaan());
@@ -31,10 +31,10 @@ public class ArkIdTest {
   public void testIsImplentation(){
 
     ArkId arkId = new ArkId("hello-world/v1");
-    assertEquals(true, arkId.isImplementation());
+    assertEquals(true, arkId.isVersion());
 
     arkId = new ArkId("hello-world");
-    assertEquals(false,arkId.isImplementation());
+    assertEquals(false,arkId.isVersion());
 
 
   }
@@ -44,7 +44,7 @@ public class ArkIdTest {
     ArkId arkId = new ArkId("ark:/hello/world/v0.1");
     assertEquals("hello", arkId.getNaan());
     assertEquals("world", arkId.getName());
-    assertEquals("v0.1", arkId.getImplementation());
+    assertEquals("v0.1", arkId.getVersion());
 
   }
 }

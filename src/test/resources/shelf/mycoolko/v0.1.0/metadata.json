@@ -1,9 +1,0 @@
-{
-  "@id" : "v0.1.0",
-  "@type" : "koio:Implementation",
-  "identifier" : "ark:/hello/folder/v0.1.0",
-  "title" : "Implementation v0.1.0of Hello World",
-  "hasServiceSpecification" : "v0.1.0/service-specification.yaml",
-  "hasDeploymentSpecification" : "v0.1.0/deployment-specification.yaml",
-  "@context" : [ "http://kgrid.org/koio/contexts/implementation.jsonld" ]
-}
