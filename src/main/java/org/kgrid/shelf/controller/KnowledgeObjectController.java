@@ -52,15 +52,6 @@ public class KnowledgeObjectController extends ShelfController {
     log.info("found " + koMap.size() + " kos");
     return koMap;
   }
-  @GetMapping(path = "/{naan}/{name}",  headers = "Accept=application/zip", produces = "application/zip")
-  public void exportKnowledgeObject( @PathVariable String naan, @PathVariable String name,
-      HttpServletResponse response) {
-
-    log.info("get ko zip for " + naan + "/" + name);
-    ArkId arkId = new ArkId(naan, name);
-
-    exportZip(response, arkId);
-  }
 
   @GetMapping(path = "/{naan}/{name}",  produces = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<JsonNode> findKnowledgeObject(
@@ -76,12 +67,15 @@ public class KnowledgeObjectController extends ShelfController {
           "Cannot connect to fcrepo at the same address as the shelf. Make sure shelf and fcrepo configuration is correct.");
     }
     ArkId arkId;
+    JsonNode results;
     if(version != null && !"".equals(version)) {
       arkId = new ArkId(naan, name, version);
+      results = shelf.findKnowledgeObjectMetadata(arkId);
     } else {
      arkId = new ArkId(naan, name);
+      results = shelf.findKnowledgeObjectMetadata(arkId);
     }
-    JsonNode results = shelf.findKnowledgeObjectMetadata(arkId);
+
 
     if (results == null || results.size() == 0) {
       throw new IllegalArgumentException("Object not found with id " + naan + "-" + name);
@@ -104,7 +98,7 @@ public class KnowledgeObjectController extends ShelfController {
   }
 
   @GetMapping(path = "/{naan}/{name}/{version}", headers = "Accept=application/zip", produces = "application/zip")
-  public void exportKnowledgeObjectImplementation(@PathVariable String naan, @PathVariable String name,
+  public void exportKnowledgeObjectVersion(@PathVariable String naan, @PathVariable String name,
       @PathVariable String version, HttpServletResponse response) {
 
     log.info("get ko zip for " + naan + "/" + name);
@@ -113,6 +107,21 @@ public class KnowledgeObjectController extends ShelfController {
     exportZip(response, arkId);
   }
 
+  @GetMapping(path = "/{naan}/{name}",  headers = "Accept=application/zip", produces = "application/zip")
+  public void exportKnowledgeObject( @PathVariable String naan, @PathVariable String name,
+      @RequestParam(name = "v", required = false) String version,
+      HttpServletResponse response) {
+
+    ArkId arkId;
+    if(version != null && !"".equals(version)) {
+      log.info("get ko zip for " + naan + "/" + name + "/" + version);
+      arkId = new ArkId(naan, name, version);
+    } else {
+      log.info("get ko zip for " + naan + "/" + name);
+      arkId = new ArkId(naan, name);
+    }
+    exportZip(response, arkId);
+  }
 
   @GetMapping(path = "/{naan}/{name}/{version}/service", produces = MediaType.APPLICATION_JSON_VALUE)
   public Object getServiceDescriptionOldVersionJson(
@@ -131,45 +140,45 @@ public class KnowledgeObjectController extends ShelfController {
   public Object getServiceDescriptionJson(
       @PathVariable String naan,
       @PathVariable String name,
-      @RequestParam(name = "v", required = false) String implementation) {
+      @RequestParam(name = "v", required = false) String version) {
 
-    log.info("getting ko service  " + naan + "/" + name + "/" + implementation);
+    log.info("getting ko service  " + naan + "/" + name + "/" + version);
 
-    ArkId arkId = new ArkId(naan, name, implementation);
+    ArkId arkId = new ArkId(naan, name, version);
 
     return shelf.findServiceSpecification(arkId);
   }
 
 
-  @GetMapping(path = "/{naan}/{name}/{implementation}/service", produces = MediaType.ALL_VALUE)
+  @GetMapping(path = "/{naan}/{name}/{version}/service", produces = MediaType.ALL_VALUE)
   public Object getServiceDescriptionYaml(
       @PathVariable String naan,
       @PathVariable String name,
-      @PathVariable String implementation) throws JsonProcessingException {
+      @PathVariable String version) throws JsonProcessingException {
 
-    log.info("getting ko service  " + naan + "/" + name + "/" + implementation);
+    log.info("getting ko service  " + naan + "/" + name + "/" + version);
 
-    ArkId arkId = new ArkId(naan, name, implementation);
+    ArkId arkId = new ArkId(naan, name, version);
 
     return new YAMLMapper().writeValueAsString(shelf.findServiceSpecification(arkId));
   }
 
 
-  @GetMapping(path = "/{naan}/{name}/{implementation}/**", produces = MediaType.ALL_VALUE)
+  @GetMapping(path = "/{naan}/{name}/{version}/**", produces = MediaType.ALL_VALUE)
   public Object getBinary(
       @PathVariable String naan,
       @PathVariable String name,
-      @PathVariable String implementation, HttpServletRequest request) throws NoSuchFileException {
+      @PathVariable String version, HttpServletRequest request) throws NoSuchFileException {
 
-    log.info("getting ko resource " + naan + "/" + name + "/" + implementation);
+    log.info("getting ko resource " + naan + "/" + name + "/" + version);
 
-    ArkId arkId = new ArkId(naan, name, implementation);
+    ArkId arkId = new ArkId(naan, name, version);
 
     String requestURI = request.getRequestURI();
-    String basePath = StringUtils.join(naan, "/", name, "/", implementation, "/");
+    String basePath = StringUtils.join(naan, "/", name, "/", version, "/");
     String childPath = StringUtils.substringAfterLast(requestURI, basePath);
 
-    log.info("getting ko resource " + naan + "/" + name + "/" + implementation + childPath);
+    log.info("getting ko resource " + naan + "/" + name + "/" + version + childPath);
 
     byte[] binary = shelf.getBinaryOrMetadata(arkId, childPath);
     if (binary != null) {
@@ -287,7 +296,7 @@ public class KnowledgeObjectController extends ShelfController {
 
     response.setHeader("Content-Type","application/octet-stream");
     response.addHeader("Content-Disposition",
-        "attachment; filename=\"" + (arkId.isVersion() ?
+        "attachment; filename=\"" + (arkId.hasVersion() ?
             arkId.getDashArk() + "-" + arkId.getVersion() : arkId.getDashArk()) + ".zip\"");
     try {
       shelf.extractZip(arkId, response.getOutputStream());

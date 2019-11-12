@@ -8,7 +8,7 @@ import org.junit.Test;
 public class ArkIdTest {
 
   @Test
-  public void testArkWithImplentation(){
+  public void testArkWithVersion(){
 
     ArkId arkId = new ArkId("hello-world/v1");
     assertEquals("hello", arkId.getNaan());
@@ -28,13 +28,13 @@ public class ArkIdTest {
   }
 
   @Test
-  public void testIsImplentation(){
+  public void testHasVersion(){
 
     ArkId arkId = new ArkId("hello-world/v1");
-    assertEquals(true, arkId.isVersion());
+    assertEquals(true, arkId.hasVersion());
 
     arkId = new ArkId("hello-world");
-    assertEquals(false,arkId.isVersion());
+    assertEquals(false,arkId.hasVersion());
 
 
   }

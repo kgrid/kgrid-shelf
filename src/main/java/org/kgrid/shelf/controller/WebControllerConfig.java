@@ -11,7 +11,7 @@ public class WebControllerConfig implements WebMvcConfigurer {
 
   @Override
   public void configurePathMatch(PathMatchConfigurer configurer) {
-    // don't match trailing implementation digit as file suffix, 'v0.0.1' =/= 'v0.0' w/ suffix '1'
+    // don't match trailing version digit as file suffix, 'v0.0.1' =/= 'v0.0' w/ suffix '1'
     configurer.setUseSuffixPatternMatch(false);
   }
 

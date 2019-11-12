@@ -158,7 +158,7 @@ public final class ArkId implements Comparable{
     return StringUtils.isEmpty(version)?"": version;
   }
 
-  public boolean isVersion(){
+  public boolean hasVersion(){
     return version !=null;
   }
 

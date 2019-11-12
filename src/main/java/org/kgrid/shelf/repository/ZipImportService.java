@@ -28,7 +28,7 @@ public class ZipImportService {
 
   /**
    * Create KO object, must add Knowledge Object files, Knowledge Object properties and Knowledge
-   * Object Implementation properties
+   * Object version properties
    *
    * @param zipFileStream zip in the form of a stream
    * @param cdoStore persistence layer

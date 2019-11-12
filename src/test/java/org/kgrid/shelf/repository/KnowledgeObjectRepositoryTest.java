@@ -69,7 +69,7 @@ public class KnowledgeObjectRepositoryTest {
   }
 
   @Test
-  public void deleteImplentation() throws Exception {
+  public void deleteVersion() throws Exception {
 
     ArkId arkId = new ArkId("hello","world","v0.2.0");
     repository.delete(arkId);

@@ -54,7 +54,7 @@ public class FedoraCDOStoreTest {
   }
 
   @Test
-  public void getImplementations() throws Exception {
+  public void getVersion() throws Exception {
     List<String> impList = compoundDigitalObjectStore.getChildren("hello-world");
     assertEquals(3, impList.size());
   }

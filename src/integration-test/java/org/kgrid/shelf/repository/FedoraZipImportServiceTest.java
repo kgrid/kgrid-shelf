@@ -44,7 +44,7 @@ public class FedoraZipImportServiceTest {
 
     assertNotNull(metadata);
 
-    assertEquals("should have 2 implementations", 3,
+    assertEquals("should have 2 versions", 3,
         metadata.findValue(IMPLEMENTATIONS_TERM).size());
 
 

@@ -20,12 +20,12 @@ public class KnowledgeObjectTest {
         + "    \"hello-world/v0.0.2\""
         + "  ] }");
 
-    assertTrue( KnowledgeObject.getImplementationIDs(node).isArray() );
+    assertTrue( KnowledgeObject.getVersionIDs(node).isArray() );
     assertEquals(2, node.findValue(KnowledgeObject.IMPLEMENTATIONS_TERM).size());
 
 
      node = mapper.readTree(  "{ \"hasImplementation\":\"hello-world/v0.0.1\"}");
-     assertFalse( KnowledgeObject.getImplementationIDs(node).isArray() );
+     assertFalse( KnowledgeObject.getVersionIDs(node).isArray() );
      assertEquals("hello-world/v0.0.1", node.findValue(KnowledgeObject.IMPLEMENTATIONS_TERM).asText());
   }
 }

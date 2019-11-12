@@ -45,8 +45,8 @@ public class ZipExportService  {
     ObjectNode koMetaData = cdoStore.getMetadata(koPath);
 
 
-    //Add Implementation binary files to export zip entries
-    extractImplementation(arkId, koPath, koMetaData,cdoStore, entries);
+    //Add version binary files to export zip entries
+    extractVersion(arkId, koPath, koMetaData,cdoStore, entries);
 
     try {
       entries.add(new ByteSource(
@@ -64,7 +64,7 @@ public class ZipExportService  {
   }
 
   /**
-   * Extract a single Implementation JsonNode
+   * Extract a single version JsonNode
    *
    * @param arkId Ark ID
    * @param cdoStore CDO Store
@@ -72,13 +72,13 @@ public class ZipExportService  {
    * @param koNode
    * @param koPath
    */
-  private void extractImplementation(ArkId arkId, String koPath, JsonNode koNode,
+  private void extractVersion(ArkId arkId, String koPath, JsonNode koNode,
       CompoundDigitalObjectStore cdoStore,
       List<ZipEntrySource> entries) {
 
-      //Add Implementation binary files to export zip entries
+      //Add version binary files to export zip entries
       List<String> binaryNodes =
-          findImplementationBinaries(koPath, cdoStore, koPath, koNode);
+          findVersionBinaries(koPath, cdoStore, koPath, koNode);
 
       binaryNodes.forEach((binaryPath) -> {
 
@@ -111,41 +111,41 @@ public class ZipExportService  {
   }
 
   /**
-   * Finds all of the binaries imported in the implementation folder
+   * Finds all of the binaries imported in the version folder
    *
    * @param koPath path to ko
    * @param cdoStore data store
-   * @param implementationPath path to implementation
-   * @param implementationNode jsonnode of implementation
-   * @return list of binary paths for the implementation
+   * @param versionPath path to version
+   * @param versionNode jsonnode of version
+   * @return list of binary paths for the version
    */
-  protected List<String> findImplementationBinaries(String koPath,
+  protected List<String> findVersionBinaries(String koPath,
       CompoundDigitalObjectStore cdoStore,
-      String implementationPath, JsonNode implementationNode) {
+      String versionPath, JsonNode versionNode) {
 
     List<String> binaryNodes = new ArrayList<>();
 
-    if (implementationNode.has(KnowledgeObject.DEPLOYMENT_SPEC_TERM)) {
-      binaryNodes.add(implementationNode.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText());
+    if (versionNode.has(KnowledgeObject.DEPLOYMENT_SPEC_TERM ) && !versionNode.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText().startsWith("$.")) {
+      binaryNodes.add(versionNode.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText());
     }
-    if (implementationNode.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
-      binaryNodes.add(implementationNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText());
+    if (versionNode.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
+      binaryNodes.add(versionNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText());
 
     }
 
-    if (implementationNode.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
+    if (versionNode.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
       YAMLMapper yamlMapper = new YAMLMapper();
       try {
 
         JsonNode serviceDescription = yamlMapper
             .readTree(cdoStore.getBinary(koPath,
-                ResourceUtils.isUrl(implementationNode
+                ResourceUtils.isUrl(versionNode
                 .findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText())?
-                    Paths.get(ResourceUtils.toURI(implementationNode
+                    Paths.get(ResourceUtils.toURI(versionNode
                         .findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()).getPath().substring(
-                        ResourceUtils.toURI(implementationNode
+                        ResourceUtils.toURI(versionNode
                             .findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()).getPath().indexOf(koPath)+koPath.length()+1)).toString():
-                    implementationNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()));
+                    versionNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()));
 
 
 
@@ -153,12 +153,12 @@ public class ZipExportService  {
           String artifact = null;
           try {
             JsonNode deploymentSpecification = yamlMapper
-                .readTree(cdoStore.getBinary(koPath, implementationNode
+                .readTree(cdoStore.getBinary(koPath, versionNode
                     .findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText()));
             artifact = deploymentSpecification.get("endpoints").get(service.getKey())
                 .get("artifact").asText();
           } catch (Exception e) {
-            log.info(implementationPath
+            log.info(versionPath
                 + " has no deployment descriptor, looking for info in the service spec.");
 
             JsonNode post = service.getValue().get("post");
@@ -175,10 +175,10 @@ public class ZipExportService  {
 
       } catch (IOException ioe) {
 
-        log.info(implementationPath, " has no service descriptor, can't export");
+        log.info(versionPath, " has no service descriptor, can't export");
 
       } catch (URISyntaxException urie) {
-        log.info(implementationPath, " issue handling URI process of path");
+        log.info(versionPath, " issue handling URI process of path");
       }
     }
 

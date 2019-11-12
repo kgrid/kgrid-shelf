@@ -23,7 +23,7 @@ public class CompoundDigitalObjectStoreFactory {
       return new FilesystemCDOStore(cdoStoreURI);
     } else {
       throw new IllegalStateException(
-          "Cannot find specified CDO store implementation " + shelfClass);
+          "Cannot find specified CDO store version " + shelfClass);
     }
   }
 }
