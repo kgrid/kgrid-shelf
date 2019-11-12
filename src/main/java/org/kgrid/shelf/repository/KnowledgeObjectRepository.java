@@ -323,10 +323,10 @@ public class KnowledgeObjectRepository {
 
   public String getObjectLocation(ArkId arkId) {
     // Reload for activation use cases
-    if(objectLocations.get(arkId) == null) {
+    if(objectLocations.get(arkId.getDashArk()) == null) {
       findAll();
     }
-    return objectLocations.get(arkId).get(arkId.getVersion());
+    return objectLocations.get(arkId.getDashArk()).get(arkId.getVersion());
   }
 
   /**
