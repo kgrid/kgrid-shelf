@@ -2,6 +2,7 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import java.io.File;
@@ -160,7 +161,13 @@ public class KnowledgeObjectRepository {
 
     log.info("find deployment specification for  " + arkId.getDashArkVersion());
 
-    return findDeploymentSpecification(arkId, findKnowledgeObjectMetadata(arkId));
+    JsonNode node = findKnowledgeObjectMetadata(arkId);
+    if(node.isArray()) {
+      node = node.get(0);
+      log.warn("Finding deployment spec for array of objects, looking up first object with version " + node.get("version").asText());
+    }
+
+    return findDeploymentSpecification(arkId, node);
 
   }
 
@@ -182,6 +189,10 @@ public class KnowledgeObjectRepository {
     String uriPath = ResourceUtils.isUrl(deploymentSpecPath) ?
         deploymentSpecPath : Paths.get(objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()), deploymentSpecPath).toString();
 
+      if(uriPath.startsWith("$.")) {
+        log.warn("Cannot load deployment spec starting with $ yet");
+        return null;
+      }
       return loadSpecificationNode(arkId, uriPath);
 
     } else {
@@ -194,6 +205,13 @@ public class KnowledgeObjectRepository {
 
   public JsonNode findKnowledgeObjectMetadata(ArkId arkId) {
 
+    if(!arkId.hasVersion()) {
+      ArrayNode node = new ObjectMapper().createArrayNode();
+      objectLocations.get(arkId.getDashArk()).forEach((version, location) -> {
+        node.add(dataStore.getMetadata(location));
+      });
+      return node;
+    }
     String nodeLoc = objectLocations.get(arkId.getDashArk()).get(arkId.getVersion());
     if(nodeLoc == null) {
       throw new ShelfResourceNotFound("Cannot load metadata, " + arkId.getDashArkVersion() + " not found on shelf");
@@ -227,11 +245,21 @@ public class KnowledgeObjectRepository {
 
     log.info("find service specification at " + serviceSpecPath);
 
-    String uriPath = ResourceUtils.isUrl(serviceSpecPath) ?
-        serviceSpecPath : Paths.get(objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()), serviceSpecPath).toString();
+    if(ResourceUtils.isUrl(serviceSpecPath)) {
+      return loadSpecificationNode(arkId, serviceSpecPath);
+    }
 
+    String uriPath;
+    if(arkId.hasVersion()) {
+      uriPath = Paths.get(objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()),
+          serviceSpecPath).toString();
+
+
+    } else {
+      uriPath = Paths.get(objectLocations.get(arkId.getDashArk()).values().toArray()[0].toString(),
+          serviceSpecPath).toString();
+    }
     return loadSpecificationNode(arkId, uriPath);
-
   }
 
   /**
@@ -244,7 +272,13 @@ public class KnowledgeObjectRepository {
 
     log.info("find service specification for " + arkId.getDashArkVersion());
 
-    return findServiceSpecification(arkId, findKnowledgeObjectMetadata(arkId));
+    JsonNode node = findKnowledgeObjectMetadata(arkId);
+    if(node.isArray()) {
+      node = node.get(0);
+      log.warn("Finding deployment spec for array of objects, looking up first object with version " + node.get("version").asText());
+    }
+
+    return findServiceSpecification(arkId, node);
   }
 
   public byte[] getBinaryOrMetadata(ArkId arkId, String childPath) {

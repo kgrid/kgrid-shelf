@@ -149,9 +149,35 @@ public class KnowledgeObjectController extends ShelfController {
     return shelf.findServiceSpecification(arkId);
   }
 
+  @GetMapping(path = "/{naan}/{name}/service", produces = MediaType.ALL_VALUE)
+  public Object getServiceDescriptionYaml(
+      @PathVariable String naan,
+      @PathVariable String name,
+      @RequestParam(name = "v", required = false) String version) throws JsonProcessingException {
+
+    log.info("getting ko service  " + naan + "/" + name + "/" + version);
+
+    ArkId arkId = new ArkId(naan, name, version);
+
+    return new YAMLMapper().writeValueAsString(shelf.findServiceSpecification(arkId));
+  }
+
+//  @GetMapping(path = "/{naan}/{name}/{version}/service", produces = MediaType.APPLICATION_JSON_VALUE)
+//  public Object getOldServiceDescriptionJson(
+//      @PathVariable String naan,
+//      @PathVariable String name,
+//      @PathVariable String version) {
+//
+//    log.info("getting ko service  " + naan + "/" + name + "/" + version);
+//
+//    ArkId arkId = new ArkId(naan, name, version);
+//
+//    return shelf.findServiceSpecification(arkId);
+//  }
+
 
   @GetMapping(path = "/{naan}/{name}/{version}/service", produces = MediaType.ALL_VALUE)
-  public Object getServiceDescriptionYaml(
+  public Object getOldServiceDescriptionYaml(
       @PathVariable String naan,
       @PathVariable String name,
       @PathVariable String version) throws JsonProcessingException {
