@@ -3,6 +3,7 @@ package org.kgrid.shelf.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import java.io.File;
 import java.io.InputStream;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
@@ -13,6 +14,7 @@ import java.util.Map;
 import java.util.Optional;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.io.IOUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObject;
@@ -165,7 +167,8 @@ public class ZipImportService {
           new KnowledgeObjectRepository(cdoStore, null, null);
 
       binaryResources.forEach((binaryPath, bytes) -> {
-            cdoStore.saveBinary(bytes, trxId, binaryPath);
+            cdoStore.saveBinary(bytes, trxId, arkId.getDashArk() + "-" + version, StringUtils.substringAfter(binaryPath,
+                File.separator));
       });
 
       cdoStore.saveMetadata(koMetaData, trxId, arkId.getDashArk()+"-"+version,
