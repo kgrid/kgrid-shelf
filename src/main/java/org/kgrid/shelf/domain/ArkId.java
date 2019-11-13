@@ -1,26 +1,26 @@
 package org.kgrid.shelf.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.nio.file.Path;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.validation.constraints.NotNull;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
-public final class ArkId {
+public final class ArkId implements Comparable{
 
   private static final String ARK_FORMAT = "ark:/%s/%s";
   private final String naan;
   private final String name;
-  private final String implementation;
+  private final String version;
 
   /* TODO:
   *    - add static 'create(String path)' factory method for creation from existing path
   *    - remove all '..Slash..' methods (consider using only naan-name, even in urls)
   *    - make getId() return 'ark:/naan/name'
   *    - make getArk return 'naan-name'
-  *    - make getImplementation return 'naan-name/version'
+  *    - make getVersion return 'naan-name/version'
   *    - make getEndpoint return 'naan-name/version/endpoint'
   *  TODO (consider):
   *    - add a builder
@@ -33,38 +33,45 @@ public final class ArkId {
   */
 
   /*
-   * Can create an ark id with optional implementation from the following formats:
+   * Can create an ark id with optional version from the following formats:
    * ark:/naan/name
    * ark:/naan-name
-   * ark:/naan/name/implementation
-   * ark:/naan-name/implementation
+   * ark:/naan/name/version
+   * ark:/naan-name/version
    */
   public ArkId(String path) {
     String arkIdRegex = "ark:/(\\w+)/(\\w+)";
     Matcher arkIdMatcher = Pattern.compile(arkIdRegex).matcher(path);
     String arkDirectoryRegex = "(\\w+)-(\\w+)";
     Matcher arkDirectoryMatcher = Pattern.compile(arkDirectoryRegex).matcher(path);
-    String arkIdImplementationRegex = "ark:/(\\w+)/(\\w+)/([a-zA-Z0-9._\\-]+)";
-    Matcher arkIdImplementationMatcher = Pattern.compile(arkIdImplementationRegex).matcher(path);
-    String arkDirectoryImplementationRegex = "(\\w+)-(\\w+)/([a-zA-Z0-9._\\-]+)";
-    Matcher arkDirectoryImplementationMatcher = Pattern.compile(arkDirectoryImplementationRegex).matcher(
+    String arkIdVersionRegex = "ark:/(\\w+)/(\\w+)/([a-zA-Z0-9._\\-]+)";
+    Matcher arkIdVersionMatcher = Pattern.compile(arkIdVersionRegex).matcher(path);
+    String arkDirectoryVersionRegex = "(\\w+)-(\\w+)/([a-zA-Z0-9._\\-]+)";
+    Matcher arkDirectoryVersionMatcher = Pattern.compile(arkDirectoryVersionRegex).matcher(
+        path);
+    String arkHyphenVersionRegex = "(\\w+)-(\\w+)-([a-zA-Z0-9._\\-]+)";
+    Matcher arkHyphenVersionMatcher = Pattern.compile(arkHyphenVersionRegex).matcher(
         path);
     if (arkIdMatcher.matches()) {
       this.naan = arkIdMatcher.group(1);
       this.name = arkIdMatcher.group(2);
-      this.implementation = null;
+      this.version = null;
     } else if (arkDirectoryMatcher.matches()) {
       this.naan = arkDirectoryMatcher.group(1);
       this.name = arkDirectoryMatcher.group(2);
-      this.implementation = null;
-    } else if (arkIdImplementationMatcher.matches()) {
-      this.naan = arkIdImplementationMatcher.group(1);
-      this.name = arkIdImplementationMatcher.group(2);
-      this.implementation = arkIdImplementationMatcher.group(3);
-    } else if(arkDirectoryImplementationMatcher.matches()) {
-      this.naan = arkDirectoryImplementationMatcher.group(1);
-      this.name = arkDirectoryImplementationMatcher.group(2);
-      this.implementation = arkDirectoryImplementationMatcher.group(3);
+      this.version = null;
+    } else if (arkIdVersionMatcher.matches()) {
+      this.naan = arkIdVersionMatcher.group(1);
+      this.name = arkIdVersionMatcher.group(2);
+      this.version = arkIdVersionMatcher.group(3);
+    } else if(arkDirectoryVersionMatcher.matches()) {
+      this.naan = arkDirectoryVersionMatcher.group(1);
+      this.name = arkDirectoryVersionMatcher.group(2);
+      this.version = arkDirectoryVersionMatcher.group(3);
+    } else if(arkHyphenVersionMatcher.matches()) {
+      this.naan = arkHyphenVersionMatcher.group(1);
+      this.name = arkHyphenVersionMatcher.group(2);
+      this.version = arkHyphenVersionMatcher.group(3);
     } else {
       throw new IllegalArgumentException("Cannot create ark id from " + path);
     }
@@ -73,13 +80,13 @@ public final class ArkId {
   public ArkId(String naan, String name) {
     this.naan = naan;
     this.name = name;
-    this.implementation = null;
+    this.version = null;
   }
 
-  public ArkId(String naan, String name, String implementation) {
+  public ArkId(String naan, String name, String version) {
     this.naan = naan;
     this.name = name;
-    this.implementation = implementation;
+    this.version = version;
   }
 
   public String getFullArk() {
@@ -92,8 +99,8 @@ public final class ArkId {
   }
 
   @JsonIgnore
-  public String getDashArkImplementation() {
-    return naan + "-" + name + "/" + implementation;
+  public String getDashArkVersion() {
+    return naan + "-" + name + "/" + version;
   }
 
   @JsonIgnore
@@ -102,8 +109,8 @@ public final class ArkId {
   }
 
   @JsonIgnore
-  public String getSlashArkImplementation() {
-    return StringUtils.join( new String[] {naan, name, implementation}, "/");
+  public String getSlashArkVersion() {
+    return StringUtils.join( new String[] {naan, name, version}, "/");
   }
 
   @Override
@@ -121,7 +128,7 @@ public final class ArkId {
     return new EqualsBuilder()
         .append(naan, arkId.naan)
         .append(name, arkId.name)
-        .append(implementation, arkId.implementation)
+        .append(version, arkId.version)
         .isEquals();
   }
 
@@ -130,7 +137,7 @@ public final class ArkId {
     return new HashCodeBuilder(17, 37)
         .append(naan)
         .append(name)
-        .append(implementation)
+        .append(version)
         .toHashCode();
   }
 
@@ -147,12 +154,12 @@ public final class ArkId {
     return name;
   }
 
-  public String getImplementation() {
-    return StringUtils.isEmpty(implementation)?"":implementation;
+  public String getVersion() {
+    return StringUtils.isEmpty(version)?"": version;
   }
 
-  public boolean isImplementation(){
-    return implementation!=null;
+  public boolean hasVersion(){
+    return version !=null;
   }
 
   public static boolean isValid(String id){
@@ -164,4 +171,26 @@ public final class ArkId {
     }
   }
 
+  @Override
+  public int compareTo(@NotNull Object o) {
+    if (this == o) {
+      return 0;
+    }
+    ArkId that = (ArkId)o;
+
+    if(this.getNaan().compareTo(that.getNaan()) != 0) {
+      return this.getNaan().compareTo(that.getNaan());
+    }
+
+    if(this.getName().compareTo(that.getName()) != 0) {
+      return this.getName().compareTo(that.getName());
+    }
+
+    if(this.getVersion() != null && that.getVersion() != null){
+      if(this.getVersion().compareTo(that.getVersion()) != 0) {
+        return this.getVersion().compareTo(that.getVersion());
+      }
+    }
+    return 0;
+  }
 }

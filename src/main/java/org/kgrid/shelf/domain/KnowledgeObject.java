@@ -39,7 +39,7 @@ public class KnowledgeObject {
     return metadata;
   }
 
-  public static JsonNode getImplementationIDs(JsonNode node){
+  public static JsonNode getVersionIDs(JsonNode node){
     return node.findValue(KnowledgeObject.IMPLEMENTATIONS_TERM);
   }
 

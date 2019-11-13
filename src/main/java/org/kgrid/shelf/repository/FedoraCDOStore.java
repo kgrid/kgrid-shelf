@@ -110,7 +110,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
       );
     }
 
-    // At the top level fcrepo returns the full arkid/implementation when it is deposited with arkid/implementation
+    // At the top level fcrepo returns the full arkid/version when it is deposited with arkid/version
     //  so we need to just return the arkid
     if (relativePathParts.length == 0) {
       return children.stream().map(path -> {

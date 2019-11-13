@@ -6,13 +6,9 @@ import static org.junit.Assert.assertTrue;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
@@ -25,9 +21,6 @@ import org.junit.runners.JUnit4;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObject;
-import org.springframework.mock.web.MockMultipartFile;
-import org.zeroturnaround.zip.ZipUtil;
 
 @RunWith(JUnit4.class)
 public class KnowledgeObjectRepositoryTest {
@@ -42,7 +35,7 @@ public class KnowledgeObjectRepositoryTest {
   ZipExportService zipExportService = new ZipExportService();
 
   private ArkId helloWorldArkId = new ArkId("hello", "world", "v0.1.0");
-  private ArkId helloFolderArkId = new ArkId("hello", "folder", "v0.1.0");
+  private ArkId helloFolder = new ArkId("hello", "folder", "v0.1.0");
 
   @Before
   public void setUp() throws Exception {
@@ -56,68 +49,44 @@ public class KnowledgeObjectRepositoryTest {
 
   }
 
-  @After
-  public void clearShelf() throws Exception {
-    repository.delete(new ArkId("hello-world"));
-  }
-
   @Test
   public void getKnowledgeObject() throws Exception {
-    assertNotNull(repository.findImplementationMetadata(helloWorldArkId));
+    assertNotNull(repository.findKnowledgeObjectMetadata(helloWorldArkId));
   }
-
-  @Test
-  public void getTopLevelMetadata() throws Exception {
-
-    JsonNode map = repository.findKnowledgeObjectMetadata(helloWorldArkId);
-    assertNotNull(map);
-  }
-
-  @Test
-  public void getMetadataFromFolder() throws Exception {
-    JsonNode metadata = repository.findKnowledgeObjectMetadata(helloFolderArkId);
-    assertTrue(metadata.has("@id"));
-    assertEquals(helloFolderArkId.getDashArk(), metadata.get("@id").asText());
-  }
-
-  @Test
-  public void getImplementationMetadataFromFolder() throws Exception {
-    JsonNode metadata = repository.findImplementationMetadata(helloFolderArkId);
-    assertTrue(metadata.has("@id"));
-    assertEquals(helloFolderArkId.getImplementation(), metadata.get("@id").asText());
-  }
-
 
   @Test
   public void getCorrectMetadata() throws Exception {
-    JsonNode koMeatadata = repository.findImplementationMetadata(helloWorldArkId);
-    assertTrue(koMeatadata.findValue("identifier").asText().equals("ark:/hello/world/v0.1.0"));
+    JsonNode koMeatadata = repository.findKnowledgeObjectMetadata(helloWorldArkId);
+    assertTrue(koMeatadata.findValue("identifier").asText().equals("ark:/hello/world"));
+    assertTrue(koMeatadata.findValue("version").asText().equals("v0.1.0"));
   }
 
   @Test
-  public void deleteImplentation() throws Exception {
+  public void getCorrectFolderMetadata() throws Exception {
+    JsonNode koMeatadata = repository.findKnowledgeObjectMetadata(helloFolder);
+    assertTrue(koMeatadata.findValue("identifier").asText().equals("ark:/hello/world"));
+    assertTrue(koMeatadata.findValue("version").asText().equals("v0.1.0"));
+  }
+
+  @Test
+  public void deleteVersion() throws Exception {
 
     ArkId arkId = new ArkId("hello","world","v0.2.0");
-    repository.deleteImpl(arkId);
-    JsonNode metadata = repository.findKnowledgeObjectMetadata(new ArkId("hello","world"));
-    assertEquals(2, metadata.get(KnowledgeObject.IMPLEMENTATIONS_TERM).size());
+    repository.delete(arkId);
 
     try{
-      metadata = repository.findImplementationMetadata(arkId);
-      assertTrue("should not find "+ arkId.getDashArkImplementation(), false);
+      repository.findKnowledgeObjectMetadata(arkId);
+      assertTrue("should not find "+ arkId.getDashArkVersion(), false);
     } catch ( ShelfResourceNotFound e){
       assertTrue(true);
     }
-
-
   }
 
   @Test
   public void listAllObjects() {
     Map<ArkId, JsonNode>  objects = repository.findAll();
-    assertEquals(3,objects.size());
-    assertEquals("hello-world", objects.get(new ArkId("hello", "world")).get("@id").asText());
-    assertEquals("hello-folder", objects.get(new ArkId("hello", "folder")).get("@id").asText());
+    assertEquals(4,objects.size());
+    assertEquals("hello-world", objects.get(new ArkId("hello", "world", "v0.1.0")).get("@id").asText());
   }
 
   @Test
@@ -140,7 +109,7 @@ public class KnowledgeObjectRepositoryTest {
   @Test(expected = ShelfResourceNotFound.class)
   public void findServiceSpecificationNotFound()  {
 
-    ArkId arkId = new ArkId("hello-world/koio.v2");
+    ArkId arkId = new ArkId("hello-world/v0.4.0");
     JsonNode serviceSpecNode = repository.findServiceSpecification(arkId);
 
   }
@@ -154,14 +123,4 @@ public class KnowledgeObjectRepositoryTest {
 
   }
 
-  @Test
-  public void exportKnowledgeObjectWackyFolderName() throws IOException {
-
-    ZipExportService zipExportService = new ZipExportService();
-
-    ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "folder"),  "mycoolko", compoundDigitalObjectStore);
-
-
-  }
 }
