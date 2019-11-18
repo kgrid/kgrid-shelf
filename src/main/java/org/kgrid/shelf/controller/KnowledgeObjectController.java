@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.NoSuchFileException;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -46,11 +47,11 @@ public class KnowledgeObjectController extends ShelfController {
   }
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-  public Map getAllObjects() {
+  public Collection getAllObjects() {
     log.info("getting all kos");
     Map koMap = shelf.findAll();
     log.info("found " + koMap.size() + " kos");
-    return koMap;
+    return koMap.values();
   }
 
   @GetMapping(path = "/{naan}/{name}",  produces = MediaType.APPLICATION_JSON_VALUE)
