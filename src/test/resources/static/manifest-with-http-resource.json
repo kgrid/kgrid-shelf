@@ -1,0 +1,6 @@
+{
+  "manifest": [
+    "http://localhost:8080/hello-world-v1.3.zip",
+    "http://localhost:8080/score-calc-v0.2.0.zip"
+  ]
+}

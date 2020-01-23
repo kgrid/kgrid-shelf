@@ -42,7 +42,13 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     if (uri.getHost() == null) {
       this.localStorageURI = uri;
     } else {
-      this.localStorageURI = Paths.get(uri.getHost(), uri.getPath()).toUri();
+      final Path path = Paths.get(uri.getHost(), uri.getPath());
+      try {
+        Files.createDirectories(path);
+      } catch (IOException e) {
+        log.error("Unable to find or create shelf at %s", path.toAbsolutePath());
+      }
+      this.localStorageURI = path.toUri();
     }
   }
 

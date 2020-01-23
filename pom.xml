@@ -131,6 +131,14 @@
       <artifactId>springfox-swagger2</artifactId>
       <version>2.9.2</version>
     </dependency>
+<!--    byte-buddy version upgrade to handle Java 10+. -->
+<!-- Consider removing on spring-boot version change -->
+    <dependency>
+      <groupId>net.bytebuddy</groupId>
+      <artifactId>byte-buddy</artifactId>
+      <version>1.10.6</version>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 
   <build>

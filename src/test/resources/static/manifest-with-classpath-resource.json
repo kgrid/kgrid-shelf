@@ -1,0 +1,6 @@
+{
+  "manifest": [
+    "classpath:/static/hello-world-v1.3.zip",
+    "classpath:/static/score-calc-v0.2.0.zip"
+  ]
+}

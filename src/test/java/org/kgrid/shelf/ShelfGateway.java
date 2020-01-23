@@ -20,8 +20,7 @@ public class ShelfGateway {
 
   }
 
-  @Primary
-  @Bean
+//  @Bean
   public CompoundDigitalObjectStore getCDOStore( @Value("${kgrid.shelf.cdostore.url:filesystem:file://shelf}") String cdoStoreURI) {
     return factory.create(cdoStoreURI);
   }

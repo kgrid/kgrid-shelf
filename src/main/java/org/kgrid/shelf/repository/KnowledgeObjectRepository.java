@@ -51,6 +51,9 @@ public class KnowledgeObjectRepository {
     findAll();
   }
 
+  public KnowledgeObjectRepository() {
+  }
+
   public void delete(ArkId arkId) {
 
     dataStore.delete(objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()));
