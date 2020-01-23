@@ -136,7 +136,7 @@ public class ImportExportControllerIntegrationTest {
     assertThat((manifest.toString()), containsString("hello-world-v1.3"));
 
     manifestResource = ctx.getResource(
-        "file:/Users/pboisver/dev/code-green/kgrid-shelf/src/test/resources/static/manifest-with-http-resource.json");
+        "file:" + manifestResource.getFile().getAbsolutePath());
 
     assertTrue(manifestResource.exists());
     manifest = mapper.readTree(manifestResource.getInputStream());
