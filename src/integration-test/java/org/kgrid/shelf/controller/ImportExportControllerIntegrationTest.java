@@ -92,6 +92,7 @@ public class ImportExportControllerIntegrationTest {
 
     final String localResource = "http://localhost:" + port + "/manifest-with-http-resource.json";
 
+    // reset to url manifest location with url-based ko locations
     System.setProperty("kgrid.shelf.manifest", localResource);
     ImportExportController iec = ctx.getBeanFactory().createBean(ImportExportController.class);
 
@@ -135,8 +136,8 @@ public class ImportExportControllerIntegrationTest {
     JsonNode manifest = mapper.readTree(manifestResource.getInputStream());
     assertThat((manifest.toString()), containsString("hello-world-v1.3"));
 
-    manifestResource = ctx.getResource(
-        "file:" + manifestResource.getFile().getAbsolutePath());
+    // Convert to absolute path
+   manifestResource = ctx.getResource(manifestResource.getFile().toURI().toString());
 
     assertTrue(manifestResource.exists());
     manifest = mapper.readTree(manifestResource.getInputStream());
@@ -163,8 +164,9 @@ public class ImportExportControllerIntegrationTest {
 
       TemporaryFolder folder = new TemporaryFolder();
       folder.create();
+
       folder.getRoot().deleteOnExit();
-      return CompoundDigitalObjectStoreFactory.create("filesystem:file:" + folder.getRoot());
+      return CompoundDigitalObjectStoreFactory.create("filesystem:" + folder.getRoot().toURI());
     }
 
   }
