@@ -163,9 +163,6 @@ public class ZipImportService {
 
       cdoStore.createContainer(trxId, arkId.getDashArk()+"-"+version);
 
-      KnowledgeObjectRepository knowledgeObjectRepository =
-          new KnowledgeObjectRepository(cdoStore, null, null);
-
       binaryResources.forEach((binaryPath, bytes) -> {
             cdoStore.saveBinary(bytes, trxId, arkId.getDashArk() + "-" + version, StringUtils.substringAfter(binaryPath,
                 File.separator));
