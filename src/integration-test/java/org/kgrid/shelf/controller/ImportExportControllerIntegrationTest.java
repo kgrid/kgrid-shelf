@@ -23,6 +23,7 @@ import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStoreFactory;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.SpringBootTest.WebEnvironment;
 import org.springframework.boot.test.context.TestConfiguration;
@@ -90,17 +91,18 @@ public class ImportExportControllerIntegrationTest {
     shelf.delete(new ArkId("score","calc", "v0.2.0"));
     assertEquals("shelf shpuld be empty", 0, shelf.findAll().size());
 
-    final String localResource = "http://localhost:" + port + "/manifest-with-http-resource.json";
+    // so let's load-on-startup from a BAD manifest
+    final String localResource = "http://localhost:" + port + "/manifest-with-bad-http-resource.json";
 
     // reset to url manifest location with url-based ko locations
     System.setProperty("kgrid.shelf.manifest", localResource);
     ImportExportController iec = ctx.getBeanFactory().createBean(ImportExportController.class);
 
     assertEquals(iec.getStartupManifestLocation(),
-        "http://localhost:" + port + "/manifest-with-http-resource.json");
-    assertEquals("shelf load should fail, port is not filtered", 0, shelf.findAll().size());
+        "http://localhost:" + port + "/manifest-with-bad-http-resource.json");
+    assertEquals("shelf load should fail when the KOs can't be found", 0, shelf.findAll().size());
 
-    // so let's create a manifest manually
+    // so let's create a GOOD manifest manually
     Resource manifestResource = ctx.getResource("http://localhost:" + port + "/manifest-with-http-resource.json");
     JsonNode manifest = mapper.readTree(readAndPortFilter(manifestResource, port));
 
@@ -158,6 +160,7 @@ public class ImportExportControllerIntegrationTest {
   @TestConfiguration
   static class TestConfig {
 
+    @ConditionalOnMissingBean
     @Bean
     @Primary
     CompoundDigitalObjectStore getCdoStore() throws IOException {

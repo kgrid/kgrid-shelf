@@ -72,6 +72,15 @@ public class ImportExportControllerTest {
   }
 
   @Test
+  public void emptyManifestLocationStringSkipsLoad() {
+    ImportExportController importExportController = getImportExportController("");
+
+    importExportController.afterPropertiesSet();
+
+    verify(shelf, never()).importZip((InputStream) any());
+  }
+
+  @Test
   public void singleShelfErrorIsSkipped() throws Exception {
     ImportExportController importExportController = getImportExportController();
 
