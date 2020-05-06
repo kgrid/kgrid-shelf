@@ -33,9 +33,10 @@ public class KnowledgeObjectRepository {
   private CompoundDigitalObjectStore dataStore;
   private ZipImportService zipImportService;
   private ZipExportService zipExportService;
+  // Map of Ark -> Version -> File Location for rapid object lookup
   private final static Map<String, Map<String, String>> objectLocations = new HashMap<>();
-//  private final static Map<ArkId, String> objectLocations = new TreeMap<>(Collections.reverseOrder());
-  private boolean shelfInvalidState = true;
+  // Map of Ark -> Metadata location for displaying to end user
+  private final static Map<ArkId, JsonNode> knowledgeObjects = new HashMap<>();
 
   @Autowired
   KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore,
@@ -45,10 +46,7 @@ public class KnowledgeObjectRepository {
     this.zipImportService = zis;
     this.zipExportService = zes;
     // Initialize the map of folder names -> ark ids
-    findAll();
-  }
-
-  public KnowledgeObjectRepository() {
+    refreshObjectMap();
   }
 
   public void delete(ArkId arkId) {
@@ -98,10 +96,9 @@ public class KnowledgeObjectRepository {
         .write(zipExportService.exportObject(arkId, koPath, dataStore).toByteArray());
   }
 
-  public Map<ArkId, JsonNode> findAll() {
-    Map<ArkId, JsonNode> knowledgeObjects = new HashMap<>();
+  private void refreshObjectMap() {
     objectLocations.clear();
-    shelfInvalidState=false;
+    knowledgeObjects.clear();
 
     //Load KO objects and skip any KOs with exceptions like missing metadata
     for (String path : dataStore.getChildren("")) {
@@ -130,8 +127,7 @@ public class KnowledgeObjectRepository {
 
         if(objectLocations.get(arkId.getDashArk()) != null && objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()) != null) {
           log.warn("Two objects on the shelf have the same ark id: " +
-              arkId + " Check folders " + folderName + " and " + objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()));
-          shelfInvalidState=true;
+                  arkId + " Check folders " + folderName + " and " + objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()));
         }
 
         if(objectLocations.get(arkId.getDashArk()) == null){
@@ -148,6 +144,10 @@ public class KnowledgeObjectRepository {
         log.warn("Unable to load KO " + illegalArgument.getMessage());
       }
     }
+  }
+
+  public Map<ArkId, JsonNode> findAll() {
+    refreshObjectMap();
     return knowledgeObjects;
   }
 
@@ -301,39 +301,11 @@ public class KnowledgeObjectRepository {
     return dataStore.getMetadata(objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()), path);
   }
 
-  /**
-   * Import ZIP file of a KO into self
-   *
-   * @param arkId ark id of object
-   * @param zippedKO zip file
-   * @return ark id of the import object
-   */
-  public ArkId importZip(ArkId arkId, MultipartFile zippedKO) {
-    if (shelfInvalidState){
-      log.warn("Shelf in an invalid state, there are duplication ark ids, import not allowed " + zippedKO.getName());
-      throw new ShelfException("Shelf in an invalid state, there are duplication ark ids, import not allowed");
-    }
-    try {
-      arkId= zipImportService.importKO(zippedKO.getInputStream(), dataStore);
-      if(objectLocations.get(arkId.getDashArk()) != null) {
-        objectLocations.get(arkId.getDashArk()).put(arkId.getVersion(), arkId.getDashArk() + "-" + arkId.getVersion());
-      } else {
-        Map<String, String> version = new TreeMap<>(Collections.reverseOrder());
-        version.put(arkId.getVersion(), arkId.getDashArk() + "-" + arkId.getVersion());
-        objectLocations.put(arkId.getDashArk(), version);
-      }
-
-    } catch (IOException e) {
-      log.warn("Cannot load full zip file for ark id " + arkId);
-    }
-    return arkId;
-  }
-
   public ArkId importZip(MultipartFile zippedKO) {
     try {
 
       ArkId arkId = zipImportService.importKO(zippedKO.getInputStream(), dataStore);
-      findAll();
+      refreshObjectMap();
       return arkId;
     } catch (IOException e) {
       log.warn("Cannot load zip file with filename " + zippedKO.getName());
@@ -351,14 +323,14 @@ public class KnowledgeObjectRepository {
       version.put(arkId.getVersion(), arkId.getDashArk() + "-" + arkId.getVersion());
       objectLocations.put(arkId.getDashArk(), version);
     }
-    findAll();
+    refreshObjectMap();
     return arkId;
   }
 
   public String getObjectLocation(ArkId arkId) {
     // Reload for activation use cases
     if(objectLocations.get(arkId.getDashArk()) == null) {
-      findAll();
+      refreshObjectMap();
     }
     return objectLocations.get(arkId.getDashArk()).get(arkId.getVersion());
   }
