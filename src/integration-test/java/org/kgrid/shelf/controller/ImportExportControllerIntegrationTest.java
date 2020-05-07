@@ -97,8 +97,8 @@ public class ImportExportControllerIntegrationTest {
         System.setProperty("kgrid.shelf.manifest", localResource);
         ImportExportController iec = ctx.getBeanFactory().createBean(ImportExportController.class);
 
-        assertEquals(iec.getStartupManifestLocations(),
-                "http://localhost:" + port + "/manifest-with-bad-http-resource.json");
+        assertArrayEquals(
+                new String[]{"http://localhost:" + port + "/manifest-with-bad-http-resource.json"}, iec.getStartupManifestLocations());
         assertEquals("shelf load should fail when the KOs can't be found", 0, shelf.findAll().size());
 
         // so let's create a GOOD manifest manually
