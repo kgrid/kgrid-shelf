@@ -1,0 +1,6 @@
+{
+  "manifest": [
+    "file:src/test/resources/static/hello-world-v1.3.zip",
+    "file:src/test/resources/static/score-calc-v0.2.0.zip"
+  ]
+}

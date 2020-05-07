@@ -1,16 +1,7 @@
 package org.kgrid.shelf.controller;
 
-import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
-import java.io.InputStream;
-import java.util.Map;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -26,99 +17,123 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.io.InputStream;
+import java.util.Map;
+
+import static org.junit.Assert.assertEquals;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
 @RunWith(SpringJUnit4ClassRunner.class)
 @WebAppConfiguration
 @JsonTest
 @SpringBootTest(classes = {ImportExportControllerTest.class})
 public class ImportExportControllerTest {
 
-  public static final String MANIFEST_WITH_CLASSPATH_RESOURCES = "classpath:/static/manifest-with-classpath-resource.json";
-  @Mock
-  KnowledgeObjectRepository shelf;
+    public static final String MANIFEST_WITH_CLASSPATH_RESOURCES = "classpath:/static/manifest-with-classpath-resource.json";
+    public static final String MANIFEST_WITH_FILE_RESOURCES = "classpath:/static/manifest-with-filesystem-resource.json";
+    @Mock
+    KnowledgeObjectRepository shelf;
 
-  @Autowired
-  WebApplicationContext ctx;
+    @Autowired
+    WebApplicationContext ctx;
 
-  @Autowired
-  ObjectMapper mapper;
+    @Autowired
+    ObjectMapper mapper;
 
-  @Test
-  public void whenTwoItemManifestImportCalledTwice() throws Exception {
-    ImportExportController importExportController = getImportExportController();
+    @Test
+    public void controllerLoadsManifestOnStartIfSetWithSingleManifest() {
+        ImportExportController importExportController = getImportExportController(new String[]{MANIFEST_WITH_CLASSPATH_RESOURCES});
 
-    when(shelf.importZip(any(InputStream.class))).thenAnswer( getRandomArkIdAnswer() );
+        importExportController.afterPropertiesSet();
 
-    Map<String, Object> loaded = importExportController
-        .loadManifestIfSet(MANIFEST_WITH_CLASSPATH_RESOURCES);
+        verify(shelf, times(2)).importZip(any(InputStream.class));
+    }
 
-    verify(shelf, times(2)).importZip(any(InputStream.class));
-  }
+    @Test
+    public void controllerLoadsManifestOnStartIfSetWithManifestArray() {
+        String[] manifests = new String[]{MANIFEST_WITH_CLASSPATH_RESOURCES, MANIFEST_WITH_FILE_RESOURCES};
+        ImportExportController importExportController = getImportExportController(manifests);
 
-  @Test
-  public void emptyLocationNeverTriesToImport() throws Exception {
-    ImportExportController importExportController = getImportExportController();
+        importExportController.afterPropertiesSet();
 
-    importExportController.afterPropertiesSet();
+        verify(shelf, times(4)).importZip(any(InputStream.class));
+    }
 
-    verify(shelf, never()).importZip((InputStream) any());
-  }
+    @Test
+    public void whenTwoItemManifestImportCalledTwice() throws Exception {
+        ImportExportController importExportController = getImportExportController(new String[]{});
 
-  @Test public void nullLocationSkipsCallingImport() throws Exception {
-    ImportExportController importExportController = getImportExportController(null);
+        when(shelf.importZip(any(InputStream.class))).thenAnswer(getRandomArkIdAnswer());
 
-    importExportController.afterPropertiesSet();
+        Map<String, Object> loaded = importExportController
+                .loadManifestIfSet(MANIFEST_WITH_CLASSPATH_RESOURCES);
 
-    verify(shelf, never()).importZip((InputStream) any());
-  }
+        verify(shelf, times(2)).importZip(any(InputStream.class));
+    }
 
-  @Test
-  public void emptyManifestLocationStringSkipsLoad() {
-    ImportExportController importExportController = getImportExportController("");
+    @Test
+    public void emptyLocationNeverTriesToImport() throws Exception {
+        ImportExportController importExportController = getImportExportController(new String[]{});
 
-    importExportController.afterPropertiesSet();
+        importExportController.afterPropertiesSet();
 
-    verify(shelf, never()).importZip((InputStream) any());
-  }
+        verify(shelf, never()).importZip((InputStream) any());
+    }
 
-  @Test
-  public void singleShelfErrorIsSkipped() throws Exception {
-    ImportExportController importExportController = getImportExportController();
+    @Test
+    public void nullLocationSkipsCallingImport() throws Exception {
+        ImportExportController importExportController = getImportExportController(null);
 
-    when(shelf.importZip((InputStream) any()))
-        .thenThrow(new RuntimeException())
-        .thenAnswer( getRandomArkIdAnswer() )
-    ;
+        importExportController.afterPropertiesSet();
 
-    Map<String, Object> loaded = importExportController
-        .loadManifestIfSet(MANIFEST_WITH_CLASSPATH_RESOURCES);
+        verify(shelf, never()).importZip((InputStream) any());
+    }
 
-    verify(shelf, times(2)).importZip((InputStream) any());
+    @Test
+    public void emptyManifestLocationStringSkipsLoad() {
+        ImportExportController importExportController = getImportExportController(new String[]{});
 
-    assertEquals("should skip one and import one:",
-        1,
-        ((ArrayNode) loaded.get("Added")).size());
-  }
+        importExportController.afterPropertiesSet();
+
+        verify(shelf, never()).importZip((InputStream) any());
+    }
+
+    @Test
+    public void singleShelfErrorIsSkipped() throws Exception {
+        ImportExportController importExportController = getImportExportController(new String[]{});
+
+        when(shelf.importZip((InputStream) any()))
+                .thenThrow(new RuntimeException())
+                .thenAnswer(getRandomArkIdAnswer())
+        ;
+
+        Map<String, Object> loaded = importExportController
+                .loadManifestIfSet(MANIFEST_WITH_CLASSPATH_RESOURCES);
+
+        verify(shelf, times(2)).importZip((InputStream) any());
+
+        assertEquals("should skip one and import one:",
+                1,
+                ((ArrayNode) loaded.get("Added")).size());
+    }
 
 
-  // utility methods
-  Answer<ArkId> getRandomArkIdAnswer() {
-    return new Answer<ArkId>() {
-      @Override
-      public ArkId answer(InvocationOnMock invocationOnMock) throws Throwable {
-        return new ArkId("a", RandomStringUtils.randomNumeric(2), "version");
-      }
-    };
-  }
+    // utility methods
+    Answer<ArkId> getRandomArkIdAnswer() {
+        return new Answer<ArkId>() {
+            @Override
+            public ArkId answer(InvocationOnMock invocationOnMock) throws Throwable {
+                return new ArkId("a", RandomStringUtils.randomNumeric(2), "version");
+            }
+        };
+    }
 
-  ImportExportController getImportExportController(String startupManifestLocation) {
-    ImportExportController importExportController
-        = new ImportExportController(shelf, null, startupManifestLocation);
-    importExportController.ctx = this.ctx;
-    importExportController.mapper = this.mapper;
-    return importExportController;
-  }
-
-  ImportExportController getImportExportController() {
-    return getImportExportController("");
-  }
+    ImportExportController getImportExportController(String[] startupManifestLocation) {
+        ImportExportController importExportController
+                = new ImportExportController(shelf, null, startupManifestLocation);
+        importExportController.ctx = ctx;
+        importExportController.mapper = mapper;
+        return importExportController;
+    }
 }
