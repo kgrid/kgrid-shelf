@@ -7,12 +7,12 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
-import org.mockito.Mock;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.json.JsonTest;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.springframework.test.context.web.WebAppConfiguration;
 import org.springframework.web.context.WebApplicationContext;
@@ -30,15 +30,19 @@ import static org.mockito.Mockito.*;
 @SpringBootTest(classes = {ImportExportControllerTest.class})
 public class ImportExportControllerTest {
 
-    public static final String MANIFEST_WITH_CLASSPATH_RESOURCES = "classpath:/static/manifest-with-classpath-resource.json";
-    public static final String MANIFEST_WITH_FILE_RESOURCES = "classpath:/static/manifest-with-filesystem-resource.json";
-    @Mock
+    private static final String MANIFEST_WITH_CLASSPATH_RESOURCES = "classpath:/static/manifest-with-classpath-resource.json";
+    private static final String MANIFEST_WITH_FILE_RESOURCES = "classpath:/static/manifest-with-filesystem-resource.json";
+    private static final String BAD_MANIFEST_LOCATION = "banana://bread.org";
+    @MockBean
+    private
     KnowledgeObjectRepository shelf;
 
     @Autowired
+    private
     WebApplicationContext ctx;
 
     @Autowired
+    private
     ObjectMapper mapper;
 
     @Test
@@ -48,6 +52,27 @@ public class ImportExportControllerTest {
         importExportController.afterPropertiesSet();
 
         verify(shelf, times(2)).importZip(any(InputStream.class));
+    }
+
+    @Test
+    public void controllerUsesManifestLocationPropertyFromSpring() {
+        System.setProperty("kgrid.shelf.manifest",
+                MANIFEST_WITH_CLASSPATH_RESOURCES + "," + BAD_MANIFEST_LOCATION + "," + MANIFEST_WITH_FILE_RESOURCES);
+
+        ctx.getAutowireCapableBeanFactory().createBean(ImportExportController.class);
+
+        verify(shelf, times(4)).importZip(any(InputStream.class));
+    }
+
+    @Test
+    public void controllerLoadsGoodManifestsAndHandlesBadManifests() {
+        String[] manifests =
+                new String[]{MANIFEST_WITH_CLASSPATH_RESOURCES, BAD_MANIFEST_LOCATION, MANIFEST_WITH_FILE_RESOURCES};
+        ImportExportController importExportController = getImportExportController(manifests);
+
+        importExportController.afterPropertiesSet();
+
+        verify(shelf, times(4)).importZip(any(InputStream.class));
     }
 
     @Test
@@ -61,19 +86,19 @@ public class ImportExportControllerTest {
     }
 
     @Test
-    public void whenTwoItemManifestImportCalledTwice() throws Exception {
+    public void whenTwoItemManifestImportCalledTwice() {
         ImportExportController importExportController = getImportExportController(new String[]{});
 
         when(shelf.importZip(any(InputStream.class))).thenAnswer(getRandomArkIdAnswer());
 
-        Map<String, Object> loaded = importExportController
+        importExportController
                 .loadManifestIfSet(MANIFEST_WITH_CLASSPATH_RESOURCES);
 
         verify(shelf, times(2)).importZip(any(InputStream.class));
     }
 
     @Test
-    public void emptyLocationNeverTriesToImport() throws Exception {
+    public void emptyLocationNeverTriesToImport() {
         ImportExportController importExportController = getImportExportController(new String[]{});
 
         importExportController.afterPropertiesSet();
@@ -82,7 +107,7 @@ public class ImportExportControllerTest {
     }
 
     @Test
-    public void nullLocationSkipsCallingImport() throws Exception {
+    public void nullLocationSkipsCallingImport() {
         ImportExportController importExportController = getImportExportController(null);
 
         importExportController.afterPropertiesSet();
@@ -100,7 +125,7 @@ public class ImportExportControllerTest {
     }
 
     @Test
-    public void singleShelfErrorIsSkipped() throws Exception {
+    public void singleShelfErrorIsSkipped() {
         ImportExportController importExportController = getImportExportController(new String[]{});
 
         when(shelf.importZip((InputStream) any()))
@@ -120,16 +145,16 @@ public class ImportExportControllerTest {
 
 
     // utility methods
-    Answer<ArkId> getRandomArkIdAnswer() {
+    private Answer<ArkId> getRandomArkIdAnswer() {
         return new Answer<ArkId>() {
             @Override
-            public ArkId answer(InvocationOnMock invocationOnMock) throws Throwable {
+            public ArkId answer(InvocationOnMock invocationOnMock) {
                 return new ArkId("a", RandomStringUtils.randomNumeric(2), "version");
             }
         };
     }
 
-    ImportExportController getImportExportController(String[] startupManifestLocation) {
+    private ImportExportController getImportExportController(String[] startupManifestLocation) {
         ImportExportController importExportController
                 = new ImportExportController(shelf, null, startupManifestLocation);
         importExportController.ctx = ctx;
