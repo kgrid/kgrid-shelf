@@ -55,7 +55,9 @@ public class ImportExportController extends ShelfController implements Initializ
     @Override
     public void afterPropertiesSet() {
         if (null != startupManifestLocations) {
+            log.info("Initializing shelf with {} Manifests", startupManifestLocations.length);
             for (String location : startupManifestLocations) {
+                log.info("Loading manifest from location: {}", location);
                 loadManifestIfSet(location);
             }
         }
@@ -70,7 +72,7 @@ public class ImportExportController extends ShelfController implements Initializ
         try {
             manifestResource = ctx.getResource(startupManifestLocation);
         } catch (Exception e) {
-            log.info(e.getMessage());
+            log.warn(e.getMessage());
             return Collections.emptyMap();
         }
 
@@ -78,7 +80,7 @@ public class ImportExportController extends ShelfController implements Initializ
             JsonNode manifest = mapper.readTree(stream);
             return depositKnowledgeObject(manifest).getBody();
         } catch (IOException e) {
-            log.info(e.getMessage());
+            log.warn(e.getMessage());
             return Collections.emptyMap();
         }
     }
