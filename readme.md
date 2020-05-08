@@ -127,9 +127,24 @@ A set of tests that help the KGrid team understand the behavior of the [Fedora R
 terms of [JSON LD](https://json-ld.org/) and our [KOIO](http://kgrid.org/koio) ontology.  Details can
 be found at Fedora Repository Characterization Tests [readme](etc/fcrepo/readme.md)
 
+## Importing Knowledge Objects with manifests
+There are two methods by which knowledge objects can be imported to the shelf:
+####1. Define one or more manifest.json files which point to each Knowledge Object's location. 
+Currently, knowledge objects can be loaded from a url, a local file, or a classpath reference.
+#####Example Manifest file:
+````{"manifest":["http://path-to-web-ko","file:/path-to-local-ko","classpath:/path-to-classpath-ko"]}````
 
+When running the shelf, an array of manifest files can be automatically imported by setting the property: ```kgrid.shelf.manifest```.
+Example: ```kgrid.shelf.manifest=file:/path/to/manifest,http://path-to-manifest,classpath:/path-to-manifest```
+
+####2. Pass a single manifest to the create manifest endpoint
+
+The Shelf-API has an endpoint for importing a single manifest.
+To use it, simple send a `POST` request to `/kos/manifest/` endpoint of your shelf with the contents of the manifest.json 
+file as the request body. You can configure the `kos` portion of the endpoint by setting the `kgrid.shelf.endpoint` property.
 ## Additional Information
 
+### Define custom port for Shelf Gateway
 The port of the shelf gateway can be altered via the _server.port_ property 
 ```
 java -jar shelf-gateway/target/shelf-gateway-*-boot.jar --kgrid.shelf.cdostore.url=filesystem:file://etc/shelf --server.port=8090
