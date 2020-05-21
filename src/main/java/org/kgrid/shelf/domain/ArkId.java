@@ -9,7 +9,7 @@ import javax.validation.constraints.NotNull;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class ArkId implements Comparable {
+public final class ArkId implements Comparable {
 
   private static final String ARK_FORMAT = "ark:/%s/%s";
   private final String naan;

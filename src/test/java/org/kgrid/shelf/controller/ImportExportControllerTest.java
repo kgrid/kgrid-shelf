@@ -32,7 +32,7 @@ public class ImportExportControllerTest {
   private KnowledgeObjectRepository mockKnowledgeObjectRepository;
   private ApplicationContext mockApplicationContext;
   private ObjectMapper mockMapper;
-  private ArkId mockArkId;
+  private ArkId validArkId;
   private InputStream mockResourceInputStream;
   private ImportExportController importExportController;
 
@@ -43,7 +43,7 @@ public class ImportExportControllerTest {
     mockMapper = Mockito.mock(ObjectMapper.class);
     Resource mockResource = Mockito.mock(Resource.class);
     mockResourceInputStream = Mockito.mock(InputStream.class);
-    mockArkId = Mockito.mock(ArkId.class);
+    validArkId = new ArkId("naan", "name");
     ObjectNode manifestNode = getManifestNode();
 
     when(mockResource.getInputStream()).thenReturn(mockResourceInputStream);
@@ -53,16 +53,16 @@ public class ImportExportControllerTest {
     when(mockApplicationContext.getResource(RESOURCE_1_URI)).thenReturn(mockResource);
     when(mockApplicationContext.getResource(RESOURCE_2_URI)).thenReturn(mockResource);
     when(mockMapper.readTree(mockResourceInputStream)).thenReturn(manifestNode);
-    when(mockKnowledgeObjectRepository.importZip(mockResourceInputStream)).thenReturn(mockArkId);
+    when(mockKnowledgeObjectRepository.importZip(mockResourceInputStream)).thenReturn(validArkId);
   }
 
   @Test
   public void afterPropertiesSet_LoadsGoodManifestsAndHandlesBadManifests() {
-    String[] manifests = new String[] {GOOD_MANIFEST_PATH, BAD_MANIFEST_PATH};
+    String[] manifests = new String[] {GOOD_MANIFEST_PATH, BAD_MANIFEST_PATH, GOOD_MANIFEST_PATH};
     importExportController = getImportExportControllerForManifestList(manifests);
     importExportController.afterPropertiesSet();
 
-    verify(mockKnowledgeObjectRepository, times(2)).importZip(any(InputStream.class));
+    verify(mockKnowledgeObjectRepository, times(4)).importZip(any(InputStream.class));
   }
 
   @Test
@@ -90,7 +90,6 @@ public class ImportExportControllerTest {
   @Test
   public void afterPropertiesSet_DoesNothingIfUnreadableManifestResourceIsLoaded()
       throws IOException {
-
     when(mockMapper.readTree(mockResourceInputStream)).thenThrow(new IOException());
 
     importExportController =
@@ -103,10 +102,9 @@ public class ImportExportControllerTest {
 
   @Test
   public void afterPropertiesSet_singleShelfErrorIsSkipped() {
-
     when(mockKnowledgeObjectRepository.importZip((InputStream) any()))
         .thenThrow(new RuntimeException())
-        .thenReturn(mockArkId);
+        .thenReturn(validArkId);
     importExportController = getImportExportControllerForManifestList(null);
 
     Map<String, Object> loaded = importExportController.loadManifestIfSet(GOOD_MANIFEST_PATH);

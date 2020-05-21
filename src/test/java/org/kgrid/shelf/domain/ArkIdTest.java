@@ -23,7 +23,7 @@ public class ArkIdTest {
 
   @Test
   public void equalsContract() {
-    EqualsVerifier.forClass(ArkId.class).usingGetClass().verify();
+    EqualsVerifier.forClass(ArkId.class).verify();
   }
 
   @Test

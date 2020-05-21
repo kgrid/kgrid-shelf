@@ -46,11 +46,6 @@ public class ImportExportController extends ShelfController implements Initializ
     this.startupManifestLocations = startupManifestLocations;
   }
 
-  // Only used in an integration test. try to refactor test to not require this method.
-  public String[] getStartupManifestLocations() {
-    return startupManifestLocations;
-  }
-
   @Override
   public void afterPropertiesSet() {
     if (null != startupManifestLocations) {
