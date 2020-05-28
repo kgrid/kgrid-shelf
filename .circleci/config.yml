@@ -36,9 +36,9 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - v1-dependencies-{{ checksum "pom.xml" }}
-          # fallback to using the latest cache if no exact match is found
-          - v1-dependencies-
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
 
       #must run install to ensure multi module dependencies(shelf-api) are cached
       - run: mvn -DskipTests clean package dependency:resolve-plugins dependency:go-offline
@@ -51,27 +51,27 @@ jobs:
 
       # run build and test
       - run:
-         name: Build and Test And Verify
-         command: |
-           mvn clean verify
+          name: Build and Test And Verify
+          command: |
+            mvn clean verify
 
       #  if triggered with Release will prepare and perform maven release
       - run:
-         name: Release
-         command: |
-           if [ $RELEASE ]; then
-               echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
-               git config --global user.email "$GIT_USER_EMAIL"
-               git config --global user.name "$GIT_USER_NAME"
-               mvn release:clean release:prepare -DscmCommentPrefix="Release [skip ci] " -DreleaseVersion=$RELEASE -DdevelopmentVersion=$NEXT release:perform -P ci -s .circleci/settings.xml
-               TAG_NAME="shelf-api-$RELEASE"
-               curl POST "https://api.github.com/repos/kgrid/kgrid-shelf/releases" \
-                 -H "Authorization: token $GITHUB_TOKEN" -H 'Content-Type: application/json' -d "{\"tag_name\":\"$TAG_NAME\"}"
-               RELEASE_ID=$(curl -s https://api.github.com/repos/kgrid/kgrid-shelf/releases/latest | jq -r ".id")
-               curl POST "https://uploads.github.com/repos/kgrid/kgrid-shelf/releases/$RELEASE_ID/assets?name=$TAG_NAME.jar" \
-                 -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/octet-stream" \
-                 --data-binary "@target/$TAG_NAME.jar"
-           fi
+          name: Release
+          command: |
+            if [ $RELEASE ]; then
+                echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
+                git config --global user.email "$GIT_USER_EMAIL"
+                git config --global user.name "$GIT_USER_NAME"
+                mvn release:clean release:prepare -DscmCommentPrefix="Release [skip ci] " -DreleaseVersion=$RELEASE -DdevelopmentVersion=$NEXT release:perform -P ci -s .circleci/settings.xml
+                TAG_NAME="shelf-api-$RELEASE"
+                curl POST "https://api.github.com/repos/kgrid/kgrid-shelf/releases" \
+                  -H "Authorization: token $GITHUB_TOKEN" -H 'Content-Type: application/json' -d "{\"tag_name\":\"$TAG_NAME\"}"
+                RELEASE_ID=$(curl -s https://api.github.com/repos/kgrid/kgrid-shelf/releases/latest | jq -r ".id")
+                curl POST "https://uploads.github.com/repos/kgrid/kgrid-shelf/releases/$RELEASE_ID/assets?name=$TAG_NAME.jar" \
+                  -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/octet-stream" \
+                  --data-binary "@target/$TAG_NAME.jar"
+            fi
 
       # save test results
       - run:
@@ -98,23 +98,21 @@ jobs:
 
     steps:
 
-        - attach_workspace:
-             at: ~/project
+      - attach_workspace:
+          at: ~/project
 
-        - run: ls
+      - run: ls
 
-        # Will normally run deploy but if triggered with Release will prepare and perform maven release
-        - run:
-            name: Deploy
-            command: |
-              echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
-              mvn clean deploy -Dmaven.test.skip=true -P ci -s .circleci/settings.xml
+      # Will normally run deploy but if triggered with Release will prepare and perform maven release
+      - run:
+          name: Deploy
+          command: |
+            echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
+            mvn clean deploy -Dmaven.test.skip=true -P ci -s .circleci/settings.xml
 
-        # Tigger Builds of Activator and Library so the newest snapshot gets used
-        - run:
-            name: Trigger Activator and Library to build
-            command: |
-              curl -v -X POST --header 'Content-Type:application/json' \
-                https://circleci.com/api/v1.1/project/github/kgrid/kgrid-activator/tree/master?circle-token=$CIRCLECI_TOKEN
-              curl -v -X POST --header 'Content-Type:application/json' \
-               https://circleci.com/api/v1.1/project/github/kgrid/kgrid-library/tree/master?circle-token=$CIRCLECI_TOKEN
+      # Tigger Builds of Library so the newest snapshot gets used
+      - run:
+          name: Trigger Library to build
+          command: |
+            curl -v -X POST --header 'Content-Type:application/json' \
+             https://circleci.com/api/v1.1/project/github/kgrid/kgrid-library/tree/master?circle-token=$CIRCLECI_TOKEN
