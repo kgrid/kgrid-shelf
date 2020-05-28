@@ -30,155 +30,105 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@SpringBootTest(classes = {ShelfGateway.class, ImportExportControllerIntegrationTest.TestConfig.class},
-        webEnvironment = WebEnvironment.RANDOM_PORT)
+@SpringBootTest(
+    classes = {ShelfGateway.class, ImportExportControllerIntegrationTest.TestConfig.class},
+    webEnvironment = WebEnvironment.RANDOM_PORT)
 public class ImportExportControllerIntegrationTest {
 
-    @Rule
-    public final TemporaryFolder shelfFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder shelfFolder = new TemporaryFolder();
 
-    @Autowired
-    KnowledgeObjectRepository shelf;
+  @Autowired KnowledgeObjectRepository shelf;
 
-    @Autowired
-    ConfigurableApplicationContext ctx;
+  @Autowired ConfigurableApplicationContext ctx;
 
-    @Autowired
-    CompoundDigitalObjectStore cdoStore;
+  @Autowired ObjectMapper mapper;
 
-    @Autowired
-    ObjectMapper mapper;
+  @LocalServerPort private String port;
 
-    @LocalServerPort
-    private String port;
+  @BeforeClass
+  public static void config() {
+    System.setProperty(
+        "kgrid.shelf.manifest", "classpath:/static/manifest-with-classpath-resource.json");
+  }
 
-    @BeforeClass
-    public static void config() {
-        System.setProperty("kgrid.shelf.manifest", "classpath:/static/manifest-with-classpath-resource.json");
+  @Test
+  public void testDefaultLoadWithAfterPropertiesSet() {
+
+    // Default ImportExportController loads classpath manifest set in @BeforeClass config method
+
+    Map<ArkId, JsonNode> kos = shelf.findAll();
+    assertTrue(
+        "Shelf contains hello-world-v1.3", kos.containsKey(new ArkId("ark:/hello/world/v1.3")));
+    assertTrue(
+        "Shelf contains score-calc-v0.2.0", kos.containsKey(new ArkId("ark:/score/calc/v0.2.0")));
+  }
+
+  @Test
+  public void resourceLoaderTestUrl() throws IOException {
+    Resource manifestResource =
+        ctx.getResource("http://localhost:" + port + "/manifest-with-http-resource.json");
+
+    assertTrue(manifestResource.exists());
+
+    JsonNode manifest = mapper.readTree(readAndPortFilter(manifestResource, port));
+
+    String firstUri = manifest.get("manifest").get(0).asText();
+    assertTrue(firstUri.contains(port + "/hello-world-v1.3"));
+  }
+
+  @Test
+  public void resourceLoaderTestsFile() throws IOException {
+
+    Resource manifestResource =
+        ctx.getResource("file:src/test/resources/static/manifest-with-classpath-resource.json");
+
+    assertTrue(manifestResource.exists());
+    JsonNode manifest = mapper.readTree(manifestResource.getInputStream());
+    assertTrue((manifest.toString()).contains("hello-world-v1.3"));
+
+    // Convert to absolute path
+    manifestResource = ctx.getResource(manifestResource.getFile().toURI().toString());
+
+    assertTrue(manifestResource.exists());
+    manifest = mapper.readTree(manifestResource.getInputStream());
+    assertTrue((manifest.toString()).contains("hello-world-v1.3"));
+  }
+
+  @Test
+  public void resourceLoaderTestClasspath() throws IOException {
+
+    Resource manifestResource =
+        ctx.getResource("classpath:/static/manifest-with-classpath-resource.json");
+
+    assertTrue(manifestResource.exists());
+    JsonNode manifest = mapper.readTree(manifestResource.getInputStream());
+    assertTrue((manifest.toString()).contains("hello-world-v1.3"));
+  }
+
+  private String readAndPortFilter(Resource manifestResource, String port) throws IOException {
+    String s;
+    try (InputStream stream = manifestResource.getInputStream()) {
+      s = IOUtils.toString(stream, "UTF-8");
     }
+    return StringUtils.replace(s, "8080", port);
+  }
 
-    @Test
-    public void testDefaultLoadWithAfterPropertiesSet() {
+  @TestConfiguration
+  static class TestConfig {
 
-        // Default ImportExportController loads classpath manifest set in @BeforeClass config method
+    @ConditionalOnMissingBean
+    @Bean
+    @Primary
+    CompoundDigitalObjectStore getCdoStore() throws IOException {
 
-        Map<ArkId, JsonNode> kos = shelf.findAll();
-        assertTrue("Shelf contains hello-world-v1.3", kos.containsKey(new ArkId("ark:/hello/world/v1.3")));
-        assertTrue("Shelf contains score-calc-v0.2.0", kos.containsKey(new ArkId("ark:/score/calc/v0.2.0")));
+      TemporaryFolder folder = new TemporaryFolder();
+      folder.create();
+
+      folder.getRoot().deleteOnExit();
+      return CompoundDigitalObjectStoreFactory.create("filesystem:" + folder.getRoot().toURI());
     }
-
-    // Exploratory tests just to see how things work
-    // TODO: delete
-
-    /**
-     * Test manifest load from a new {@link ImportExportController}
-     * with a hand loaded JsonNode manifest.
-     * <p>
-     * Just to show the moving pieces a little better
-     *
-     * @throws IOException the io exception
-     */
-    @Test
-    public void testDepositObjectFromManifestWithHttpLoading() throws IOException {
-
-//    Empty the existing shelf
-        shelf.delete(new ArkId("hello", "world", "v1.3"));
-        shelf.delete(new ArkId("score", "calc", "v0.2.0"));
-        assertEquals("shelf shpuld be empty", 0, shelf.findAll().size());
-
-        // so let's load-on-startup from a BAD manifest
-        String localResource = "http://localhost:" + port + "/manifest-with-bad-http-resource.json";
-
-        // reset to url manifest location with url-based ko locations
-        System.setProperty("kgrid.shelf.manifest", localResource);
-        ImportExportController iec = ctx.getBeanFactory().createBean(ImportExportController.class);
-
-        assertArrayEquals(
-                new String[]{"http://localhost:" + port + "/manifest-with-bad-http-resource.json"}, iec.getStartupManifestLocations());
-        assertEquals("shelf load should fail when the KOs can't be found", 0, shelf.findAll().size());
-
-        // so let's create a GOOD manifest manually
-        Resource manifestResource = ctx.getResource("http://localhost:" + port + "/manifest-with-http-resource.json");
-        JsonNode manifest = mapper.readTree(readAndPortFilter(manifestResource, port));
-
-        // and test the deposit method
-        iec.depositKnowledgeObject(manifest);
-
-        Map<ArkId, JsonNode> kos = shelf.findAll();
-
-        assertEquals(2, kos.size());
-        assertTrue("Shelf contains hello-world-v1.3", kos.containsKey(new ArkId("ark:/hello/world/v1.3")));
-        assertTrue("Shelf contains score-calc-v0.2.0", kos.containsKey(new ArkId("ark:/score/calc/v0.2.0")));
-    }
-
-    // ResourceLoader tests just to show it works
-
-    @Test
-    public void resourceLoaderTestUrl() throws IOException {
-        Resource manifestResource = ctx.getResource("http://localhost:" + port + "/manifest-with-http-resource.json");
-
-        assertTrue(manifestResource.exists());
-
-        JsonNode manifest = mapper.readTree(readAndPortFilter(manifestResource, port));
-
-        assertThat(manifest.get("manifest").get(0).asText(), containsString(port + "/hello-world-v1.3"));
-    }
-
-    @Test
-    public void resourceLoaderTestsFile() throws IOException {
-
-        Resource manifestResource = ctx.getResource("file:src/test/resources/static/manifest-with-classpath-resource.json");
-
-        assertTrue(manifestResource.exists());
-        JsonNode manifest = mapper.readTree(manifestResource.getInputStream());
-        assertThat((manifest.toString()), containsString("hello-world-v1.3"));
-
-        // Convert to absolute path
-        manifestResource = ctx.getResource(manifestResource.getFile().toURI().toString());
-
-        assertTrue(manifestResource.exists());
-        manifest = mapper.readTree(manifestResource.getInputStream());
-        assertThat((manifest.toString()), containsString("hello-world-v1.3"));
-    }
-
-    @Test
-    public void resourceLoaderTestClasspath() throws IOException {
-
-        Resource manifestResource = ctx.getResource("classpath:/static/manifest-with-classpath-resource.json");
-
-        assertTrue(manifestResource.exists());
-        JsonNode manifest = mapper.readTree(manifestResource.getInputStream());
-        assertThat((manifest.toString()), containsString("hello-world-v1.3"));
-
-    }
-
-    private String readAndPortFilter(Resource manifestResource, String port) throws IOException {
-        String s;
-        try (InputStream stream = manifestResource.getInputStream()) {
-            s = IOUtils.toString(stream, "UTF-8");
-        }
-        return StringUtils.replace(s, "8080", port);
-    }
-
-    @TestConfiguration
-    static class TestConfig {
-
-        @ConditionalOnMissingBean
-        @Bean
-        @Primary
-        CompoundDigitalObjectStore getCdoStore() throws IOException {
-
-            TemporaryFolder folder = new TemporaryFolder();
-            folder.create();
-
-            folder.getRoot().deleteOnExit();
-            return CompoundDigitalObjectStoreFactory.create("filesystem:" + folder.getRoot().toURI());
-        }
-
-    }
-
+  }
 }
