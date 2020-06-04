@@ -36,7 +36,7 @@ jobs:
   trigger_integration_builds:
 
     docker:
-      - image: cimg/base # image: cimg/base:2020.01
+      - image: cimg/base:2020.01 # image: cimg/base:2020.01
 
     steps:
       # Trigger Builds Activator and Library so the newest snapshot gets used
