@@ -47,4 +47,3 @@ jobs:
              https://circleci.com/api/v1.1/project/github/kgrid/kgrid-activator/tree/master?circle-token=$CIRCLECI_TOKEN
             curl -v -X POST --header 'Content-Type:application/json' \
              https://circleci.com/api/v1.1/project/github/kgrid/kgrid-library/tree/master?circle-token=$CIRCLECI_TOKEN
-
