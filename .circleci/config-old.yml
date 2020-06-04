@@ -1,0 +1,120 @@
+# Java Maven CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.0/language-java/ for more details
+
+version: 2
+workflows:
+  version: 2
+  build-and-deploy:
+    jobs:
+      - build:
+          context: kgrid
+      - deploy:
+          context: kgrid
+          requires:
+            - build
+          filters:
+            branches:
+              only: master
+jobs:
+
+  ##############
+  # Build job
+  ##############
+  build:
+    docker:
+      - image: circleci/openjdk:11.0.1-jdk
+      - image: yinlinchen/fcrepo4-docker:4.7.5
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "pom.xml" }}
+            # fallback to using the latest cache if no exact match is found
+            - v1-dependencies-
+
+      #must run install to ensure multi module dependencies(shelf-api) are cached
+      - run: mvn -DskipTests clean package dependency:resolve-plugins dependency:go-offline
+
+      - save_cache:
+          paths:
+            - ~/.m2
+          key: v1-dependencies-{{ checksum "pom.xml" }}
+
+
+      # run build and test
+      - run:
+          name: Build and Test And Verify
+          command: |
+            mvn clean verify
+
+      #  if triggered with Release will prepare and perform maven release
+      - run:
+          name: Release
+          command: |
+            if [ $RELEASE ]; then
+                echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
+                git config --global user.email "$GIT_USER_EMAIL"
+                git config --global user.name "$GIT_USER_NAME"
+                mvn release:clean release:prepare -DscmCommentPrefix="Release [skip ci] " -DreleaseVersion=$RELEASE -DdevelopmentVersion=$NEXT release:perform -P ci -s .circleci/settings.xml
+                TAG_NAME="shelf-api-$RELEASE"
+                curl POST "https://api.github.com/repos/kgrid/kgrid-shelf/releases" \
+                  -H "Authorization: token $GITHUB_TOKEN" -H 'Content-Type: application/json' -d "{\"tag_name\":\"$TAG_NAME\"}"
+                RELEASE_ID=$(curl -s https://api.github.com/repos/kgrid/kgrid-shelf/releases/latest | jq -r ".id")
+                curl POST "https://uploads.github.com/repos/kgrid/kgrid-shelf/releases/$RELEASE_ID/assets?name=$TAG_NAME.jar" \
+                  -H "Authorization: token $GITHUB_TOKEN" -H "Content-Type: application/octet-stream" \
+                  --data-binary "@target/$TAG_NAME.jar"
+            fi
+
+      # save test results
+      - run:
+          name: Save test results
+          command: |
+            mkdir -p ~/tests/junit
+            find . -type f -regex ".*/target/surefire-reports/.*xml" -exec cp {} ~/tests/junit/ \;
+            mkdir -p ~/tests/it
+            find . -type f -regex ".*/target/failsafe-reports/.*xml" -exec cp {} ~/tests/it \;
+          when: always
+
+      - persist_to_workspace:
+          root: . # Persist current working directory
+          paths: ./* # Glob. Will persist everything in folder
+
+  deploy:
+
+    docker:
+      - image: circleci/openjdk:11.0.1-jdk
+
+    environment:
+      # Customize the JVM maximum heap limit
+      MAVEN_OPTS: -Xmx3200m
+
+    steps:
+
+      - attach_workspace:
+          at: ~/project
+
+      - run: ls
+
+      # Will normally run deploy but if triggered with Release will prepare and perform maven release
+      - run:
+          name: Deploy
+          command: |
+            echo $GPG_SECRET_KEYS | base64 --decode | gpg --import --no-tty --batch --yes
+            mvn clean deploy -Dmaven.test.skip=true -P ci -s .circleci/settings.xml
+
+      # Tigger Builds Activator and Library so the newest snapshot gets used
+      - run:
+          name: Trigger Activator and Library to build
+          command: |
+            curl -v -X POST --header 'Content-Type:application/json' \
+             https://circleci.com/api/v1.1/project/github/kgrid/kgrid-activator/tree/master?circle-token=$CIRCLECI_TOKEN
+            curl -v -X POST --header 'Content-Type:application/json' \
+             https://circleci.com/api/v1.1/project/github/kgrid/kgrid-library/tree/master?circle-token=$CIRCLECI_TOKEN
