@@ -14,9 +14,15 @@ workflows:
           filters:
             branches:
               only: master
+      - trigger_integration_builds:
+          filters:
+            branches:
+              only: master
+          requires:
+            - deploy
 
 jobs:
-  deploy: # mvn deploy already does build, test, install, deploy (of the SNAPSHOT)
+  deploy: # mvn deploy does build, test, install, deploy (of the SNAPSHOT)
 
     docker:
       - image: circleci/openjdk:11.0.1-jdk
@@ -26,3 +32,19 @@ jobs:
       - run:
           name: Deploy
           command: mvn clean deploy -s .circleci/settings.xml
+
+  trigger_integration_builds:
+
+    docker:
+      - image: cimg/base # image: cimg/base:2020.01
+
+    steps:
+      # Trigger Builds Activator and Library so the newest snapshot gets used
+      - run:
+          name: Trigger Activator and Library to build
+          command: |
+            curl -v -X POST --header 'Content-Type:application/json' \
+             https://circleci.com/api/v1.1/project/github/kgrid/kgrid-activator/tree/master?circle-token=$CIRCLECI_TOKEN
+            curl -v -X POST --header 'Content-Type:application/json' \
+             https://circleci.com/api/v1.1/project/github/kgrid/kgrid-library/tree/master?circle-token=$CIRCLECI_TOKEN
+
