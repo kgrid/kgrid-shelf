@@ -40,6 +40,7 @@ jobs:
 
     steps:
       # Trigger Builds Activator and Library so the newest snapshot gets used
+      # Triggers the the pipeline using the default branch (GitHub and CirclCI implicit behavior)
       - run:
           name: Trigger Activator and Library to build
           command: |
