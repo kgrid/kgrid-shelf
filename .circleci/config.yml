@@ -7,14 +7,17 @@ workflows:
   maven_test:
     jobs:
       - maven/test: # checkout, build, test, and upload test results
+          context: kgrid
           filters:
             branches:
               ignore: master
       - deploy:
+          context: kgrid
           filters:
             branches:
               only: master
       - trigger_integration_builds:
+          context: kgrid
           filters:
             branches:
               only: master
