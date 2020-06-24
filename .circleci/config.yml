@@ -10,17 +10,17 @@ workflows:
           context: kgrid
           filters:
             branches:
-              ignore: master
+              ignore: main
       - deploy:
           context: kgrid
           filters:
             branches:
-              only: master
+              only: main
       - trigger_integration_builds:
           context: kgrid
           filters:
             branches:
-              only: master
+              only: main
           requires:
             - deploy
 
