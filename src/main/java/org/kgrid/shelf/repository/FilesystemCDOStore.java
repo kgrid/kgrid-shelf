@@ -148,19 +148,6 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
-  private void createKOFolderStructure(Path resourceLocation, Path serviceLocation) {
-    Path shelf = Paths.get(localStorageURI);
-
-    try {
-      Path resourceDir = shelf.resolve(resourceLocation);
-      Files.createDirectories(resourceDir);
-      Path serviceDir = shelf.resolve(serviceLocation);
-      Files.createDirectory(serviceDir);
-    } catch (IOException ioEx) {
-      log.error("Unable to create directories for ko " + ioEx);
-    }
-  }
-
   @Override
   public void createContainer(String... relativePathParts) {
     Path containerPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);

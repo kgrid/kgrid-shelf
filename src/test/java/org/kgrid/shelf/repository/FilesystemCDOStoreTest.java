@@ -81,9 +81,9 @@ public class FilesystemCDOStoreTest {
   @Test
   public void getBinaryReturnsCorrectBinary() {
     String code =
-        "function welcome(inputs) {\n"
-            + "    name = inputs.name;\n"
-            + "    return \"Welcome to Knowledge Grid, \" + name;\n"
+        "function welcome(inputs) {\r\n"
+            + "    var name = inputs.name;\r\n"
+            + "    return \"Welcome to Knowledge Grid, \" + name;\r\n"
             + "}";
     assertEquals(code, new String(koStore.getBinary(helloDirName, "src", "index.js")));
   }
