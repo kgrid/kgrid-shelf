@@ -16,61 +16,22 @@ public final class ArkId implements Comparable {
   private final String name;
   private final String version;
 
-  /* TODO:
-   *    - add static 'create(String path)' factory method for creation from existing path
-   *    - remove all '..Slash..' methods (consider using only naan-name, even in urls)
-   *    - make getId() return 'ark:/naan/name'
-   *    - make getArk return 'naan-name'
-   *    - make getVersion return 'naan-name/version'
-   *    - make getEndpoint return 'naan-name/version/endpoint'
-   *  TODO (consider):
-   *    - add a builder
-   *    - add a 'toURI()' method
-   *    - add a 'with(...)' method to extend the path
-   *    - add a 'server' parameter, 'withServer(...)' method, or static
-   *      'withServer(ArkId, server)' method to support full urls
-   *   .
-   *   Note: all the above stay in URL/URI style forward slash style
-   */
-
-  /*
-   * Can create an ark id with optional version from the following formats:
-   * ark:/naan/name
-   * ark:/naan-name
-   * ark:/naan/name/version
-   * ark:/naan-name/version
-   */
   public ArkId(String path) {
     String arkIdRegex = "ark:/(\\w+)/(\\w+)";
     Matcher arkIdMatcher = Pattern.compile(arkIdRegex).matcher(path);
-    String arkDirectoryRegex = "(\\w+)-(\\w+)";
-    Matcher arkDirectoryMatcher = Pattern.compile(arkDirectoryRegex).matcher(path);
+    // Use [a-zA-Z0-9._\-]+ instead of just \w+ for the version because want to allow periods,
+    // dashes and underscores in versions
+    // Can't use \S for everything because it will capture the / between naan name and version
     String arkIdVersionRegex = "ark:/(\\w+)/(\\w+)/([a-zA-Z0-9._\\-]+)";
     Matcher arkIdVersionMatcher = Pattern.compile(arkIdVersionRegex).matcher(path);
-    String arkDirectoryVersionRegex = "(\\w+)-(\\w+)/([a-zA-Z0-9._\\-]+)";
-    Matcher arkDirectoryVersionMatcher = Pattern.compile(arkDirectoryVersionRegex).matcher(path);
-    String arkHyphenVersionRegex = "(\\w+)-(\\w+)-([a-zA-Z0-9._\\-]+)";
-    Matcher arkHyphenVersionMatcher = Pattern.compile(arkHyphenVersionRegex).matcher(path);
     if (arkIdMatcher.matches()) {
       naan = arkIdMatcher.group(1);
       name = arkIdMatcher.group(2);
-      version = null;
-    } else if (arkDirectoryMatcher.matches()) {
-      naan = arkDirectoryMatcher.group(1);
-      name = arkDirectoryMatcher.group(2);
       version = null;
     } else if (arkIdVersionMatcher.matches()) {
       naan = arkIdVersionMatcher.group(1);
       name = arkIdVersionMatcher.group(2);
       version = arkIdVersionMatcher.group(3);
-    } else if (arkDirectoryVersionMatcher.matches()) {
-      naan = arkDirectoryVersionMatcher.group(1);
-      name = arkDirectoryVersionMatcher.group(2);
-      version = arkDirectoryVersionMatcher.group(3);
-    } else if (arkHyphenVersionMatcher.matches()) {
-      naan = arkHyphenVersionMatcher.group(1);
-      name = arkHyphenVersionMatcher.group(2);
-      version = arkHyphenVersionMatcher.group(3);
     } else {
       throw new IllegalArgumentException("Cannot create ark id from " + path);
     }
@@ -86,15 +47,6 @@ public final class ArkId implements Comparable {
     this.naan = naan;
     this.name = name;
     this.version = version;
-  }
-
-  public static boolean isValid(String id) {
-    try {
-      new ArkId(id);
-      return true;
-    } catch (IllegalArgumentException e) {
-      return false;
-    }
   }
 
   public String getFullArk() {

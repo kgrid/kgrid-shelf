@@ -7,7 +7,7 @@ import com.github.jsonldjava.utils.JsonUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObject;
+import org.kgrid.shelf.domain.KnowledgeObjectFields;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
@@ -54,7 +54,7 @@ public class ZipExportService {
               FilenameUtils.normalize(
                   Paths.get(
                           arkId.getDashArk() + "-" + koMetaData.get("version").asText(),
-                          KnowledgeObject.METADATA_FILENAME)
+                          KnowledgeObjectFields.METADATA_FILENAME.asStr())
                       .toString(),
                   true),
               JsonUtils.toPrettyString(koMetaData).getBytes()));
@@ -147,15 +147,20 @@ public class ZipExportService {
 
     List<String> binaryNodes = new ArrayList<>();
 
-    if (versionNode.has(KnowledgeObject.DEPLOYMENT_SPEC_TERM)
-        && !versionNode.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText().startsWith("$.")) {
-      binaryNodes.add(versionNode.findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM).asText());
+    if (versionNode.has(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr())
+        && !versionNode
+            .findValue(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr())
+            .asText()
+            .startsWith("$.")) {
+      binaryNodes.add(
+          versionNode.findValue(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr()).asText());
     }
-    if (versionNode.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
-      binaryNodes.add(versionNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText());
+    if (versionNode.has(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())) {
+      binaryNodes.add(
+          versionNode.findValue(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr()).asText());
     }
 
-    if (versionNode.has(KnowledgeObject.SERVICE_SPEC_TERM)) {
+    if (versionNode.has(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())) {
       YAMLMapper yamlMapper = new YAMLMapper();
       try {
         JsonNode serviceDescription =
@@ -163,25 +168,31 @@ public class ZipExportService {
                 cdoStore.getBinary(
                     koPath,
                     ResourceUtils.isUrl(
-                            versionNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText())
+                            versionNode
+                                .findValue(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())
+                                .asText())
                         ? Paths.get(
                                 ResourceUtils.toURI(
                                         versionNode
-                                            .findValue(KnowledgeObject.SERVICE_SPEC_TERM)
+                                            .findValue(
+                                                KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())
                                             .asText())
                                     .getPath()
                                     .substring(
                                         ResourceUtils.toURI(
                                                     versionNode
                                                         .findValue(
-                                                            KnowledgeObject.SERVICE_SPEC_TERM)
+                                                            KnowledgeObjectFields.SERVICE_SPEC_TERM
+                                                                .asStr())
                                                         .asText())
                                                 .getPath()
                                                 .indexOf(koPath)
                                             + koPath.length()
                                             + 1))
                             .toString()
-                        : versionNode.findValue(KnowledgeObject.SERVICE_SPEC_TERM).asText()));
+                        : versionNode
+                            .findValue(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())
+                            .asText()));
 
         serviceDescription
             .get("paths")
@@ -195,7 +206,7 @@ public class ZipExportService {
                             cdoStore.getBinary(
                                 koPath,
                                 versionNode
-                                    .findValue(KnowledgeObject.DEPLOYMENT_SPEC_TERM)
+                                    .findValue(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr())
                                     .asText()));
                     artifact =
                         deploymentSpecification

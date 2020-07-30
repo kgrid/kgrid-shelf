@@ -8,7 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObject;
+import org.kgrid.shelf.domain.KnowledgeObjectFields;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -82,7 +82,7 @@ public class ZipImportService {
         (inputStream, zipEntry) -> {
           if (!zipEntry.getName().contains("__MACOSX")) {
 
-            if (zipEntry.getName().endsWith(KnowledgeObject.METADATA_FILENAME)) {
+            if (zipEntry.getName().endsWith(KnowledgeObjectFields.METADATA_FILENAME.asStr())) {
 
               StringWriter writer = new StringWriter();
               IOUtils.copy(inputStream, writer, StandardCharsets.UTF_8);
@@ -99,7 +99,7 @@ public class ZipImportService {
               metadataQueue.put(metadata.get("@id").asText(), metadata);
 
             } else if (!zipEntry.isDirectory()
-                && !zipEntry.getName().endsWith(KnowledgeObject.METADATA_FILENAME)) {
+                && !zipEntry.getName().endsWith(KnowledgeObjectFields.METADATA_FILENAME.asStr())) {
 
               binaryQueue.put(zipEntry.getName(), IOUtils.toByteArray(inputStream));
             }
@@ -176,7 +176,10 @@ public class ZipImportService {
           });
 
       cdoStore.saveMetadata(
-          koMetaData, trxId, arkId.getDashArk() + "-" + version, KnowledgeObject.METADATA_FILENAME);
+          koMetaData,
+          trxId,
+          arkId.getDashArk() + "-" + version,
+          KnowledgeObjectFields.METADATA_FILENAME.asStr());
 
       cdoStore.commitTransaction(trxId);
 

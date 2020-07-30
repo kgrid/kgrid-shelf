@@ -1,12 +1,10 @@
 package org.kgrid.shelf.controller;
 
+import org.kgrid.shelf.domain.KnowledgeObjectFields;
 
 import javax.servlet.http.HttpServletRequest;
-import org.kgrid.shelf.domain.KnowledgeObject;
-import org.springframework.http.RequestEntity;
 
 public interface KnowledgeObjectDecorator {
 
-  void decorate(KnowledgeObject ko, HttpServletRequest request);
-
+  void decorate(KnowledgeObjectFields ko, HttpServletRequest request);
 }
