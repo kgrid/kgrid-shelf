@@ -40,7 +40,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       @Value("${kgrid.shelf.cdostore.url:filesystem:file://shelf}") String connectionURI) {
     URI uri = URI.create(connectionURI.substring(connectionURI.indexOf(':') + 1));
     if (uri.getHost() == null) {
-      this.localStorageURI = uri; // Relative path
+      this.localStorageURI = uri; // Absolute path
     } else {
       final Path path = Paths.get(uri.getHost(), uri.getPath());
       this.localStorageURI = path.toUri();
@@ -70,7 +70,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
               .collect(Collectors.toList());
       children.remove(0); // Remove the parent directory
     } catch (IOException ioEx) {
-      log.error("Cannot read children at location " + path + " " + ioEx);
+      throw new ShelfResourceNotFound("Cannot read children at location " + path, ioEx);
     }
     return children;
   }
@@ -98,10 +98,6 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     JsonNode koMetadata;
     try {
       koMetadata = mapper.readTree(metadataFile);
-      if (koMetadata.isArray()) {
-        // Parent object in json-ld is array, get first element.
-        koMetadata = koMetadata.get(0);
-      }
 
       return ((ObjectNode) koMetadata);
     } catch (Exception ioEx) {
@@ -132,7 +128,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       ObjectWriter writer = new ObjectMapper().writer().with(SerializationFeature.INDENT_OUTPUT);
       writer.writeValue(metadataFile, metadata);
     } catch (IOException ioEx) {
-      log.error("Could not write to file at " + metadataPath + " " + ioEx);
+      throw new ShelfException("Could not write to file at " + metadataPath, ioEx);
     }
   }
 
@@ -143,8 +139,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     try (FileOutputStream fos = FileUtils.openOutputStream(dataFile)) {
       fos.write(output);
     } catch (IOException ioEx) {
-      log.error("Could not write to file at {}", dataPath);
-      throw new ShelfException("Could not write to file at " + dataPath);
+      throw new ShelfException("Could not write to file at " + dataPath, ioEx);
     }
   }
 
