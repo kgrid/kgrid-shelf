@@ -172,10 +172,10 @@ public class KnowledgeObjectController extends ShelfController {
       path = "/{naan}/{name}",
       consumes = MediaType.APPLICATION_JSON_VALUE,
       produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<JsonNode> editKnowledgeObjectOMetadata(
+  public ResponseEntity<JsonNode> editKnowledgeObjectMetadata(
       @PathVariable String naan, @PathVariable String name, @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name);
-    shelf.editMetadata(arkId, null, data);
+    shelf.editMetadata(arkId, data);
     return new ResponseEntity<>(shelf.findKnowledgeObjectMetadata(arkId), HttpStatus.OK);
   }
 
@@ -186,7 +186,7 @@ public class KnowledgeObjectController extends ShelfController {
       @PathVariable String version,
       @RequestBody String data) {
     ArkId arkId = new ArkId(naan, name, version);
-    shelf.editMetadata(arkId, null, data);
+    shelf.editMetadata(arkId, data);
     return new ResponseEntity<>(shelf.findKnowledgeObjectMetadata(arkId), HttpStatus.OK);
   }
 

@@ -1,118 +1,326 @@
 package org.kgrid.shelf.repository;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.apache.commons.io.FileUtils;
 import org.junit.Before;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
 import org.junit.runner.RunWith;
-import org.junit.runners.JUnit4;
 import org.kgrid.shelf.ShelfException;
-import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.KnowledgeObjectFields;
+import org.mockito.Mock;
+import org.mockito.Mockito;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.springframework.mock.web.MockMultipartFile;
+import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.util.Map;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.file.FileSystems;
+import java.util.*;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.*;
 
-@RunWith(JUnit4.class)
+@RunWith(MockitoJUnitRunner.class)
 public class KnowledgeObjectRepositoryTest {
 
-  @Rule public TemporaryFolder folder = new TemporaryFolder();
-
   KnowledgeObjectRepository repository;
-  CompoundDigitalObjectStore compoundDigitalObjectStore;
 
-  ZipImportService zipImportService = new ZipImportService();
-  ZipExportService zipExportService = new ZipExportService();
+  @Mock CompoundDigitalObjectStore compoundDigitalObjectStore;
 
-  private ArkId helloWorldArkId = new ArkId("hello", "world", "v0.1.0");
+  @Mock ZipImportService zipImportService;
+  @Mock ZipExportService zipExportService;
+
+  private ArkId helloWorld1ArkId = new ArkId("hello", "world", "v0.1.0");
+  private ArkId helloWorld2ArkId = new ArkId("hello", "world", "v0.2.0");
+  private ArkId noSpecArkId = new ArkId("bad", "bad", "bad");
+  private String helloWorld1Location =
+      helloWorld1ArkId.getDashArk() + "-" + helloWorld1ArkId.getVersion();
+  private String helloWorld2Location =
+      helloWorld2ArkId.getDashArk() + "-" + helloWorld2ArkId.getVersion();
+  private JsonNode helloWorld1Metadata;
+  private JsonNode helloWorld2Metadata;
+  private List<String> koLocations;
+  private JsonNode noSpecMetadata;
+  private String badLocation = noSpecArkId.getDashArk() + "-" + noSpecArkId.getVersion();
 
   @Before
   public void setUp() throws Exception {
-    FileUtils.copyDirectory(
-        new File("src/test/resources/shelf"), new File(folder.getRoot().getPath()));
-    String connectionURL = "filesystem:" + folder.getRoot().toURI();
-    compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
 
+    koLocations = Arrays.asList(helloWorld1Location, helloWorld2Location, badLocation);
+    helloWorld1Metadata =
+        new ObjectMapper()
+            .readTree(
+                "{\n"
+                    + "  \"@id\" : \"hello-world\",\n"
+                    + "  \"@type\" : \"koio:KnowledgeObject\",\n"
+                    + "  \"identifier\" : \"ark:/hello/world\",\n"
+                    + "  \"version\":\"v0.1.0\",\n"
+                    + "  \"title\" : \"Hello World Title\",\n"
+                    + "  \"contributors\" : \"Kgrid Team\",\n"
+                    + "  \"keywords\":[\"Hello\",\"example\"],\n"
+                    + "  \"hasServiceSpecification\": \"service.yaml\",\n"
+                    + "  \"hasDeploymentSpecification\": \"deployment.yaml\",\n"
+                    + "  \"hasPayload\": \"src/index.js\",\n"
+                    + "  \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
+                    + "}");
+    helloWorld2Metadata =
+        new ObjectMapper()
+            .readTree(
+                "{\n"
+                    + "  \"@id\" : \"hello-world\",\n"
+                    + "  \"@type\" : \"koio:KnowledgeObject\",\n"
+                    + "  \"identifier\" : \"ark:/hello/world\",\n"
+                    + "  \"version\":\"v0.2.0\",\n"
+                    + "  \"title\" : \"Hello World Title\",\n"
+                    + "  \"contributors\" : \"Kgrid Team\",\n"
+                    + "  \"keywords\":[\"Hello\",\"example\"],\n"
+                    + "  \"hasServiceSpecification\": \"service2.yaml\",\n"
+                    + "  \"hasDeploymentSpecification\": \"deployment.yaml\",\n"
+                    + "  \"hasPayload\": \"src/index.js\",\n"
+                    + "  \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
+                    + "}");
+
+    noSpecMetadata =
+        new ObjectMapper().readTree("{  \"identifier\" : \"ark:/bad/bad\",\n\"version\":\"bad\"}");
+    when(compoundDigitalObjectStore.getChildren("")).thenReturn(koLocations);
+    when(compoundDigitalObjectStore.getMetadata(helloWorld1Location))
+        .thenReturn((ObjectNode) helloWorld1Metadata);
+    when(compoundDigitalObjectStore.getMetadata(helloWorld2Location))
+        .thenReturn((ObjectNode) helloWorld2Metadata);
+    when(compoundDigitalObjectStore.getMetadata(badLocation))
+        .thenReturn((ObjectNode) noSpecMetadata);
     repository =
         new KnowledgeObjectRepository(
             compoundDigitalObjectStore, zipImportService, zipExportService);
-    assertTrue(repository.findAll().size() > 0);
   }
 
   @Test
-  public void getKnowledgeObject() throws Exception {
-    assertNotNull(repository.findKnowledgeObjectMetadata(helloWorldArkId));
+  public void inspectsMetadataDuringLoading() {
+    verify(compoundDigitalObjectStore, times(1)).getMetadata(helloWorld1Location);
   }
 
   @Test
-  public void getCorrectMetadata() throws Exception {
-    JsonNode koMeatadata = repository.findKnowledgeObjectMetadata(helloWorldArkId);
-    assertTrue(koMeatadata.findValue("identifier").asText().equals("ark:/hello/world"));
-    assertTrue(koMeatadata.findValue("version").asText().equals("v0.1.0"));
+  public void getCorrectMetadata() {
+    repository.findKnowledgeObjectMetadata(helloWorld1ArkId);
+    verify(compoundDigitalObjectStore, times(2)).getMetadata(helloWorld1Location);
   }
 
   @Test
-  public void getCorrectFolderMetadata() throws Exception {
-    JsonNode koMeatadata = repository.findKnowledgeObjectMetadata(helloWorldArkId);
-    assertTrue(koMeatadata.findValue("identifier").asText().equals("ark:/hello/world"));
-    assertTrue(koMeatadata.findValue("version").asText().equals("v0.1.0"));
+  public void deleteVersion() {
+    repository.delete(helloWorld1ArkId);
+    verify(compoundDigitalObjectStore).delete(helloWorld1Location);
   }
 
   @Test
-  public void deleteVersion() throws Exception {
-
-    ArkId arkId = new ArkId("hello", "world", "v0.2.0");
-    repository.delete(arkId);
-
-    try {
-      repository.findKnowledgeObjectMetadata(arkId);
-      assertTrue("should not find " + arkId.getDashArkVersion(), false);
-    } catch (ShelfResourceNotFound e) {
-      assertTrue(true);
-    }
+  public void editMetadataResolvesToCorrectLocation() throws JsonProcessingException {
+    String newMetadataStr = "{\"@id\" : \"goodbye-world\"}";
+    JsonNode metadata = new ObjectMapper().readTree(newMetadataStr);
+    repository.editMetadata(helloWorld1ArkId, newMetadataStr);
+    verify(compoundDigitalObjectStore)
+        .saveMetadata(
+            metadata,
+            helloWorld1Location
+                + FileSystems.getDefault().getSeparator()
+                + KnowledgeObjectFields.METADATA_FILENAME.asStr());
   }
 
   @Test
-  public void listAllObjects() {
-    Map<ArkId, JsonNode> objects = repository.findAll();
-    assertEquals(4, objects.size());
-    assertEquals(
-        "hello-world", objects.get(new ArkId("hello", "world", "v0.1.0")).get("@id").asText());
-  }
-
-  @Test
-  public void testEditMainMetadata() {
-    String testdata = "{\"test\":\"data\"}";
-    ObjectNode metadata = repository.editMetadata(helloWorldArkId, null, testdata);
-    assertEquals("data", metadata.get("test").asText());
-  }
-
-  @Test
-  public void findServiceSpecification() throws IOException, URISyntaxException {
-
-    JsonNode serviceSpecNode = repository.findServiceSpecification(helloWorldArkId);
-    assertEquals("Hello, World", serviceSpecNode.path("info").path("title").asText());
-    assertEquals("/welcome", serviceSpecNode.findValue("paths").fieldNames().next());
-  }
-
-  @Test(expected = ShelfResourceNotFound.class)
-  public void findServiceSpecificationNotFound() {
-
-    ArkId arkId = new ArkId("ark:/hello/world/v0.4.0");
-    JsonNode serviceSpecNode = repository.findServiceSpecification(arkId);
+  public void editMetadataReturnsSavedData() {
+    String newMetadataStr = "{\"@id\" : \"goodbye-world\"}";
+    repository.editMetadata(helloWorld1ArkId, newMetadataStr);
+    verify(compoundDigitalObjectStore, times(1))
+        .getMetadata(
+            helloWorld1Location
+                + FileSystems.getDefault().getSeparator()
+                + KnowledgeObjectFields.METADATA_FILENAME.asStr());
   }
 
   @Test(expected = ShelfException.class)
-  public void findPayloadNotFound() throws IOException, URISyntaxException {
+  public void editMetadataThrowsCorrectError() {
+    String badMetadata = "{\"@id\" : \"goodbye-world}";
+    repository.editMetadata(helloWorld1ArkId, badMetadata);
+  }
 
-    ArkId arkId = new ArkId("ark:/hello/world/koio.v1");
-    byte[] payload = repository.findPayload(arkId, "koio.v1/one/two/three/welcome.js");
+  @Test
+  public void extractZip_getsCorrectZip() throws IOException {
+    OutputStream oStream = Mockito.mock(OutputStream.class);
+    when(zipExportService.exportObject(
+            helloWorld1ArkId, helloWorld1Location, compoundDigitalObjectStore))
+        .thenReturn(new ByteArrayOutputStream());
+    repository.extractZip(helloWorld1ArkId, oStream);
+    verify(zipExportService)
+        .exportObject(helloWorld1ArkId, helloWorld1Location, compoundDigitalObjectStore);
+  }
+
+  @Test
+  public void extractZip_writesToOutputStream() throws IOException {
+    OutputStream oStream = Mockito.mock(OutputStream.class);
+    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+    when(zipExportService.exportObject(
+            helloWorld1ArkId, helloWorld1Location, compoundDigitalObjectStore))
+        .thenReturn(byteArrayOutputStream);
+    repository.extractZip(helloWorld1ArkId, oStream);
+    verify(oStream).write(byteArrayOutputStream.toByteArray());
+  }
+
+  @Test
+  public void findAll_refreshesMap() {
+    repository.findAll();
+    verify(compoundDigitalObjectStore, times(2)).getMetadata(helloWorld1Location);
+    verify(compoundDigitalObjectStore, times(2)).getChildren("");
+  }
+
+  @Test
+  public void findAll_returnsObjectMap() {
+    Map<ArkId, JsonNode> map = new HashMap<>();
+    map.put(helloWorld1ArkId, helloWorld1Metadata);
+    map.put(helloWorld2ArkId, helloWorld2Metadata);
+    map.put(noSpecArkId, noSpecMetadata);
+    assertEquals(repository.findAll(), map);
+  }
+
+  @Test
+  public void findDeploymentSpec_fetchesDeployment() {
+    String deployment = "{\"This is a deployment spec\": \"yay\"}";
+
+    when(compoundDigitalObjectStore.getBinary(
+            helloWorld1Location + FileSystems.getDefault().getSeparator() + "deployment.yaml"))
+        .thenReturn(deployment.getBytes());
+    JsonNode deploymentSpec = repository.findDeploymentSpecification(helloWorld1ArkId);
+    assertEquals("yay", deploymentSpec.get("This is a deployment spec").asText());
+  }
+
+  @Test(expected = ShelfException.class)
+  public void findDeploymentSpec_throwsErrorWithNoSpec() {
+    repository.findDeploymentSpecification(noSpecArkId);
+  }
+
+  @Test
+  public void findKOMetadata_getsMetadataWithGoodArk() {
+    assertEquals(helloWorld1Metadata, repository.findKnowledgeObjectMetadata(helloWorld1ArkId));
+  }
+
+  @Test
+  public void findKOMetadata_getsAllVersionsWithUnversionedArk() {
+    ArrayNode array = new ObjectMapper().createArrayNode();
+    array.add(helloWorld2Metadata);
+    array.add(helloWorld1Metadata);
+    assertEquals(array, repository.findKnowledgeObjectMetadata(new ArkId("hello", "world")));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void findKOMetadata_nullArk() {
+    repository.findKnowledgeObjectMetadata(null);
+  }
+
+  @Test(expected = ShelfException.class)
+  public void findKOMetadata_unknownArk() {
+    ArkId notInMap = new ArkId("hello", "whirled", "wow");
+    repository.findKnowledgeObjectMetadata(notInMap);
+  }
+
+  @Test(expected = ShelfException.class)
+  public void findKOMetadata_unknownVersion() {
+    ArkId notInMap = new ArkId("hello", "world", "wow");
+    repository.findKnowledgeObjectMetadata(notInMap);
+  }
+
+  @Test
+  public void findServiceSpec_getsCorrectSpec() {
+    String deployment = "{\"This is a service spec\": \"yay\"}";
+    when(compoundDigitalObjectStore.getBinary(
+            helloWorld1Location + FileSystems.getDefault().getSeparator() + "service.yaml"))
+        .thenReturn(deployment.getBytes());
+    JsonNode serviceSpec = repository.findServiceSpecification(helloWorld1ArkId);
+    assertEquals("yay", serviceSpec.get("This is a service spec").asText());
+  }
+
+  @Test(expected = ShelfException.class)
+  public void findServiceSpec_badArkIdThrowsError() {
+    repository.findServiceSpecification(noSpecArkId);
+  }
+
+  @Test
+  public void findServiceSpec_noSpecifiedVersion() {
+    ArkId versionless = new ArkId("hello", "world");
+    String service = "{\"This is a service spec\": \"yay\"}";
+    when(compoundDigitalObjectStore.getBinary(
+            helloWorld2Location + FileSystems.getDefault().getSeparator() + "service2.yaml"))
+        .thenReturn(service.getBytes());
+    JsonNode serviceSpec = repository.findServiceSpecification(versionless);
+    assertEquals("yay", serviceSpec.get("This is a service spec").asText());
+  }
+
+  @Test
+  public void getBinary_returnsBinary() {
+    byte[] binaryData = "I'm a binary!".getBytes();
+    String childPath = "src/index.js";
+    when(compoundDigitalObjectStore.getBinary(helloWorld1Location, childPath))
+        .thenReturn(binaryData);
+    byte[] binaryResult = repository.getBinary(helloWorld1ArkId, childPath);
+    assertArrayEquals(binaryData, binaryResult);
+  }
+
+  @Test(expected = ShelfException.class)
+  public void getBinary_missingArkThrowsException() {
+    ArkId missingArk = new ArkId("missing", "help");
+    String childPath = "src/index.js";
+    repository.getBinary(missingArk, childPath);
+  }
+
+  @Test
+  public void getKoRepoLocation_returnsDataStoreLocation() {
+    when(compoundDigitalObjectStore.getAbsoluteLocation("")).thenReturn("good");
+    assertEquals("good", repository.getKoRepoLocation());
+  }
+
+  @Test
+  public void importZip_importsFile() {
+    MultipartFile file = new MockMultipartFile("hello", "hello".getBytes());
+    when(zipImportService.importKO(any(), eq(compoundDigitalObjectStore)))
+        .thenReturn(helloWorld1ArkId);
+    assertEquals(helloWorld1ArkId, repository.importZip(file));
+  }
+
+  @Test(expected = ShelfException.class)
+  public void importZip_throwsException() throws IOException {
+    MultipartFile file = Mockito.mock(MultipartFile.class);
+    when(file.getInputStream()).thenThrow(IOException.class);
+    repository.importZip(file);
+  }
+
+  @Test
+  public void importZip_importsStream() {
+    InputStream stream = Mockito.mock(InputStream.class);
+    when(zipImportService.importKO(stream, compoundDigitalObjectStore))
+        .thenReturn(helloWorld1ArkId);
+    assertEquals(helloWorld1ArkId, repository.importZip(stream));
+  }
+
+  @Test
+  public void getObjectLocation_returnsLocation() {
+    assertEquals(helloWorld1Location, repository.getObjectLocation(helloWorld1ArkId));
+  }
+
+  @Test
+  public void getObjectLocation_missingObjectIsNull() throws JsonProcessingException {
+    ArkId hellov4 = new ArkId("hello", "world", "v0.4.0");
+    String hellov4Location = hellov4.getDashArk() + "-" + hellov4.getVersion();
+    List<String> location = Collections.singletonList("hello-world-v0.4.0");
+    when(compoundDigitalObjectStore.getChildren("")).thenReturn(location);
+    JsonNode v4Metadata =
+        new ObjectMapper()
+            .readTree("{  \"identifier\" : \"ark:/hello/world\",\n\"version\":\"v0.4.0\"}");
+    when(compoundDigitalObjectStore.getMetadata(hellov4Location))
+        .thenReturn((ObjectNode) v4Metadata);
+    assertEquals(hellov4Location, repository.getObjectLocation(hellov4));
   }
 }
