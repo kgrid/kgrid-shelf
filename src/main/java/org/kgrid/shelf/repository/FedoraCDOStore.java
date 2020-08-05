@@ -10,7 +10,7 @@ import org.apache.http.impl.client.DefaultRedirectStrategy;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.ShelfResourceNotFound;
-import org.kgrid.shelf.domain.KnowledgeObjectFields;
+import org.kgrid.shelf.domain.KoFields;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -164,7 +164,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   @Override
   public void saveMetadata(JsonNode node, String... relativePathParts) {
     String path = pathBuilder(relativePathParts);
-    if (path.endsWith(KnowledgeObjectFields.METADATA_FILENAME.asStr())) {
+    if (path.endsWith(KoFields.METADATA_FILENAME.asStr())) {
       path = StringUtils.substringBeforeLast(path, "/");
     }
     URI destination = URI.create(path);
@@ -344,10 +344,10 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
       HttpEntity<String> entity = new HttpEntity<>("", header);
 
-      if (objectURI.endsWith(KnowledgeObjectFields.METADATA_FILENAME.asStr())) {
+      if (objectURI.endsWith(KoFields.METADATA_FILENAME.asStr())) {
         objectURI =
             objectURI.substring(
-                0, objectURI.length() - KnowledgeObjectFields.METADATA_FILENAME.asStr().length());
+                0, objectURI.length() - KoFields.METADATA_FILENAME.asStr().length());
       }
       ResponseEntity<String> response =
           restTemplate.exchange(objectURI, HttpMethod.GET, entity, String.class);

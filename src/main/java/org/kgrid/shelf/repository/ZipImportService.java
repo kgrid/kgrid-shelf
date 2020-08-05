@@ -8,7 +8,7 @@ import org.apache.commons.io.IOUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObjectFields;
+import org.kgrid.shelf.domain.KoFields;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ObjectUtils;
@@ -45,11 +45,12 @@ public class ZipImportService {
 
     } else {
 
-      if (findKOMetadata(containerResources).has("identifier")
-          && findKOMetadata(containerResources).has("version")) {
+      if (findKOMetadata(containerResources).has(KoFields.IDENTIFIER.asStr())
+          && findKOMetadata(containerResources).has(KoFields.VERSION.asStr())) {
 
-        ArkId arkId = new ArkId(findKOMetadata(containerResources).get("identifier").asText());
-        String version = findKOMetadata(containerResources).get("version").asText();
+        ArkId arkId =
+            new ArkId(findKOMetadata(containerResources).get(KoFields.IDENTIFIER.asStr()).asText());
+        String version = findKOMetadata(containerResources).get(KoFields.VERSION.asStr()).asText();
 
         importObject(arkId, version, cdoStore, containerResources, binaryResources);
         return arkId;
@@ -82,7 +83,7 @@ public class ZipImportService {
         (inputStream, zipEntry) -> {
           if (!zipEntry.getName().contains("__MACOSX")) {
 
-            if (zipEntry.getName().endsWith(KnowledgeObjectFields.METADATA_FILENAME.asStr())) {
+            if (zipEntry.getName().endsWith(KoFields.METADATA_FILENAME.asStr())) {
 
               StringWriter writer = new StringWriter();
               IOUtils.copy(inputStream, writer, StandardCharsets.UTF_8);
@@ -99,14 +100,14 @@ public class ZipImportService {
               metadataQueue.put(metadata.get("@id").asText(), metadata);
 
             } else if (!zipEntry.isDirectory()
-                && !zipEntry.getName().endsWith(KnowledgeObjectFields.METADATA_FILENAME.asStr())) {
+                && !zipEntry.getName().endsWith(KoFields.METADATA_FILENAME.asStr())) {
 
               binaryQueue.put(zipEntry.getName(), IOUtils.toByteArray(inputStream));
             }
           }
         });
 
-    metadataQueue.forEach((filename, metadata) -> containerResources.put(filename, metadata));
+    metadataQueue.forEach(containerResources::put);
 
     binaryQueue.forEach(
         (filename, bytes) -> binaryResources.put(FilenameUtils.normalize(filename), bytes));
@@ -121,12 +122,9 @@ public class ZipImportService {
   public JsonNode findKOMetadata(Map<String, JsonNode> containerResources) {
 
     Optional<JsonNode> koMetadata =
-        containerResources.entrySet().stream()
-            .filter(jsonNode -> jsonNode.getValue().has("@type"))
-            .filter(
-                jsonNode ->
-                    jsonNode.getValue().get("@type").asText().equals("koio:KnowledgeObject"))
-            .map(value -> value.getValue())
+        containerResources.values().stream()
+            .filter(jsonNode -> jsonNode.has("@type"))
+            .filter(jsonNode -> jsonNode.get("@type").asText().equals("koio:KnowledgeObject"))
             .findFirst();
 
     if (koMetadata.isPresent()) {
@@ -167,19 +165,18 @@ public class ZipImportService {
       cdoStore.createContainer(trxId, arkId.getDashArk() + "-" + version);
 
       binaryResources.forEach(
-          (binaryPath, bytes) -> {
-            cdoStore.saveBinary(
-                bytes,
-                trxId,
-                arkId.getDashArk() + "-" + version,
-                StringUtils.substringAfter(binaryPath, File.separator));
-          });
+          (binaryPath, bytes) ->
+              cdoStore.saveBinary(
+                  bytes,
+                  trxId,
+                  arkId.getDashArk() + "-" + version,
+                  StringUtils.substringAfter(binaryPath, File.separator)));
 
       cdoStore.saveMetadata(
           koMetaData,
           trxId,
           arkId.getDashArk() + "-" + version,
-          KnowledgeObjectFields.METADATA_FILENAME.asStr());
+          KoFields.METADATA_FILENAME.asStr());
 
       cdoStore.commitTransaction(trxId);
 

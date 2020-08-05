@@ -7,8 +7,9 @@ import com.github.jsonldjava.utils.JsonUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObjectFields;
+import org.kgrid.shelf.domain.KoFields;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpMethod;
 import org.springframework.stereotype.Service;
 import org.springframework.util.ResourceUtils;
 import org.zeroturnaround.zip.ByteSource;
@@ -40,7 +41,7 @@ public class ZipExportService {
       ArkId arkId, String koPath, CompoundDigitalObjectStore cdoStore) throws ShelfException {
 
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-    List<ZipEntrySource> entries = new ArrayList();
+    List<ZipEntrySource> entries = new ArrayList<>();
 
     // Get KO and add to export zip entries
     ObjectNode koMetaData = cdoStore.getMetadata(koPath);
@@ -53,8 +54,10 @@ public class ZipExportService {
           new ByteSource(
               FilenameUtils.normalize(
                   Paths.get(
-                          arkId.getDashArk() + "-" + koMetaData.get("version").asText(),
-                          KnowledgeObjectFields.METADATA_FILENAME.asStr())
+                          arkId.getDashArk()
+                              + "-"
+                              + koMetaData.get(KoFields.VERSION.asStr()).asText(),
+                          KoFields.METADATA_FILENAME.asStr())
                       .toString(),
                   true),
               JsonUtils.toPrettyString(koMetaData).getBytes()));
@@ -85,21 +88,19 @@ public class ZipExportService {
       List<ZipEntrySource> entries) {
 
     // Add version binary files to export zip entries
-    List<String> binaryNodes = findVersionBinaries(koPath, cdoStore, koPath, koNode);
+    List<String> binaryNodes;
+    try {
+      binaryNodes = findVersionBinaries(koPath, cdoStore, koNode);
 
+    } catch (IOException | URISyntaxException e) {
+      throw new ShelfException("Cannot export zip for object " + arkId, e);
+    }
     binaryNodes.forEach(
         (binaryPath) -> {
           try {
             String uriPath =
                 ResourceUtils.isUrl(binaryPath)
-                    ? Paths.get(
-                            ResourceUtils.toURI(binaryPath)
-                                .getPath()
-                                .substring(
-                                    ResourceUtils.toURI(binaryPath)
-                                        .getPath()
-                                        .indexOf(arkId.getDashArk())))
-                        .toString()
+                    ? getResourceSlug(arkId, binaryPath)
                     : Paths.get(koPath, binaryPath).toString();
 
             byte[] bytes = cdoStore.getBinary(uriPath);
@@ -107,17 +108,12 @@ public class ZipExportService {
             // handle absolute and relative IRIs for binary filesdoc
             String binaryFileName =
                 ResourceUtils.isUrl(binaryPath)
-                    ? Paths.get(
-                            ResourceUtils.toURI(binaryPath)
-                                .getPath()
-                                .substring(
-                                    ResourceUtils.toURI(binaryPath)
-                                        .getPath()
-                                        .indexOf(arkId.getDashArk())))
-                        .toString()
+                    ? FilenameUtils.normalize(getResourceSlug(arkId, binaryPath), true)
                     : FilenameUtils.normalize(
                         Paths.get(
-                                arkId.getDashArk() + "-" + koNode.get("version").asText(),
+                                arkId.getDashArk()
+                                    + "-"
+                                    + koNode.get(KoFields.VERSION.asStr()).asText(),
                                 binaryPath)
                             .toString(),
                         true);
@@ -135,117 +131,100 @@ public class ZipExportService {
    *
    * @param koPath path to ko
    * @param cdoStore data store
-   * @param versionPath path to version
    * @param versionNode jsonnode of version
    * @return list of binary paths for the version
    */
-  protected List<String> findVersionBinaries(
-      String koPath,
-      CompoundDigitalObjectStore cdoStore,
-      String versionPath,
-      JsonNode versionNode) {
+  private List<String> findVersionBinaries(
+      String koPath, CompoundDigitalObjectStore cdoStore, JsonNode versionNode)
+      throws IOException, URISyntaxException {
 
     List<String> binaryNodes = new ArrayList<>();
 
-    if (versionNode.has(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr())
-        && !versionNode
-            .findValue(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr())
-            .asText()
-            .startsWith("$.")) {
-      binaryNodes.add(
-          versionNode.findValue(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr()).asText());
+    if (versionNode.has(KoFields.DEPLOYMENT_SPEC_TERM.asStr())
+        && !getSpecLocation(versionNode, KoFields.DEPLOYMENT_SPEC_TERM).startsWith("$.")) {
+      binaryNodes.add(getSpecLocation(versionNode, KoFields.DEPLOYMENT_SPEC_TERM));
     }
-    if (versionNode.has(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())) {
-      binaryNodes.add(
-          versionNode.findValue(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr()).asText());
-    }
-
-    if (versionNode.has(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())) {
-      YAMLMapper yamlMapper = new YAMLMapper();
-      try {
-        JsonNode serviceDescription =
-            yamlMapper.readTree(
-                cdoStore.getBinary(
-                    koPath,
-                    ResourceUtils.isUrl(
-                            versionNode
-                                .findValue(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())
-                                .asText())
-                        ? Paths.get(
-                                ResourceUtils.toURI(
-                                        versionNode
-                                            .findValue(
-                                                KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())
-                                            .asText())
-                                    .getPath()
-                                    .substring(
-                                        ResourceUtils.toURI(
-                                                    versionNode
-                                                        .findValue(
-                                                            KnowledgeObjectFields.SERVICE_SPEC_TERM
-                                                                .asStr())
-                                                        .asText())
-                                                .getPath()
-                                                .indexOf(koPath)
-                                            + koPath.length()
-                                            + 1))
-                            .toString()
-                        : versionNode
-                            .findValue(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr())
-                            .asText()));
-
-        serviceDescription
-            .get("paths")
-            .fields()
-            .forEachRemaining(
-                service -> {
-                  JsonNode artifact = null;
-                  try {
-                    JsonNode deploymentSpecification =
-                        yamlMapper.readTree(
-                            cdoStore.getBinary(
-                                koPath,
-                                versionNode
-                                    .findValue(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr())
-                                    .asText()));
-                    artifact =
-                        deploymentSpecification
-                            .get("endpoints")
-                            .get(service.getKey())
-                            .get("artifact");
-                  } catch (Exception e) {
-                    log.info(
-                        versionPath
-                            + " has no deployment descriptor, looking for info in the service spec.");
-
-                    JsonNode post = service.getValue().get("post");
-                    if (post.has("x-kgrid-activation")) {
-                      artifact = post.get("x-kgrid-activation").get("artifact");
-                    }
-                  }
-                  if (artifact != null) {
-                    if (artifact.isArray()) {
-                      artifact.forEach((JsonNode element) -> binaryNodes.add(element.asText()));
-                    } else {
-                      binaryNodes.add(artifact.asText());
-                    }
-                  } else {
-                    log.warn(
-                        "Cannot find location of artifact in service spec or deployment descriptor for endpoint "
-                            + service.getKey());
-                  }
-                });
-
-      } catch (IOException ioe) {
-
-        log.info(versionPath, " has no service descriptor, can't export");
-
-      } catch (URISyntaxException urie) {
-        log.info(versionPath, " issue handling URI process of path");
-      }
+    if (versionNode.has(KoFields.SERVICE_SPEC_TERM.asStr())) {
+      binaryNodes.add(getSpecLocation(versionNode, KoFields.SERVICE_SPEC_TERM));
+      getArtifacts(koPath, cdoStore, versionNode, binaryNodes);
     }
 
     // remove dups
     return binaryNodes.stream().distinct().collect(Collectors.toList());
+  }
+
+  private void getArtifacts(
+      String koPath,
+      CompoundDigitalObjectStore cdoStore,
+      JsonNode versionNode,
+      List<String> binaryNodes)
+      throws IOException, URISyntaxException {
+    YAMLMapper yamlMapper = new YAMLMapper();
+    JsonNode serviceDescription =
+        yamlMapper.readTree(
+            cdoStore.getBinary(
+                koPath,
+                ResourceUtils.isUrl(getSpecLocation(versionNode, KoFields.SERVICE_SPEC_TERM))
+                    ? getServiceSpecSlug(koPath, versionNode)
+                    : getSpecLocation(versionNode, KoFields.SERVICE_SPEC_TERM)));
+
+    serviceDescription
+        .get("paths")
+        .fields()
+        .forEachRemaining(
+            service -> {
+              JsonNode artifact = null;
+              try {
+                JsonNode deploymentSpecification =
+                    yamlMapper.readTree(
+                        cdoStore.getBinary(
+                            koPath, getSpecLocation(versionNode, KoFields.DEPLOYMENT_SPEC_TERM)));
+                artifact =
+                    deploymentSpecification
+                        .get("endpoints")
+                        .get(service.getKey())
+                        .get(KoFields.ARTIFACT.asStr());
+              } catch (Exception e) {
+                log.info(
+                    koPath
+                        + " has no deployment descriptor, looking for info in the service spec.");
+
+                JsonNode post = service.getValue().get(HttpMethod.POST.name().toLowerCase());
+                if (post.has(KoFields.SERVICE_ACTIVATION_KEY.asStr())) {
+                  artifact =
+                      post.get(KoFields.SERVICE_ACTIVATION_KEY.asStr())
+                          .get(KoFields.ARTIFACT.asStr());
+                }
+              }
+              if (artifact != null) {
+                if (artifact.isArray()) {
+                  artifact.forEach((JsonNode element) -> binaryNodes.add(element.asText()));
+                } else {
+                  binaryNodes.add(artifact.asText());
+                }
+              } else {
+                log.warn(
+                    "Cannot find location of artifact in service spec or deployment descriptor for endpoint "
+                        + service.getKey());
+              }
+            });
+  }
+
+  private String getSpecLocation(JsonNode versionNode, KoFields specTerm) {
+    return versionNode.findValue(specTerm.asStr()).asText();
+  }
+
+  private String getServiceSpecSlug(String koPath, JsonNode versionNode) throws URISyntaxException {
+    final String specPath =
+        ResourceUtils.toURI(getSpecLocation(versionNode, KoFields.SERVICE_SPEC_TERM)).getPath();
+    return Paths.get(specPath.substring(specPath.indexOf(koPath) + koPath.length() + 1)).toString();
+  }
+
+  private String getResourceSlug(ArkId arkId, String binaryPath) throws URISyntaxException {
+    return Paths.get(
+            ResourceUtils.toURI(binaryPath)
+                .getPath()
+                .substring(ResourceUtils.toURI(binaryPath).getPath().indexOf(arkId.getDashArk())))
+        .toString();
   }
 }

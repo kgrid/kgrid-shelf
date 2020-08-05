@@ -9,7 +9,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.ShelfResourceNotFound;
-import org.kgrid.shelf.domain.KnowledgeObjectFields;
+import org.kgrid.shelf.domain.KoFields;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -22,7 +22,7 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -61,7 +61,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   public List<String> getChildren(int maxDepth, String... filePathParts) {
     Path path = Paths.get(Paths.get(localStorageURI).toString(), filePathParts);
-    List<String> children = new ArrayList<>();
+    List<String> children;
     try {
       children =
           Files.walk(path, maxDepth, FOLLOW_LINKS)
@@ -89,8 +89,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     Path metadataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     File metadataFile = metadataPath.toFile();
     if (metadataFile.isDirectory()
-        || !metadataFile.getPath().endsWith(KnowledgeObjectFields.METADATA_FILENAME.asStr())) {
-      metadataFile = metadataPath.resolve(KnowledgeObjectFields.METADATA_FILENAME.asStr()).toFile();
+        || !metadataFile.getPath().endsWith(KoFields.METADATA_FILENAME.asStr())) {
+      metadataFile = metadataPath.resolve(KoFields.METADATA_FILENAME.asStr()).toFile();
     }
 
     ObjectMapper mapper = new ObjectMapper();
@@ -108,7 +108,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   @Override
   public byte[] getBinary(String... relativePathParts) {
     Path binaryPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
-    byte[] bytes = null;
+    byte[] bytes;
     try {
       bytes = Files.readAllBytes(binaryPath);
     } catch (IOException ioEx) {
@@ -122,7 +122,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     Path metadataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
     File metadataFile = metadataPath.toFile();
     if (metadataFile.isDirectory()) {
-      metadataFile = metadataPath.resolve(KnowledgeObjectFields.METADATA_FILENAME.asStr()).toFile();
+      metadataFile = metadataPath.resolve(KoFields.METADATA_FILENAME.asStr()).toFile();
     }
     try {
       ObjectWriter writer = new ObjectMapper().writer().with(SerializationFeature.INDENT_OUTPUT);
@@ -157,7 +157,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     try {
       FileUtils.deleteDirectory(new File(path.toString()));
     } catch (IOException e) {
-      throw new ShelfException("Could not delete cdo " + relativePathParts, e);
+      throw new ShelfException("Could not delete cdo " + Arrays.deepToString(relativePathParts), e);
     }
   }
 

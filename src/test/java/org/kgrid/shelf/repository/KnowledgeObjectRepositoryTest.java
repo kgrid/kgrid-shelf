@@ -10,7 +10,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObjectFields;
+import org.kgrid.shelf.domain.KoFields;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -129,7 +129,7 @@ public class KnowledgeObjectRepositoryTest {
             metadata,
             helloWorld1Location
                 + FileSystems.getDefault().getSeparator()
-                + KnowledgeObjectFields.METADATA_FILENAME.asStr());
+                + KoFields.METADATA_FILENAME.asStr());
   }
 
   @Test
@@ -140,7 +140,7 @@ public class KnowledgeObjectRepositoryTest {
         .getMetadata(
             helloWorld1Location
                 + FileSystems.getDefault().getSeparator()
-                + KnowledgeObjectFields.METADATA_FILENAME.asStr());
+                + KoFields.METADATA_FILENAME.asStr());
   }
 
   @Test(expected = ShelfException.class)

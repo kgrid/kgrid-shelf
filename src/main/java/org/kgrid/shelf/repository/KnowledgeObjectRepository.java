@@ -9,7 +9,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.domain.KnowledgeObjectFields;
+import org.kgrid.shelf.domain.KoFields;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -65,8 +65,7 @@ public class KnowledgeObjectRepository {
    */
   public ObjectNode editMetadata(ArkId arkId, String metadata) {
     Path metadataPath;
-    metadataPath =
-        Paths.get(resolveArkIdToLocation(arkId), KnowledgeObjectFields.METADATA_FILENAME.asStr());
+    metadataPath = Paths.get(resolveArkIdToLocation(arkId), KoFields.METADATA_FILENAME.asStr());
     JsonNode jsonMetadata;
     try {
       jsonMetadata = new ObjectMapper().readTree(metadata);
@@ -119,10 +118,10 @@ public class KnowledgeObjectRepository {
    */
   public JsonNode findDeploymentSpecification(ArkId arkId, JsonNode metadata) {
 
-    if (metadata.has(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr())) {
+    if (metadata.has(KoFields.DEPLOYMENT_SPEC_TERM.asStr())) {
 
       String deploymentSpecPath =
-          metadata.findValue(KnowledgeObjectFields.DEPLOYMENT_SPEC_TERM.asStr()).asText();
+          metadata.findValue(KoFields.DEPLOYMENT_SPEC_TERM.asStr()).asText();
 
       String uriPath = Paths.get(resolveArkIdToLocation(arkId), deploymentSpecPath).toString();
 
@@ -146,10 +145,7 @@ public class KnowledgeObjectRepository {
 
     if (!arkId.hasVersion()) {
       ArrayNode node = new ObjectMapper().createArrayNode();
-      versionMap.forEach(
-          (version, location) -> {
-            node.add(dataStore.getMetadata(location));
-          });
+      versionMap.forEach((version, location) -> node.add(dataStore.getMetadata(location)));
       return node;
     }
     String nodeLoc = versionMap.get(arkId.getVersion());
@@ -169,14 +165,13 @@ public class KnowledgeObjectRepository {
    */
   public JsonNode findServiceSpecification(ArkId arkId, JsonNode versionNode) {
 
-    JsonNode serviceSpecNode =
-        versionNode.findValue(KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr());
+    JsonNode serviceSpecNode = versionNode.findValue(KoFields.SERVICE_SPEC_TERM.asStr());
     if (serviceSpecNode == null) {
       throw new ShelfException(
           "Metadata for "
               + arkId
               + " is missing a \""
-              + KnowledgeObjectFields.SERVICE_SPEC_TERM.asStr()
+              + KoFields.SERVICE_SPEC_TERM.asStr()
               + "\" field.");
     }
     String serviceSpecPath = serviceSpecNode.asText();
@@ -286,21 +281,23 @@ public class KnowledgeObjectRepository {
         }
 
         JsonNode metadata = dataStore.getMetadata(koLocation);
-        if (!metadata.has("identifier")) {
+        if (!metadata.has(KoFields.IDENTIFIER.asStr())) {
           log.warn("Folder with metadata " + koLocation + " is missing an @id field, cannot load.");
           continue;
         }
 
-        if (!metadata.has("version")) {
+        if (!metadata.has(KoFields.VERSION.asStr())) {
           log.warn(
               "Folder with metadata "
                   + koLocation
                   + " is missing a version field, will default to reverse alphabetical lookup");
-          arkId = new ArkId(metadata.get("identifier").asText());
+          arkId = new ArkId(metadata.get(KoFields.IDENTIFIER.asStr()).asText());
         } else {
           arkId =
               new ArkId(
-                  metadata.get("identifier").asText() + "/" + metadata.get("version").asText());
+                  metadata.get(KoFields.IDENTIFIER.asStr()).asText()
+                      + "/"
+                      + metadata.get(KoFields.VERSION.asStr()).asText());
         }
 
         if (objectLocations.get(arkId.getDashArk()) != null
