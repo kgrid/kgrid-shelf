@@ -1,0 +1,374 @@
+{
+	"info": {
+		"_postman_id": "ec34f2cb-e18e-4cbf-9416-ad2915725d6c",
+		"name": "Shelf-Smoketest",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Load Example Collection From Manifest",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "ac230f9a-a252-4187-9ec7-bbd59387008d",
+						"exec": [
+							"",
+							"pm.test(\"Status code is 201\", function () {",
+							"    pm.response.to.have.status(201);",
+							"});",
+							"",
+							"pm.test(\"Loaded 7 objects\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Added.length).to.eql(7);",
+							"});",
+							"",
+							"pm.test(\"Examples Collection Loaded\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData.Added.includes(\"ark:/V8/simple\")).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"manifest\": [\r\n    \"https://github.com/kgrid-objects/example-collection/releases/download/3.0.0/js-bundled-v1.0.zip\",\r\n    \"https://github.com/kgrid-objects/example-collection/releases/download/3.0.0/js-executive-v1.0.zip\",\r\n    \"https://github.com/kgrid-objects/example-collection/releases/download/3.0.0/js-simple-v1.0.zip\",\r\n    \"https://github.com/kgrid-objects/example-collection/releases/download/3.0.0/proxy-executive-v1.0.zip\",\r\n    \"https://github.com/kgrid-objects/example-collection/releases/download/3.0.0/proxy-multiartifact-v1.0.zip\",\r\n    \"https://github.com/kgrid-objects/example-collection/releases/download/3.0.0/proxy-simple-v1.0.zip\",\r\n    \"https://github.com/kgrid-objects/example-collection/releases/download/3.0.0/V8-simple-v1.0.zip\"\r\n  ]\r\n}\r\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{url}}/kos/manifest",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kos",
+						"manifest"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get All Metadata",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "bd4c5baa-15f2-4554-b8c5-5e4bb5a55616",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"Content-Type is present\", function () {\r",
+							"    pm.response.to.have.header(\"Content-Type\");\r",
+							"});\r",
+							"pm.test(\"Has a KnowledgeObject\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData[0]['@type']).to.eql(\"koio:KnowledgeObject\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/kos",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Gets a metadata resource as json",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "bfee6bcc-dcc9-4db2-a663-9905450159a5",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"Content-Type is present\", function () {\r",
+							"    pm.response.to.have.header(\"Content-Type\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"id is V8-simple\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData[0]['@id']).to.eql('V8-simple');\r",
+							"});\r",
+							"\r",
+							"\r",
+							"pm.test(\"version is v1.0\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData[0].version).to.eql('v1.0');\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/kos/V8/simple",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kos",
+						"V8",
+						"simple"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Gets a version of a ko",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "94930611-bb2c-44d3-8f4c-338e4d7c8acb",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"Content-Type is present\", function () {\r",
+							"    pm.response.to.have.header(\"Content-Type\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"id is V8-simple\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData['@id']).to.eql('V8-simple');\r",
+							"});\r",
+							"\r",
+							"pm.test(\"version is v1.0\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData.version).to.eql('v1.0');\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/kos/V8/simple?v=v1.0",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kos",
+						"V8",
+						"simple"
+					],
+					"query": [
+						{
+							"key": "v",
+							"value": "v1.0"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Gets the ko service",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "7a6a8501-cc6e-4a8e-9d76-75a9dcbfb889",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"Content-Type is present\", function () {\r",
+							"    pm.response.to.have.header(\"Content-Type\");\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/kos/V8/simple/service?v=v1.0",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kos",
+						"V8",
+						"simple",
+						"service"
+					],
+					"query": [
+						{
+							"key": "v",
+							"value": "v1.0"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Gets a binary resource",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "e8a87e9d-1192-4dd8-9a96-a69a12ce4d35",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"pm.test(\"Content-Type is present\", function () {\r",
+							"    pm.response.to.have.header(\"Content-Type\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Body matches string\", function () {\r",
+							"    pm.expect(pm.response.text()).to.include(\"function welcome(inputs)\");\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{url}}/kos/V8/simple/v1.0/src/index.js",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kos",
+						"V8",
+						"simple",
+						"v1.0",
+						"src",
+						"index.js"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Gets a zip representation of a full object",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"id": "73c28e0a-02d9-488e-9a3f-eedee8a7584a",
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {\r",
+							"    pm.response.to.have.status(200);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Content-Type is present\", function () {\r",
+							"    pm.response.to.have.header(\"Content-Type\");\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Zip size is 1738 bytes\", function () {\r",
+							"    pm.expect(pm.response.responseSize).to.eql(1738);\r",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {
+					"accept": true
+				}
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Accept",
+						"value": "application/zip",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "{{url}}/kos/V8/simple?v=v1.0",
+					"host": [
+						"{{url}}"
+					],
+					"path": [
+						"kos",
+						"V8",
+						"simple"
+					],
+					"query": [
+						{
+							"key": "v",
+							"value": "v1.0"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"id": "caacae45-7b20-4b90-8ac6-448106dee77b",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"id": "da12e671-f2c4-4a05-bc96-0d6b180aba28",
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"id": "7e01da58-b06a-41d9-a954-51b5f4b53c2c",
+			"key": "url",
+			"value": "localhost:8080"
+		}
+	],
+	"protocolProfileBehavior": {}
+}
