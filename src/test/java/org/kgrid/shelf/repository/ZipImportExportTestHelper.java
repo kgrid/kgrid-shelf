@@ -10,7 +10,6 @@ import org.zeroturnaround.zip.ZipEntrySource;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -26,7 +25,7 @@ public class ZipImportExportTestHelper {
     public static final String KO_PATH = NAAN + "-" + NAME + "-" + VERSION;
     public static final ArkId ARK_ID = new ArkId(NAAN, NAME, VERSION);
     public static final String SEPARATOR = "/";
-    
+
     public static final byte[] DEPLOYMENT_BYTES =
             ("endpoints:\n  /welcome:\n    artifact: " + PAYLOAD_PATH + "\n    function: welcome\n")
                     .getBytes();
@@ -37,14 +36,13 @@ public class ZipImportExportTestHelper {
                     .getBytes();
     public static final byte[] PAYLOAD_BYTES = "function(input){return \"hi\";}".getBytes();
 
-    public static ByteArrayInputStream packZip(byte[] metadata, byte[] deploymentSpec, byte[] serviceSpec, byte[] payload) throws IOException {
+    public static ByteArrayInputStream packZipForImport(byte[] metadata, byte[] deploymentSpec, byte[] serviceSpec, byte[] payload) {
+        return new ByteArrayInputStream(packZipForExport(metadata, deploymentSpec, serviceSpec, payload).toByteArray());
+    }
+
+    public static ByteArrayOutputStream packZipForExport(byte[] metadata, byte[] deploymentSpec, byte[] serviceSpec, byte[] payload) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         List<ZipEntrySource> filesToBeZipped = new ArrayList<>();
-
-        if (metadata != null && metadata.length != 0) {
-            filesToBeZipped.add(
-                    new ByteSource(KO_PATH + SEPARATOR + KoFields.METADATA_FILENAME.asStr(), metadata));
-        }
         if (deploymentSpec != null && deploymentSpec.length != 0) {
             filesToBeZipped.add(new ByteSource(KO_PATH + SEPARATOR + DEPLOYMENT_YAML_PATH, deploymentSpec));
         }
@@ -54,8 +52,12 @@ public class ZipImportExportTestHelper {
         if (payload != null && payload.length != 0) {
             filesToBeZipped.add(new ByteSource(KO_PATH + SEPARATOR + PAYLOAD_PATH, payload));
         }
-        pack(filesToBeZipped.toArray(new ZipEntrySource[filesToBeZipped.size()]), outputStream);
-        return new ByteArrayInputStream(outputStream.toByteArray());
+        if (metadata != null && metadata.length != 0) {
+            filesToBeZipped.add(
+                    new ByteSource(KO_PATH + SEPARATOR + KoFields.METADATA_FILENAME.asStr(), metadata));
+        }
+        pack(filesToBeZipped.toArray(new ZipEntrySource[0]), outputStream);
+        return outputStream;
     }
 
     public static JsonNode generateMetadata(String serviceYamlPath, String deploymentYamlPath, boolean hasAtId, boolean hasIdentifier, boolean hasVersion, boolean hasType) {
