@@ -19,7 +19,7 @@ public class ShelfHealthIndicator implements HealthIndicator {
     try {
       return Health.up()
           .withDetail("numberOfKOs", shelf.findAll().size())
-          .withDetail("kgrid.shelf.cdostore.url", shelf.getConnection())
+          .withDetail("kgrid.shelf.cdostore.url", shelf.getKoRepoLocation())
           .build();
     } catch (Exception ex) {
       return Health.down().withException(ex).build();

@@ -30,165 +30,167 @@ import java.util.Optional;
 @RestController
 @RequestMapping("${kgrid.shelf.endpoint:kos}")
 @CrossOrigin(origins = "${cors.url:}")
-public class ImportExportController extends ShelfController implements InitializingBean {
+public class ImportExportController extends ShelfExceptionHandler implements InitializingBean {
 
-  final String[] startupManifestLocations;
+    final String[] startupManifestLocations;
 
-  @Autowired ApplicationContext applicationContext;
+    @Autowired
+    ApplicationContext applicationContext;
 
-  @Autowired ObjectMapper mapper;
+    @Autowired
+    ObjectMapper mapper;
 
-  public ImportExportController(
-      KnowledgeObjectRepository shelf,
-      Optional<KnowledgeObjectDecorator> kod,
-      @Value("${kgrid.shelf.manifest:}") String[] startupManifestLocations) {
-    super(shelf, kod);
-    this.startupManifestLocations = startupManifestLocations;
-  }
-
-  @Override
-  public void afterPropertiesSet() {
-    if (null != startupManifestLocations) {
-      log.info("Initializing shelf with {} Manifests", startupManifestLocations.length);
-      for (String location : startupManifestLocations) {
-        log.info("Loading manifest from location: {}", location);
-        loadManifestIfSet(location);
-      }
-    }
-  }
-
-  Map<String, Object> loadManifestIfSet(String startupManifestLocation) {
-    Resource manifestResource;
-    try {
-      manifestResource = applicationContext.getResource(startupManifestLocation);
-    } catch (Exception e) {
-      log.warn(e.getMessage());
-      return Collections.emptyMap();
+    public ImportExportController(
+            KnowledgeObjectRepository shelf,
+            Optional<KnowledgeObjectDecorator> kod,
+            @Value("${kgrid.shelf.manifest:}") String[] startupManifestLocations) {
+        super(shelf, kod);
+        this.startupManifestLocations = startupManifestLocations;
     }
 
-    try (InputStream stream = manifestResource.getInputStream()) {
-      JsonNode manifest = mapper.readTree(stream);
-      return depositKnowledgeObject(manifest).getBody();
-    } catch (IOException e) {
-      log.warn(e.getMessage());
-      return Collections.emptyMap();
-    }
-  }
-
-  @GetMapping(
-      path = "/{naan}/{name}/{version}",
-      headers = "Accept=application/zip",
-      produces = "application/zip")
-  public void exportKnowledgeObjectVersion(
-      @PathVariable String naan,
-      @PathVariable String name,
-      @PathVariable String version,
-      HttpServletResponse response) {
-
-    log.info("get ko zip for " + naan + "/" + name);
-    ArkId arkId = new ArkId(naan, name, version);
-
-    exportZip(response, arkId);
-  }
-
-  @GetMapping(
-      path = "/{naan}/{name}",
-      headers = "Accept=application/zip",
-      produces = "application/zip")
-  public void exportKnowledgeObject(
-      @PathVariable String naan,
-      @PathVariable String name,
-      @RequestParam(name = "v", required = false) String version,
-      HttpServletResponse response) {
-
-    ArkId arkId;
-    if (version != null && !"".equals(version)) {
-      log.info("get ko zip for " + naan + "/" + name + "/" + version);
-      arkId = new ArkId(naan, name, version);
-    } else {
-      log.info("get ko zip for " + naan + "/" + name);
-      arkId = new ArkId(naan, name);
-    }
-    exportZip(response, arkId);
-  }
-
-  @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-  public ResponseEntity<Map<String, String>> depositKnowledgeObject(
-      @RequestParam("ko") MultipartFile zippedKo) {
-
-    log.info("Add ko via zip");
-    ArkId arkId = shelf.importZip(zippedKo);
-
-    Map<String, String> response = new HashMap<String, String>();
-    HttpHeaders headers = addKOHeaderLocation(arkId);
-    response.put("Added", arkId.getDashArk());
-
-    return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
-  }
-
-  @PostMapping(path = "/manifest", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Map<String, Object>> depositKnowledgeObject(
-      @RequestBody JsonNode manifest) {
-
-    log.info("Add kos from manifest {}", manifest.asText());
-
-    if (!manifest.has("manifest")) {
-      throw new IllegalArgumentException(
-          "Provide manifest field with url or array of urls as the value");
+    @Override
+    public void afterPropertiesSet() {
+        if (null != startupManifestLocations) {
+            log.info("Initializing shelf with {} Manifests", startupManifestLocations.length);
+            for (String location : startupManifestLocations) {
+                log.info("Loading manifest from location: {}", location);
+                loadManifestIfSet(location);
+            }
+        }
     }
 
-    Map<String, Object> response = new HashMap<String, Object>();
-    JsonNode uris = manifest.get("manifest");
-    ArrayNode arkList = new ObjectMapper().createArrayNode();
-    log.info("importing {} kos", uris.size());
-    uris.forEach(
-        ko -> {
-          String koLocation = ko.asText();
-          try {
-            Resource koURL = applicationContext.getResource(koLocation);
-            log.info("import {}", koLocation);
-            InputStream zipStream = koURL.getInputStream();
-            ArkId arkId = shelf.importZip(zipStream);
-            arkList.add(arkId.toString());
-          } catch (Exception ex) {
-            log.warn("Error importing {}, {}", koLocation, ex.getMessage());
-          }
-        });
-    response.put("Added", arkList);
-    return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
-  }
+    Map<String, Object> loadManifestIfSet(String startupManifestLocation) {
+        Resource manifestResource;
+        try {
+            manifestResource = applicationContext.getResource(startupManifestLocation);
+        } catch (Exception e) {
+            log.warn(e.getMessage());
+            return Collections.emptyMap();
+        }
 
-  protected void exportZip(HttpServletResponse response, ArkId arkId) {
-
-    response.setHeader("Content-Type", "application/octet-stream");
-    response.addHeader(
-        "Content-Disposition",
-        "attachment; filename=\""
-            + (arkId.hasVersion()
-                ? arkId.getDashArk() + "-" + arkId.getVersion()
-                : arkId.getDashArk())
-            + ".zip\"");
-    try {
-      shelf.extractZip(arkId, response.getOutputStream());
-    } catch (IOException ex) {
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    } finally {
-      try {
-        response.getOutputStream().close();
-      } catch (IOException e) {
-        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-      }
+        try (InputStream stream = manifestResource.getInputStream()) {
+            JsonNode manifest = mapper.readTree(stream);
+            return depositKnowledgeObject(manifest).getBody();
+        } catch (IOException e) {
+            log.warn(e.getMessage());
+            return Collections.emptyMap();
+        }
     }
-  }
 
-  private HttpHeaders addKOHeaderLocation(ArkId arkId) {
-    URI loc =
-        ServletUriComponentsBuilder.fromCurrentRequestUri()
-            .pathSegment(arkId.getSlashArk())
-            .build()
-            .toUri();
-    HttpHeaders headers = new HttpHeaders();
-    headers.setLocation(loc);
-    return headers;
-  }
+    @GetMapping(
+            path = "/{naan}/{name}/{version}",
+            headers = "Accept=application/zip",
+            produces = "application/zip")
+    public void exportKnowledgeObjectVersion(
+            @PathVariable String naan,
+            @PathVariable String name,
+            @PathVariable String version,
+            HttpServletResponse response) {
+
+        log.info("get ko zip for " + naan + "/" + name);
+        ArkId arkId = new ArkId(naan, name, version);
+
+        exportZip(response, arkId);
+    }
+
+    @GetMapping(
+            path = "/{naan}/{name}",
+            headers = "Accept=application/zip",
+            produces = "application/zip")
+    public void exportKnowledgeObject(
+            @PathVariable String naan,
+            @PathVariable String name,
+            @RequestParam(name = "v", required = false) String version,
+            HttpServletResponse response) {
+
+        ArkId arkId;
+        if (version != null && !"".equals(version)) {
+            log.info("get ko zip for " + naan + "/" + name + "/" + version);
+            arkId = new ArkId(naan, name, version);
+        } else {
+            log.info("get ko zip for " + naan + "/" + name);
+            arkId = new ArkId(naan, name);
+        }
+        exportZip(response, arkId);
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<Map<String, String>> depositKnowledgeObject(
+            @RequestParam("ko") MultipartFile zippedKo) {
+
+        log.info("Add ko via zip");
+        ArkId arkId = shelf.importZip(zippedKo);
+
+        Map<String, String> response = new HashMap<String, String>();
+        HttpHeaders headers = addKOHeaderLocation(arkId);
+        response.put("Added", arkId.getDashArk());
+
+        return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
+    }
+
+    @PostMapping(path = "/manifest", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Map<String, Object>> depositKnowledgeObject(
+            @RequestBody JsonNode manifest) {
+
+        log.info("Add kos from manifest {}", manifest.asText());
+
+        if (!manifest.has("manifest")) {
+            throw new IllegalArgumentException(
+                    "Provide manifest field with url or array of urls as the value");
+        }
+
+        Map<String, Object> response = new HashMap<String, Object>();
+        JsonNode uris = manifest.get("manifest");
+        ArrayNode arkList = new ObjectMapper().createArrayNode();
+        log.info("importing {} kos", uris.size());
+        uris.forEach(
+                ko -> {
+                    String koLocation = ko.asText();
+                    try {
+                        Resource koURL = applicationContext.getResource(koLocation);
+                        log.info("import {}", koLocation);
+                        InputStream zipStream = koURL.getInputStream();
+                        ArkId arkId = shelf.importZip(zipStream);
+                        arkList.add(arkId.toString());
+                    } catch (Exception ex) {
+                        log.warn("Error importing {}, {}", koLocation, ex.getMessage());
+                    }
+                });
+        response.put("Added", arkList);
+        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+    }
+
+    protected void exportZip(HttpServletResponse response, ArkId arkId) {
+
+        response.setHeader("Content-Type", "application/octet-stream");
+        response.addHeader(
+                "Content-Disposition",
+                "attachment; filename=\""
+                        + (arkId.hasVersion()
+                        ? arkId.getDashArk() + "-" + arkId.getVersion()
+                        : arkId.getDashArk())
+                        + ".zip\"");
+        try {
+            shelf.extractZip(arkId, response.getOutputStream());
+        } catch (IOException ex) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } finally {
+            try {
+                response.getOutputStream().close();
+            } catch (IOException e) {
+                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+            }
+        }
+    }
+
+    private HttpHeaders addKOHeaderLocation(ArkId arkId) {
+        URI loc =
+                ServletUriComponentsBuilder.fromCurrentRequestUri()
+                        .pathSegment(arkId.getSlashArk())
+                        .build()
+                        .toUri();
+        HttpHeaders headers = new HttpHeaders();
+        headers.setLocation(loc);
+        return headers;
+    }
 }

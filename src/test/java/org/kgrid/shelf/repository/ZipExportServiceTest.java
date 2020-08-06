@@ -1,121 +1,119 @@
 package org.kgrid.shelf.repository;
 
-import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
-import static org.junit.Assert.*;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.github.jsonldjava.utils.JsonUtils;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.kgrid.shelf.ShelfException;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.zeroturnaround.zip.ZipEntrySource;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
-import org.apache.commons.io.FileUtils;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.ClassRule;
-import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
-import org.kgrid.shelf.domain.ArkId;
-import org.zeroturnaround.zip.ZipUtil;
 
+import static org.junit.jupiter.api.Assertions.assertArrayEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.kgrid.shelf.repository.ZipImportExportTestHelper.*;
+import static org.mockito.Mockito.when;
+
+@RunWith(MockitoJUnitRunner.class)
 public class ZipExportServiceTest {
 
-  @ClassRule
-  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
-  private FilesystemCDOStore compoundDigitalObjectStore;
+    @InjectMocks
+    private ZipExportService service;
+    @Mock
+    private CompoundDigitalObjectStore cdoStore;
 
-  @Before
-  public void setUp() throws Exception {
+    public static final String SERVICE_SPEC_URL = "http://localhost/" + KO_PATH + "/service.yaml";
 
-    String connectionURL = "filesystem:" + temporaryFolder.getRoot().toURI();
-    compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
-    Path shelf = Paths.get(compoundDigitalObjectStore.getAbsoluteLocation(""));
+    private JsonNode happyMetadata;
+    private byte[] happyMetadataBytes;
+    private JsonNode serviceUrlMetadata;
+    private JsonNode noDeploymentMetadata;
+    private JsonNode noServiceSpecMetadata;
 
-    ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/hello-world-v2.zip").toFile(), temporaryFolder.getRoot() );
-    ZipUtil.unpack(Paths.get("src/test/resources/fixtures/import-export/kozip.zip").toFile(), temporaryFolder.getRoot() );
+    private List<ZipEntrySource> expectedFiles = new ArrayList<>();
+    private ByteArrayOutputStream expectedOutputStream = new ByteArrayOutputStream();
 
-    temporaryFolder.newFolder("export");
+    @Before
+    public void setUp() throws IOException {
 
-  }
+        happyMetadata = generateMetadata(SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, true, true);
+        happyMetadataBytes = JsonUtils.toPrettyString(happyMetadata).getBytes();
+        serviceUrlMetadata = generateMetadata(SERVICE_SPEC_URL, DEPLOYMENT_YAML_PATH, true, true, true, true);
+        noDeploymentMetadata = generateMetadata(SERVICE_SPEC_URL, null, true, true, true, true);
+        noServiceSpecMetadata = generateMetadata(null, DEPLOYMENT_YAML_PATH, true, true, true, true);
 
-  @Test
-  public void exportKnowledgeObject() throws IOException {
-
-    ZipExportService zipExportService = new ZipExportService();
-
-    ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world", "v2"), "hello-world-v2", compoundDigitalObjectStore);
-
-    writeZip(outputStream);
-
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(),"export","hello-world-v2"),  3, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
-
-    System.out.println("exportKnowledgeObject");
-
-    filesPaths.forEach(file ->{
-      System.out.println(file.toAbsolutePath().toString());
-    });
-
-    assertEquals(3,filesPaths.size());
-
-  }
-
-  @Test
-  public void exportKnowledgeObjectWackyFolderName() throws IOException {
-
-    ZipExportService zipExportService = new ZipExportService();
-
-    ByteArrayOutputStream outputStream = zipExportService.exportObject(
-        new ArkId("hello", "world", "v3"), "mycoolko", compoundDigitalObjectStore);
-
-    writeZip(outputStream);
-
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(),"export","hello-world-v3"),  3, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
-
-    filesPaths.forEach(file ->{
-      System.out.println(file.toAbsolutePath().toString());
-    });
-
-    assertEquals(3,filesPaths.size());
-
-  }
-
-    protected void writeZip(ByteArrayOutputStream zipOutputStream) {
-
-    try {
-
-      Path path = Paths.get(temporaryFolder.getRoot().getAbsolutePath(), "export.zip");
-      OutputStream outputStream = new FileOutputStream(path.toString());
-      try {
-        zipOutputStream.writeTo(outputStream);
-      } finally {
-        outputStream.close();
-
-        ZipUtil.unpack(
-            Paths.get(temporaryFolder.getRoot().getAbsolutePath(), "export.zip").toFile(),
-            Paths.get(temporaryFolder.getRoot().getAbsolutePath(),"export").toFile());
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
+        when(cdoStore.getBinary(Paths.get(KO_PATH, DEPLOYMENT_YAML_PATH).toString()))
+                .thenReturn(DEPLOYMENT_BYTES);
+        when(cdoStore.getBinary(Paths.get(KO_PATH, PAYLOAD_PATH).toString())).thenReturn(PAYLOAD_BYTES);
+        when(cdoStore.getBinary(Paths.get(KO_PATH, SERVICE_YAML_PATH).toString()))
+                .thenReturn(SERVICE_BYTES);
+        when(cdoStore.getBinary(KO_PATH, DEPLOYMENT_YAML_PATH)).thenReturn(DEPLOYMENT_BYTES);
+        when(cdoStore.getBinary(KO_PATH, SERVICE_YAML_PATH)).thenReturn(SERVICE_BYTES);
+        when(cdoStore.getMetadata(KO_PATH)).thenReturn((ObjectNode) happyMetadata);
     }
-  }
-  @After
-  public void cleanUp() throws IOException {
 
-    FileUtils.deleteDirectory( Paths.get(temporaryFolder.getRoot().getAbsolutePath(),"export").toFile());
+    @Test
+    public void exportObject_happyPathReturnsStream() {
+        byte[] zippedObject = service.exportObject(ARK_ID, KO_PATH, cdoStore).toByteArray();
+        expectedOutputStream = packZipForExport(happyMetadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        byte[] expectedObject = expectedOutputStream.toByteArray();
 
-  }
+        assertArrayEquals(expectedObject, zippedObject);
+    }
+
+    @Test
+    public void exportObject_returnsStreamGivenUrlPaths() {
+        when(cdoStore.getMetadata(KO_PATH)).thenReturn((ObjectNode) serviceUrlMetadata);
+        byte[] expectedObject = packZipForExport(serviceUrlMetadata.toPrettyString().getBytes(), DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES).toByteArray();
+        byte[] zippedObject = service.exportObject(ARK_ID, KO_PATH, cdoStore).toByteArray();
+
+        assertArrayEquals(expectedObject, zippedObject);
+    }
+
+    @Test
+    public void exportObject_worksWithNoDeploymentSpec() {
+        when(cdoStore.getMetadata(KO_PATH)).thenReturn((ObjectNode) noDeploymentMetadata);
+        byte[] expectedObject = packZipForExport(noDeploymentMetadata.toPrettyString().getBytes(), null, SERVICE_BYTES, PAYLOAD_BYTES).toByteArray();
+        byte[] zippedObject = service.exportObject(ARK_ID, KO_PATH, cdoStore).toByteArray();
+
+        assertArrayEquals(expectedObject, zippedObject);
+    }
+
+    @Test
+    public void exportObject_worksWithNoServiceSpec() {
+        when(cdoStore.getMetadata(KO_PATH)).thenReturn((ObjectNode) noServiceSpecMetadata);
+        byte[] expectedObject = packZipForExport(noServiceSpecMetadata.toPrettyString().getBytes(), DEPLOYMENT_BYTES, null, null).toByteArray();
+        byte[] zippedObject = service.exportObject(ARK_ID, KO_PATH, cdoStore).toByteArray();
+
+        assertArrayEquals(expectedObject, zippedObject);
+    }
+
+    @Test
+    public void exportObject_failsNoDeploymentAnywhere() {
+        when(cdoStore.getMetadata(KO_PATH)).thenReturn((ObjectNode) noDeploymentMetadata);
+        final byte[] serviceSpecNoXKgrid = "paths:\n  /endpoint:\n    post:\n      data".getBytes();
+        when(cdoStore.getBinary(KO_PATH, SERVICE_YAML_PATH)).thenReturn(serviceSpecNoXKgrid);
+        when(cdoStore.getBinary(Paths.get(KO_PATH, SERVICE_YAML_PATH).toString()))
+                .thenReturn(serviceSpecNoXKgrid);
+        byte[] expectedObject = packZipForExport(noDeploymentMetadata.toPrettyString().getBytes(), null, serviceSpecNoXKgrid, null).toByteArray();
+        byte[] zippedObject = service.exportObject(ARK_ID, KO_PATH, cdoStore).toByteArray();
+
+        assertArrayEquals(expectedObject, zippedObject);
+    }
+
+    @Test
+    public void exportObject_failsUnparsableDeployment() {
+        when(cdoStore.getBinary(KO_PATH, SERVICE_YAML_PATH)).thenReturn("\tbroken".getBytes());
+        assertThrows(ShelfException.class, () -> service.exportObject(ARK_ID, KO_PATH, cdoStore));
+    }
+
 }

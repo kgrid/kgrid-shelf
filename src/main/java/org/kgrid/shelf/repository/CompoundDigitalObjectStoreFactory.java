@@ -1,18 +1,9 @@
 package org.kgrid.shelf.repository;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.ApplicationContext;
 import org.springframework.stereotype.Component;
 
 @Component
 public class CompoundDigitalObjectStoreFactory {
-
-  private static ApplicationContext applicationContext;
-
-  @Autowired
-  public CompoundDigitalObjectStoreFactory(ApplicationContext applicationContext) {
-    this.applicationContext = applicationContext;
-  }
 
   public static CompoundDigitalObjectStore create(String cdoStoreURI) {
     String shelfClass = cdoStoreURI.substring(0, cdoStoreURI.indexOf(':'));
@@ -22,8 +13,7 @@ public class CompoundDigitalObjectStoreFactory {
     if ("filesystem".equals(shelfClass)) {
       return new FilesystemCDOStore(cdoStoreURI);
     } else {
-      throw new IllegalStateException(
-          "Cannot find specified CDO store version " + shelfClass);
+      throw new IllegalArgumentException("Cannot find specified CDO store version " + shelfClass);
     }
   }
 }

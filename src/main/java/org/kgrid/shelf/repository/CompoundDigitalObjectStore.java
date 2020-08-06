@@ -2,14 +2,13 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.util.List;
 import org.kgrid.shelf.ShelfException;
+
+import java.util.List;
 
 public interface CompoundDigitalObjectStore {
 
   List<String> getChildren(String... relativeLocationParts);
-
-  boolean isMetadata(String... relativeLocationParts);
 
   String getAbsoluteLocation(String... relativeLocationParts);
 
@@ -30,5 +29,4 @@ public interface CompoundDigitalObjectStore {
   void commitTransaction(String transactionID);
 
   void rollbackTransaction(String transactionID);
-
 }

@@ -1,164 +1,176 @@
 package org.kgrid.shelf.repository;
 
-import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
-import static org.junit.Assert.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import com.github.jsonldjava.utils.JsonUtils;
 import org.junit.Before;
-import org.junit.ClassRule;
 import org.junit.Test;
-import org.junit.rules.TemporaryFolder;
+import org.junit.runner.RunWith;
 import org.kgrid.shelf.ShelfException;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.zeroturnaround.zip.ZipUtil;
+import org.kgrid.shelf.domain.KoFields;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnitRunner;
 
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.kgrid.shelf.repository.ZipImportExportTestHelper.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+
+@RunWith(MockitoJUnitRunner.class)
 public class ZipImportServiceTest {
 
-  @ClassRule
-  public static TemporaryFolder temporaryFolder = new TemporaryFolder();
+    private static String TRANSACTION_ID = "transacting out of line";
+    @InjectMocks
+    ZipImportService zipImportService;
 
-  ZipImportService service = new ZipImportService();
+    @Mock
+    CompoundDigitalObjectStore compoundDigitalObjectStore;
 
-  @Autowired
-  CompoundDigitalObjectStore compoundDigitalObjectStore;
+    private JsonNode metadataNode;
+    private byte[] metadataBytes;
+    private final String dashArkWithVersion = ARK_ID.getDashArk() + "-" + VERSION;
 
+    @Before
+    public void setUp() throws IOException {
+        metadataNode = generateMetadata(
+                SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, true, true);
+        metadataBytes = JsonUtils.toPrettyString(metadataNode).getBytes();
+        when(compoundDigitalObjectStore.createTransaction()).thenReturn(TRANSACTION_ID);
+    }
 
-  @Before
-  public void setUp() throws Exception {
+    @Test
+    public void importKo_UsesCreateTransactionOnCdoStore() {
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        zipImportService.importKO(inStream, compoundDigitalObjectStore);
+        verify(compoundDigitalObjectStore).createTransaction();
+    }
 
-    String connectionURL = "filesystem:" + temporaryFolder.getRoot().toURI();
-    compoundDigitalObjectStore = new FilesystemCDOStore(connectionURL);
+    @Test
+    public void importKo_UsesCreateContainerOnCdoStore() {
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        zipImportService.importKO(inStream, compoundDigitalObjectStore);
+        verify(compoundDigitalObjectStore).createContainer(TRANSACTION_ID, dashArkWithVersion);
+    }
 
+    @Test
+    public void importKo_CallsSaveBinaryForEachFile() {
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        zipImportService.importKO(inStream, compoundDigitalObjectStore);
+        verify(compoundDigitalObjectStore)
+                .saveBinary(
+                        SERVICE_BYTES,
+                        TRANSACTION_ID,
+                        dashArkWithVersion,
+                        SERVICE_YAML_PATH);
+        verify(compoundDigitalObjectStore)
+                .saveBinary(
+                        DEPLOYMENT_BYTES,
+                        TRANSACTION_ID,
+                        dashArkWithVersion,
+                        DEPLOYMENT_YAML_PATH);
+        verify(compoundDigitalObjectStore)
+                .saveBinary(
+                        PAYLOAD_BYTES,
+                        TRANSACTION_ID,
+                        dashArkWithVersion,
+                        PAYLOAD_PATH);
+    }
 
-  }
-  /**
-   * Happy Day test, unzips into folder with all the stuff in the zip
-   * @throws IOException
-   */
-  @Test
-  public void testImportKnowledgeObject() throws IOException {
+    @Test
+    public void importKo_CallsSaveMetadata() {
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        zipImportService.importKO(inStream, compoundDigitalObjectStore);
+        verify(compoundDigitalObjectStore)
+                .saveMetadata(metadataNode,
+                        TRANSACTION_ID,
+                        dashArkWithVersion,
+                        KoFields.METADATA_FILENAME.asStr());
+    }
 
-    InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/import-export/hello-world-v3.zip");
+    @Test
+    public void importKo_CallsCommitTransaction() {
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        zipImportService.importKO(inStream, compoundDigitalObjectStore);
+        verify(compoundDigitalObjectStore).commitTransaction(TRANSACTION_ID);
+    }
 
-    service.importKO(zipStream, compoundDigitalObjectStore);
+    @Test
+    public void importKo_ThrowsExceptionWithNoMetadata() {
+        ByteArrayInputStream inStream = packZipForImport(null, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        ShelfException shelfException = assertThrows(ShelfException.class,
+                () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
+        assertEquals("The imported zip is not a valid knowledge object, no valid metadata found",
+                shelfException.getMessage());
+    }
 
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "hello-world-v3"), 3, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
+    @Test
+    public void importKo_ThrowsExceptionWithNoIdentifierInMetadata() throws IOException {
+        metadataNode = generateMetadata(
+                SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, false, true, true);
+        metadataBytes = JsonUtils.toPrettyString(metadataNode).getBytes();
 
-    filesPaths.forEach(file -> {
-      System.out.println(file.toAbsolutePath().toString());
-    });
-    assertEquals(3, filesPaths.size());
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        ShelfException shelfException = assertThrows(ShelfException.class,
+                () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
+        assertEquals("Can't import identifier and/or version are not found in the metadata",
+                shelfException.getMessage());
+    }
 
-    zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/import-export/hello-world-v3.zip");
-    service.importKO(zipStream, compoundDigitalObjectStore);
+    @Test
+    public void importKo_ThrowsExceptionWithNoAtIdInMetadata() throws IOException {
+        metadataNode = generateMetadata(
+                SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, false, true, false, true);
+        metadataBytes = JsonUtils.toPrettyString(metadataNode).getBytes();
 
-  }
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        ShelfException shelfException = assertThrows(ShelfException.class,
+                () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
+        assertEquals("The imported zip is not a valid knowledge object, no valid metadata found",
+                shelfException.getMessage());
+    }
 
-  /**
-   * Packaged KO with different directory structure
-   * @throws IOException
-   */
-  @Test
-  public void testImportDifferentDirectoryKnowledgeObject() throws IOException {
+    @Test
+    public void importKo_ThrowsExceptionWithNoVersionInMetadata() throws IOException {
+        metadataNode = generateMetadata(
+                SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, false, true);
+        metadataBytes = JsonUtils.toPrettyString(metadataNode).getBytes();
 
-    InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/import-export/bad-package.zip");
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        ShelfException shelfException = assertThrows(ShelfException.class,
+                () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
+        assertEquals("Can't import identifier and/or version are not found in the metadata",
+                shelfException.getMessage());
+    }
 
-    service.importKO(zipStream, compoundDigitalObjectStore);
+    @Test
+    public void importKo_ThrowsExceptionWithNoTypeInMetadata() throws IOException {
+        metadataNode = generateMetadata(
+                SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, true, false);
+        metadataBytes = JsonUtils.toPrettyString(metadataNode).getBytes();
 
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "hello-world-v3"), 3, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        ShelfException shelfException = assertThrows(ShelfException.class,
+                () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
+        assertEquals("The imported zip is not a valid knowledge object, no valid metadata found",
+                shelfException.getMessage());
+    }
 
-    filesPaths.forEach(file -> {
-      System.out.println(file.toAbsolutePath().toString());
-    });
-    assertEquals(3, filesPaths.size());
+    @Test
+    public void importKo_ThrowsExceptionWhenSavingGoesWrong() throws IOException {
+        doThrow(new ShelfException("OPE")).when(compoundDigitalObjectStore).saveMetadata(any(), any(), any(), any());
 
-  }
+        metadataNode = generateMetadata(
+                SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, true, true);
+        metadataBytes = JsonUtils.toPrettyString(metadataNode).getBytes();
 
-  @Test( expected = ShelfException.class)
-  public void testBadKOMetaData() throws IOException {
-
-    InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/import-export/bad-kometadata.zip");
-
-
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-  }
-
-  @Test
-  public void testfindKOMetadata() {
-    Map<String, JsonNode> containerResources = new HashMap<>();
-
-    ObjectNode koMetadata = new ObjectMapper().createObjectNode();
-    koMetadata.put("@id", "hello-world");
-    koMetadata.put("@type", "koio:KnowledgeObject");
-
-    ObjectNode implMetadata = new ObjectMapper().createObjectNode();
-    implMetadata = new ObjectMapper().createObjectNode();
-    implMetadata.put("@id", "v1");
-    implMetadata.put("@type", "koio:Implementation\"");
-
-    containerResources.put("v1", implMetadata);
-    containerResources.put("v1", koMetadata);
-
-    JsonNode metadata = service.findKOMetadata(containerResources);
-    assertEquals("hello-world", metadata.get("@id").asText());
-    assertEquals("koio:KnowledgeObject", metadata.get("@type").asText());
-  }
-
-
-  /**
-   * Happy Day test, unzips into folder with all the stuff in the zip
-   * @throws IOException
-   */
-  @Test
-  public void testZipOfZipsImport() throws IOException {
-
-    InputStream zipStream = ZipImportServiceTest.class
-        .getResourceAsStream("/fixtures/import-export/kozip.zip");
-
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-    List<Path> filesPaths;
-    filesPaths = Files.walk(Paths.get(
-        temporaryFolder.getRoot().toPath().toString(), "hello-world-v3"), 3, FOLLOW_LINKS)
-        .filter(Files::isRegularFile)
-        .map(Path::toAbsolutePath)
-        .collect(Collectors.toList());
-
-    filesPaths.forEach(file -> {
-      System.out.println(file.toAbsolutePath().toString());
-    });
-    assertEquals(3, filesPaths.size());
-
-    zipStream = ZipImportServiceTest.class.getResourceAsStream("/fixtures/import-export/hello-world-v3.zip");
-    service.importKO(zipStream, compoundDigitalObjectStore);
-
-  }
-
-
+        ByteArrayInputStream inStream = packZipForImport(metadataBytes, DEPLOYMENT_BYTES, SERVICE_BYTES, PAYLOAD_BYTES);
+        ShelfException shelfException = assertThrows(ShelfException.class,
+                () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
+        assertEquals("Could not import " + ARK_ID.toString(),
+                shelfException.getMessage());
+    }
 }
