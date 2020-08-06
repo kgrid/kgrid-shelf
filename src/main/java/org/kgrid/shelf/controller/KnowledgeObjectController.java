@@ -20,7 +20,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("${kgrid.shelf.endpoint:kos}")
 @CrossOrigin(origins = "${cors.url:}")
-public class KnowledgeObjectController extends ShelfController {
+public class KnowledgeObjectController extends ShelfExceptionHandler {
 
     public KnowledgeObjectController(
             KnowledgeObjectRepository shelf, Optional<KnowledgeObjectDecorator> kod) {

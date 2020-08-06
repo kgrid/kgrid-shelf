@@ -30,7 +30,7 @@ import java.util.Optional;
 @RestController
 @RequestMapping("${kgrid.shelf.endpoint:kos}")
 @CrossOrigin(origins = "${cors.url:}")
-public class ImportExportController extends ShelfController implements InitializingBean {
+public class ImportExportController extends ShelfExceptionHandler implements InitializingBean {
 
     final String[] startupManifestLocations;
 
