@@ -62,7 +62,6 @@ public class ZipImportServiceTest {
     final byte[] payload = "function(input){return \"hi\";}".getBytes();
 
     private List<ZipEntrySource> expectedFiles = new ArrayList<>();
-    private ByteArrayOutputStream byteArrayOStream = new ByteArrayOutputStream();
     private byte[] happyMetadataBytes;
     private String dashArkWithVersion = ARK_ID.getDashArk() + "-" + VERSION;
 
@@ -78,21 +77,21 @@ public class ZipImportServiceTest {
 
     @Test
     public void importKo_UsesCreateTransactionOnCdoStore() throws IOException {
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         zipImportService.importKO(inStream, compoundDigitalObjectStore);
         verify(compoundDigitalObjectStore).createTransaction();
     }
 
     @Test
     public void importKo_UsesCreateContainerOnCdoStore() throws IOException {
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         zipImportService.importKO(inStream, compoundDigitalObjectStore);
         verify(compoundDigitalObjectStore).createContainer(TRANSACTION_ID, dashArkWithVersion);
     }
 
     @Test
     public void importKo_CallsSaveBinaryForEachFile() throws IOException {
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         zipImportService.importKO(inStream, compoundDigitalObjectStore);
         verify(compoundDigitalObjectStore)
                 .saveBinary(
@@ -116,7 +115,7 @@ public class ZipImportServiceTest {
 
     @Test
     public void importKo_CallsSaveMetadata() throws IOException {
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         zipImportService.importKO(inStream, compoundDigitalObjectStore);
         verify(compoundDigitalObjectStore)
                 .saveMetadata(happyMetadata,
@@ -127,14 +126,14 @@ public class ZipImportServiceTest {
 
     @Test
     public void importKo_CallsCommitTransaction() throws IOException {
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         zipImportService.importKO(inStream, compoundDigitalObjectStore);
         verify(compoundDigitalObjectStore).commitTransaction(TRANSACTION_ID);
     }
 
     @Test
     public void importKo_ThrowsExceptionWithNoMetadata() throws IOException {
-        ByteArrayInputStream inStream = packZip(null, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(null, deploymentSpec, serviceSpec, payload);
         ShelfException shelfException = assertThrows(ShelfException.class,
                 () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
         assertEquals("The imported zip is not a valid knowledge object, no valid metadata found",
@@ -147,7 +146,7 @@ public class ZipImportServiceTest {
                 SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, false, true, true);
         happyMetadataBytes = JsonUtils.toPrettyString(happyMetadata).getBytes();
 
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         ShelfException shelfException = assertThrows(ShelfException.class,
                 () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
         assertEquals("Can't import identifier and/or version are not found in the metadata",
@@ -160,7 +159,7 @@ public class ZipImportServiceTest {
                 SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, false, true, false, true);
         happyMetadataBytes = JsonUtils.toPrettyString(happyMetadata).getBytes();
 
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         ShelfException shelfException = assertThrows(ShelfException.class,
                 () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
         assertEquals("The imported zip is not a valid knowledge object, no valid metadata found",
@@ -173,7 +172,7 @@ public class ZipImportServiceTest {
                 SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, false, true);
         happyMetadataBytes = JsonUtils.toPrettyString(happyMetadata).getBytes();
 
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         ShelfException shelfException = assertThrows(ShelfException.class,
                 () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
         assertEquals("Can't import identifier and/or version are not found in the metadata",
@@ -186,7 +185,7 @@ public class ZipImportServiceTest {
                 SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, true, false);
         happyMetadataBytes = JsonUtils.toPrettyString(happyMetadata).getBytes();
 
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         ShelfException shelfException = assertThrows(ShelfException.class,
                 () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
         assertEquals("The imported zip is not a valid knowledge object, no valid metadata found",
@@ -202,7 +201,7 @@ public class ZipImportServiceTest {
                 SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, true, true);
         happyMetadataBytes = JsonUtils.toPrettyString(happyMetadata).getBytes();
 
-        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload, byteArrayOStream);
+        ByteArrayInputStream inStream = packZip(happyMetadataBytes, deploymentSpec, serviceSpec, payload);
         ShelfException shelfException = assertThrows(ShelfException.class,
                 () -> zipImportService.importKO(inStream, compoundDigitalObjectStore));
         assertEquals("Could not import " + ARK_ID.toString(),
@@ -210,7 +209,9 @@ public class ZipImportServiceTest {
     }
 
 
-    private ByteArrayInputStream packZip(byte[] metadata, byte[] deploymentSpec, byte[] serviceSpec, byte[] payload, ByteArrayOutputStream outputStream) throws IOException {
+    private ByteArrayInputStream packZip(byte[] metadata, byte[] deploymentSpec, byte[] serviceSpec, byte[] payload) throws IOException {
+        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+
         if (metadata != null && metadata.length != 0) {
             metadata = JsonUtils.toPrettyString(happyMetadata).getBytes();
             expectedFiles.add(
