@@ -3,6 +3,7 @@ package org.kgrid.shelf.repository;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.github.jsonldjava.utils.JsonUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -51,10 +52,10 @@ public class ZipExportServiceTest {
         noDeploymentMetadata = generateMetadata(SERVICE_SPEC_URL, null, true, true, true, true);
         noServiceSpecMetadata = generateMetadata(null, DEPLOYMENT_YAML_PATH, true, true, true, true);
 
-        when(cdoStore.getBinary(Paths.get(KO_PATH, DEPLOYMENT_YAML_PATH).toString()))
+        when(cdoStore.getBinary(FilenameUtils.normalize(Paths.get(KO_PATH, DEPLOYMENT_YAML_PATH).toString(), true)))
                 .thenReturn(DEPLOYMENT_BYTES);
-        when(cdoStore.getBinary(Paths.get(KO_PATH, PAYLOAD_PATH).toString())).thenReturn(PAYLOAD_BYTES);
-        when(cdoStore.getBinary(Paths.get(KO_PATH, SERVICE_YAML_PATH).toString()))
+        when(cdoStore.getBinary(FilenameUtils.normalize(Paths.get(KO_PATH, PAYLOAD_PATH).toString(), true))).thenReturn(PAYLOAD_BYTES);
+        when(cdoStore.getBinary(FilenameUtils.normalize(Paths.get(KO_PATH, SERVICE_YAML_PATH).toString(), true)))
                 .thenReturn(SERVICE_BYTES);
         when(cdoStore.getBinary(KO_PATH, DEPLOYMENT_YAML_PATH)).thenReturn(DEPLOYMENT_BYTES);
         when(cdoStore.getBinary(KO_PATH, SERVICE_YAML_PATH)).thenReturn(SERVICE_BYTES);

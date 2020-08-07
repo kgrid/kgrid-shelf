@@ -2,6 +2,7 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jsonldjava.utils.JsonUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -77,7 +78,7 @@ public class ZipImportServiceTest {
                         PAYLOAD_BYTES,
                         TRANSACTION_ID,
                         dashArkWithVersion,
-                        PAYLOAD_PATH);
+                        FilenameUtils.normalize(PAYLOAD_PATH, true));
     }
 
     @Test
