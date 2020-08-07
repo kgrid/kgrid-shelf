@@ -19,6 +19,7 @@ public class ZipImportExportTestHelper {
     public static final String SERVICE_YAML_PATH = "service.yaml";
     public static final String DEPLOYMENT_YAML_PATH = "deployment.yaml";
     public static final String PAYLOAD_PATH = "src/index.js";
+//    public static final String PAYLOAD_PATH = Paths.get("src","index.js";
     public static final String NAAN = "naan";
     public static final String NAME = "name";
     public static final String VERSION = "version";

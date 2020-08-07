@@ -14,6 +14,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -78,7 +79,7 @@ public class ZipImportServiceTest {
                         PAYLOAD_BYTES,
                         TRANSACTION_ID,
                         dashArkWithVersion,
-                        FilenameUtils.normalize(PAYLOAD_PATH, true));
+                        Paths.get(PAYLOAD_PATH).toString());
     }
 
     @Test
