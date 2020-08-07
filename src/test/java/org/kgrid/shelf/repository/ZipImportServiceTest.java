@@ -2,6 +2,7 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.github.jsonldjava.utils.JsonUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,6 +14,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -77,7 +79,7 @@ public class ZipImportServiceTest {
                         PAYLOAD_BYTES,
                         TRANSACTION_ID,
                         dashArkWithVersion,
-                        PAYLOAD_PATH);
+                        Paths.get(PAYLOAD_PATH).toString());
     }
 
     @Test
