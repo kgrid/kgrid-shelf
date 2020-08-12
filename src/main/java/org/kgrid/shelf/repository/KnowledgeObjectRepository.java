@@ -264,7 +264,7 @@ public class KnowledgeObjectRepository {
     }
   }
 
-  private void refreshObjectMap() {
+  public void refreshObjectMap() {
     objectLocations.clear();
     knowledgeObjects.clear();
 

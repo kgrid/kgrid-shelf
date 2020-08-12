@@ -8,6 +8,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.repository.ImportService;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -50,9 +51,11 @@ public class ImportExportControllerTest {
     private ImportExportController importExportController;
     private HttpServletResponse servletResponse;
     private MultipartFile mulitPartFile;
+    private ImportService mockImportService;
 
     @Before
     public void setup() throws Exception {
+        mockImportService = Mockito.mock(ImportService.class);
         mockKnowledgeObjectRepository = Mockito.mock(KnowledgeObjectRepository.class);
         mockApplicationContext = Mockito.mock(ApplicationContext.class);
         mockMapper = Mockito.mock(ObjectMapper.class);
@@ -68,21 +71,21 @@ public class ImportExportControllerTest {
         when(mockApplicationContext.getResource(GOOD_MANIFEST_PATH)).thenReturn(mockResource);
         when(mockApplicationContext.getResource(BAD_MANIFEST_PATH))
                 .thenThrow(new NullPointerException());
-        when(mockApplicationContext.getResource(RESOURCE_1_URI)).thenReturn(mockResource);
-        when(mockApplicationContext.getResource(RESOURCE_2_URI)).thenReturn(mockResource);
+//        when(mockApplicationContext.getResource(RESOURCE_1_URI)).thenReturn(mockResource);
+//        when(mockApplicationContext.getResource(RESOURCE_2_URI)).thenReturn(mockResource);
         when(mockMapper.readTree(mockResourceInputStream)).thenReturn(manifestNode);
-        when(mockKnowledgeObjectRepository.importZip(mockResourceInputStream)).thenReturn(validArkId);
+//        when(mockKnowledgeObjectRepository.importZip(mockResourceInputStream)).thenReturn(validArkId);
         when(mockKnowledgeObjectRepository.importZip(mulitPartFile)).thenReturn(validArkId);
         when(servletResponse.getOutputStream()).thenReturn(mockServletOutputStream);
     }
 
     @Test
-    public void afterPropertiesSet_LoadsGoodManifestsAndHandlesBadManifests() {
+    public void afterPropertiesSet_LoadsGoodManifestsAndHandlesBadManifests() throws IOException {
         String[] manifests = new String[]{GOOD_MANIFEST_PATH, BAD_MANIFEST_PATH, GOOD_MANIFEST_PATH};
         importExportController = getImportExportControllerForManifestList(manifests);
         importExportController.afterPropertiesSet();
 
-        verify(mockKnowledgeObjectRepository, times(4)).importZip(any(InputStream.class));
+        verify(mockImportService, times(4)).importZip(any(URI.class));
     }
 
     @Test
@@ -121,15 +124,15 @@ public class ImportExportControllerTest {
     }
 
     @Test
-    public void afterPropertiesSet_singleShelfErrorIsSkipped() {
-        when(mockKnowledgeObjectRepository.importZip((InputStream) any()))
+    public void afterPropertiesSet_singleShelfErrorIsSkipped() throws IOException {
+        when(mockImportService.importZip((URI) any()))
                 .thenThrow(new RuntimeException())
-                .thenReturn(validArkId);
+                .thenReturn(URI.create("test42"));
         importExportController = getImportExportControllerForManifestList(null);
 
         Map<String, Object> loaded = importExportController.loadManifestIfSet(GOOD_MANIFEST_PATH);
 
-        verify(mockKnowledgeObjectRepository, times(2)).importZip((InputStream) any());
+        verify(mockImportService, times(2)).importZip((URI) any());
 
         assertEquals("should skip one and import one:", 1, ((ArrayNode) loaded.get("Added")).size());
     }
@@ -293,7 +296,7 @@ public class ImportExportControllerTest {
 
     private ImportExportController getImportExportControllerForManifestList(String[] manifests) {
         ImportExportController controller =
-                new ImportExportController(mockKnowledgeObjectRepository, null, manifests);
+                new ImportExportController(mockImportService, mockKnowledgeObjectRepository, null, manifests);
         controller.applicationContext = mockApplicationContext;
         controller.mapper = mockMapper;
         return controller;

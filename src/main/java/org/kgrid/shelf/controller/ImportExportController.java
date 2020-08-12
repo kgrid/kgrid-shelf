@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.repository.ImportService;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -40,12 +41,16 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
     @Autowired
     ObjectMapper mapper;
 
+    ImportService importService;
+
     public ImportExportController(
+            ImportService importService,
             KnowledgeObjectRepository shelf,
             Optional<KnowledgeObjectDecorator> kod,
             @Value("${kgrid.shelf.manifest:}") String[] startupManifestLocations) {
         super(shelf, kod);
         this.startupManifestLocations = startupManifestLocations;
+        this.importService = importService;
     }
 
     @Override
@@ -145,15 +150,17 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
         log.info("importing {} kos", uris.size());
         uris.forEach(
                 ko -> {
-                    String koLocation = ko.asText();
+//                    String koLocation = ko.asText();
+                    URI koUri = URI.create(ko.asText());
                     try {
-                        Resource koURL = applicationContext.getResource(koLocation);
-                        log.info("import {}", koLocation);
-                        InputStream zipStream = koURL.getInputStream();
-                        ArkId arkId = shelf.importZip(zipStream);
-                        arkList.add(arkId.toString());
+//                        Resource koURL = applicationContext.getResource(koLocation);
+                        log.info("import {}", koUri);
+//                        InputStream zipStream = koURL.getInputStream();
+//                        ArkId arkId = shelf.importZip(zipStream);
+                        URI result = importService.importZip(koUri);
+                        arkList.add(result.toString());
                     } catch (Exception ex) {
-                        log.warn("Error importing {}, {}", koLocation, ex.getMessage());
+                        log.warn("Error importing {}, {}", koUri, ex.getMessage());
                     }
                 });
         response.put("Added", arkList);
