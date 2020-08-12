@@ -7,7 +7,8 @@ public enum KoFields {
   ARTIFACT("artifact"),
   SERVICE_ACTIVATION_KEY("x-kgrid-activation"),
   VERSION("version"),
-  IDENTIFIER("identifier");
+  IDENTIFIER("identifier"),
+  ENDPOINTS("endpoints");
 
   private final String fieldName;
 
