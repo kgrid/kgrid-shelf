@@ -124,11 +124,12 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
             @RequestParam("ko") MultipartFile zippedKo) {
 
         log.info("Add ko via zip");
-        ArkId arkId = shelf.importZip(zippedKo);
+//        ArkId arkId = shelf.importZip(zippedKo);
+        URI id = importService.importZip(zippedKo);
 
         Map<String, String> response = new HashMap<String, String>();
-        HttpHeaders headers = addKOHeaderLocation(arkId);
-        response.put("Added", arkId.getDashArk());
+        HttpHeaders headers = addKOHeaderLocation(id);
+        response.put("Added", id.toString());
 
         return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
     }
@@ -192,12 +193,24 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
 
     private HttpHeaders addKOHeaderLocation(ArkId arkId) {
         URI loc =
-                ServletUriComponentsBuilder.fromCurrentRequestUri()
-                        .pathSegment(arkId.getSlashArk())
-                        .build()
-                        .toUri();
+            ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .pathSegment(arkId.getSlashArk())
+                .build()
+                .toUri();
         HttpHeaders headers = new HttpHeaders();
         headers.setLocation(loc);
+        return headers;
+    }
+
+    private HttpHeaders addKOHeaderLocation(URI id) {
+        URI loc =
+            ServletUriComponentsBuilder.fromCurrentRequestUri()
+                .build()
+                .toUri();
+
+        HttpHeaders headers = new HttpHeaders();
+
+        headers.setLocation(loc.resolve(id));
         return headers;
     }
 }

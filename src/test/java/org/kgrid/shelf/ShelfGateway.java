@@ -2,6 +2,8 @@ package org.kgrid.shelf;
 
 import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStoreFactory;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.SpringApplication;
@@ -16,6 +18,8 @@ public class ShelfGateway {
   @Autowired
   CompoundDigitalObjectStoreFactory factory;
 
+  Logger log = LoggerFactory.getLogger(ShelfGateway.class);
+
   public static void main(String[] args) {
     SpringApplication.run(ShelfGateway.class, args);
 
@@ -27,7 +31,9 @@ public class ShelfGateway {
     @Bean
     public CompoundDigitalObjectStore getCDOStore(
         @Value("${kgrid.shelf.cdostore.url:filesystem:file://shelf}") String cdoStoreURI) {
-      return factory.create(cdoStoreURI);
+      final CompoundDigitalObjectStore cdoStore = factory.create(cdoStoreURI);
+      log.info("kgrid.shelf.cdostor.url: {}", cdoStore.getAbsoluteLocation(""));
+      return cdoStore;
     }
   }
 }

@@ -14,8 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.zeroturnaround.zip.ZipUtil;
 
 import java.io.IOException;
@@ -37,6 +39,17 @@ public class ImportService {
 
   public URI importZip(URI zipUri) throws IOException {
     Resource zipResource = applicationContext.getResource(zipUri.toString());
+    URI id = importZip(zipResource);
+    return id;
+  }
+
+  public URI importZip(MultipartFile zippedKo) {
+    Resource zipResource = null;
+    try {
+      zipResource = new ByteArrayResource(zippedKo.getBytes());
+    } catch (IOException e) {
+      throw new ImportExportException("Couldn't handle file upload " + zippedKo.getName(), e);
+    }
     URI id = importZip(zipResource);
     return id;
   }
