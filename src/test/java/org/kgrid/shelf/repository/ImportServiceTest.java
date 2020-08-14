@@ -33,6 +33,8 @@ import static org.junit.Assert.assertThrows;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -116,10 +118,10 @@ public class ImportServiceTest {
 
     importService.importZip(resourceUri);
 
-    verify(cdoStore).saveBinary(any(), eq("hello-world/metadata.json"));
-    verify(cdoStore).saveBinary(any(), eq("hello-world/service.yaml"));
-    verify(cdoStore).saveBinary(any(), eq("hello-world/deployment.yaml"));
-    verify(cdoStore).saveBinary(any(), eq("hello-world/dist/main.js"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/service.yaml"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/deployment.yaml"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/dist/main.js"));
   }
   @Test
   public void canExtractAndSaveMultipleArtifacts() throws IOException {
@@ -127,11 +129,11 @@ public class ImportServiceTest {
 
     importService.importZip(resourceUri);
 
-    verify(cdoStore).saveBinary(any(), eq("hello-world/metadata.json"));
-    verify(cdoStore).saveBinary(any(), eq("hello-world/service.yaml"));
-    verify(cdoStore).saveBinary(any(), eq("hello-world/deployment.yaml"));
-    verify(cdoStore).saveBinary(any(), eq("hello-world/dist/main.js"));
-    verify(cdoStore).saveBinary(any(), eq("hello-world/src/index.js"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/service.yaml"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/deployment.yaml"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/dist/main.js"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/src/index.js"));
   }
 
   @Test
@@ -142,8 +144,7 @@ public class ImportServiceTest {
       importService.importZip(resourceUri);
     }).getCause();
 
-    assertTrue(IllegalArgumentException.class.isAssignableFrom(cause.getClass()));
-    assertEquals(IOException.class,cause.getClass());
+    assertEquals(IllegalArgumentException.class,cause.getClass());
   }
 
   @Test
@@ -180,23 +181,13 @@ public class ImportServiceTest {
   }
 
   @Test
-  public void resourceFromInputStream() throws IOException {
+  public void canLoadHelloWorld() throws IOException {
+    resourceUri = URI.create("file:src/test/resources/static/hello-world-v1.3.zip");
 
-    ByteArrayInputStream funnyZipStream = ZipImportExportTestHelper.packZipForImport(
-        null,
-        ZipImportExportTestHelper.DEPLOYMENT_BYTES,
-        null,
-        null
-    );
+    URI uri = importService.importZip(resourceUri);
 
-    final File test = File.createTempFile("test", ".zip");
-    Files.write(funnyZipStream.readAllBytes(), test);
+    verify(cdoStore, times(4)).saveBinary(any(), any());
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
 
-    final FileSystemResource zipResource = new FileSystemResource(test);
-
-    importService.importZip(zipResource);
-
-    assertEquals("", test.getName());
   }
-
 }

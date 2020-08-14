@@ -63,7 +63,7 @@ public class ImportService {
       List<URI> artifacts = getArtifactLocations(deploymentSpec, serviceSpec);
       artifacts.addAll(koParts.values());
 
-      extractAndSaveArtifacts(zipResource.getInputStream(), artifacts, id, zipBase);
+      extractAndSaveArtifacts(zipResource, artifacts, id, zipBase);
     } catch (Exception e) {
       final String errorMsg = "Error importing: " + zipResource.getDescription();
       log.warn(errorMsg);
@@ -138,13 +138,22 @@ public class ImportService {
   }
 
   public void extractAndSaveArtifacts(
-      InputStream zipStream, List<URI> artifacts, URI identifier, URI zipBase) {
+      Resource zipResource, List<URI> artifacts, URI identifier, URI zipBase) {
     artifacts.forEach(
         (artifact) -> {
+          URI cdoUri;
+          final byte[] data;
           URI zipURI = zipBase.resolve(artifact);
-          URI cdoUri = identifier.resolve(artifact);
+          cdoUri = identifier.resolve(artifact);
+          try (InputStream zipStream = zipResource.getInputStream()) {
+            data = ZipUtil.unpackEntry(zipStream, zipURI.toString());
+          } catch (IOException e) {
+            throw new ImportExportException(
+                "Cannot save " + zipURI + " -> " + cdoUri,
+                e);
+          }
           cdoStore.saveBinary(
-              ZipUtil.unpackEntry(zipStream, zipURI.toString()),
+              data,
               cdoUri.toString());
         });
   }
