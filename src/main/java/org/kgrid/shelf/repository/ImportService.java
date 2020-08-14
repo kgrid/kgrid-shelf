@@ -55,7 +55,7 @@ public class ImportService {
   }
 
   public URI importZip(Resource zipResource) {
-    URI id = null;
+    URI id = URI.create("");
     try {
       // URIs are relative to `metadata.json`; can be resolved against zip base and `@id`
       Map<KoFields, URI> koParts = getMetadataURIs(zipResource.getInputStream());

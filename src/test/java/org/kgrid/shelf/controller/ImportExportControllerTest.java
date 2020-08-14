@@ -273,14 +273,23 @@ public class ImportExportControllerTest {
     @Test
     public void depositKnowledgeObject_CallsImportZipOnKORepo() {
         MockHttpServletRequest request = new MockHttpServletRequest();
-        String requestUri = "requestUri";
-        request.setRequestURI(requestUri);
-        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
-        importExportController = getImportExportControllerForManifestList(new String[]{GOOD_MANIFEST_PATH});
-        String s = "http://localhost/" + requestUri + "/" + GOOD_NAAN + "/" + GOOD_NAME;
-        HttpHeaders expectedHeaders = new HttpHeaders();
-        expectedHeaders.setLocation(URI.create(s));
 
+        //set up request
+        URI requestUri = URI.create("requestUri/");
+        request.setRequestURI(requestUri.toString());
+        RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
+
+        // setup mock ImportService and IEController
+        when(mockImportService.importZip((MultipartFile) any()))
+            .thenReturn(URI.create(GOOD_NAAN + "/" + GOOD_NAME));
+        importExportController = getImportExportControllerForManifestList(new String[]{GOOD_MANIFEST_PATH});
+
+
+        // Set up expected headers
+        HttpHeaders expectedHeaders = new HttpHeaders();
+        expectedHeaders.setLocation(URI.create("http://localhost/requestUri/naan/name"));
+
+        // Do it!
         ResponseEntity<Map<String, String>> mapResponseEntity = importExportController.depositKnowledgeObject(mulitPartFile);
 
         assertEquals(expectedHeaders, mapResponseEntity.getHeaders());
