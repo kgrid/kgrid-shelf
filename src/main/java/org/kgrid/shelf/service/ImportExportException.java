@@ -1,4 +1,4 @@
-package org.kgrid.shelf.repository;
+package org.kgrid.shelf.service;
 
 public class ImportExportException extends RuntimeException {
 

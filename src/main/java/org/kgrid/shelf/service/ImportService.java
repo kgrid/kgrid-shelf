@@ -1,11 +1,9 @@
-package org.kgrid.shelf.repository;
+package org.kgrid.shelf.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
-import org.apache.commons.io.FileUtils;
-import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.domain.KoFields;
+import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
+import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,13 +12,9 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.zeroturnaround.zip.ZipUtil;
 
-import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -30,10 +24,10 @@ import static org.kgrid.shelf.domain.KoFields.*;
 
 @Service
 public class ImportService {
-  @Autowired CompoundDigitalObjectStore cdoStore;
+
+  @Autowired
+  CompoundDigitalObjectStore cdoStore;
   @Autowired ApplicationContext applicationContext;
-  private final ObjectMapper jsonMapper = new ObjectMapper();
-  private final YAMLMapper yamlMapper = new YAMLMapper();
 
   Logger log = LoggerFactory.getLogger(ImportService.class);
 
@@ -58,45 +52,38 @@ public class ImportService {
 
     URI id;
     try {
-      File koBase = createKoBase(zipResource);
+      ZipImportReader reader = new ZipImportReader(zipResource);
+
       // URIs are relative to `metadata.json`; can be resolved against zip base and `@id`
-      JsonNode metadata = getSpecification(koBase, URI.create(METADATA_FILENAME.asStr()));
+      JsonNode metadata = reader.getMetadata(URI.create(METADATA_FILENAME.asStr()));
       // get KO base URI (`@id`)
+
+//      KnowledgeObjectWrapper kow = new KnowledgeObjectWrapper(metadata);
       id = getId(metadata);
       Map<KoFields, URI> koParts = getKoParts(metadata);
 
-      JsonNode deploymentSpec = getSpecification(koBase, koParts.get(DEPLOYMENT_SPEC_TERM));
-      JsonNode serviceSpec = getSpecification(koBase, koParts.get(SERVICE_SPEC_TERM));
+//      JsonNode deploymentSpec = reader.getMetadata(kow.SERVICE_SPEC);
+      JsonNode deploymentSpec = reader.getMetadata(koParts.get(DEPLOYMENT_SPEC_TERM));
+      JsonNode serviceSpec = reader.getMetadata(koParts.get(SERVICE_SPEC_TERM));
 
-      // fetch all artifact locations from deployment spec (and possibly payload).
+//      kow.add(deploymentSpec);
+//      kow.add(serviceSpec);
+
+      //fetch all artifact locations from deployment spec (and possibly payload).
       List<URI> artifacts = getArtifactLocations(deploymentSpec, serviceSpec);
       artifacts.addAll(koParts.values());
 
-      copyArtifactsToShelf(koBase, id, artifacts);
+      copyArtifactsToShelf(reader, id, artifacts);
+
+//      copyArtifactsToShelf(reader, kow);
+
+
     } catch (Exception e) {
       final String errorMsg = "Error importing: " + zipResource.getDescription();
       log.warn(errorMsg);
       throw new ImportExportException(errorMsg, e);
     }
     return id;
-  }
-
-  private File createKoBase(Resource zipResource) throws IOException {
-    String koName = StringUtils.removeEnd(zipResource.getFilename(), ".zip");
-    File parentDir = unzipToTemp(zipResource.getInputStream());
-    FileUtils.forceDeleteOnExit(parentDir);
-    File koBase = new File(parentDir, koName);
-    return koBase;
-  }
-
-  private File unzipToTemp(InputStream inputStream) {
-    try {
-      File temp = Files.createTempDirectory("ko").toFile();
-      ZipUtil.unpack(inputStream, temp);
-      return temp;
-    } catch (IOException e) {
-      throw new ImportExportException("Cannot create temporary directory to unpack zip", e);
-    }
   }
 
   public Map<KoFields, URI> getKoParts(JsonNode metadataNode) {
@@ -109,20 +96,6 @@ public class ImportService {
     koParts.put(
         SERVICE_SPEC_TERM, URI.create(metadataNode.at("/" + SERVICE_SPEC_TERM.asStr()).asText()));
     return koParts;
-  }
-
-  public JsonNode getSpecification(File koBase, URI specName) throws IOException {
-
-    final File specFile = new File(koBase, specName.toString());
-
-    JsonNode jsonNode;
-    if (specName.getPath().endsWith(".json")) {
-      jsonNode = jsonMapper.readTree(specFile);
-    } else {
-      jsonNode = yamlMapper.readTree(specFile);
-    }
-
-    return jsonNode;
   }
 
   public URI getId(JsonNode metadata) {
@@ -147,16 +120,16 @@ public class ImportService {
     return artifacts;
   }
 
-  public void copyArtifactsToShelf(File koBase, URI identifier, List<URI> artifacts) {
+  public void copyArtifactsToShelf(ZipImportReader reader, URI identifier,
+      List<URI> artifacts) {
     artifacts.forEach(
         artifact -> {
-          File artifactFile = new File(koBase, artifact.toString());
           try {
-            final byte[] data = Files.readAllBytes(artifactFile.toPath());
+            byte[] data = reader.getBinary(artifact);
             cdoStore.saveBinary(data, identifier.resolve(artifact).toString());
           } catch (IOException e) {
             throw new ImportExportException(
-                "Cannot read in file " + artifactFile + " to copy onto shelf", e);
+                "Cannot read in file " + artifact + " to copy onto shelf", e);
           }
         });
   }

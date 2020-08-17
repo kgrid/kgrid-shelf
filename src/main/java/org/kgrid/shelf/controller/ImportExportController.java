@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.repository.ImportService;
+import org.kgrid.shelf.service.ImportService;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;

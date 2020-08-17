@@ -7,6 +7,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.domain.KoFields;
+import org.kgrid.shelf.service.ImportExportException;
+import org.kgrid.shelf.service.ImportService;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -36,7 +38,8 @@ public class ImportServiceTest {
   @Spy ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
   @Mock CompoundDigitalObjectStore cdoStore;
 
-  @InjectMocks ImportService importService;
+  @InjectMocks
+  ImportService importService;
 
   URI resourceUri;
   Resource zippedKo;
@@ -81,42 +84,6 @@ public class ImportServiceTest {
     assertTrue(metadataURIs.containsValue(URI.create("metadata.json")));
   }
 
-  @Test
-  public void serviceSpecCanBeExtractedToJsonNode() throws IOException {
-    File tempKo = new File(tempDir, "mycoolko");
-    Map<KoFields, URI> metadataURIs = importService.getKoParts(metadata);
-    JsonNode serviceSpec =
-        importService.getSpecification(tempKo, metadataURIs.get(KoFields.SERVICE_SPEC_TERM));
-
-    assertTrue(serviceSpec.has("paths"));
-  }
-
-  @Test
-  public void canGetListOfArtifactLocations() throws IOException {
-    JsonNode deploymentSpec = importService.getSpecification(tempKo, URI.create("deployment.yaml"));
-    JsonNode serviceSpec = importService.getSpecification(tempKo, URI.create("service.yaml"));
-    List<URI> artifactLocations = importService.getArtifactLocations(deploymentSpec, serviceSpec);
-
-    assertEquals("dist/main.js", artifactLocations.get(0).toString());
-  }
-
-  @Test
-  public void canGetListOfArtifactLocationsFromArray() throws IOException {
-
-    resourceUri = URI.create("file:src/test/resources/fixtures/import-export/artifact-array.zip");
-    zippedKo = applicationContext.getResource(resourceUri.toString());
-    File multiartifactDir = Files.createTempDir();
-    ZipUtil.unpack(zippedKo.getInputStream(), multiartifactDir);
-    tempKo = new File(multiartifactDir, "artifact-array");
-    FileUtils.forceDeleteOnExit(multiartifactDir);
-
-    JsonNode deploymentSpec = importService.getSpecification(tempKo, URI.create("deployment.yaml"));
-    JsonNode serviceSpec = importService.getSpecification(tempKo, URI.create("service.yaml"));
-    List<URI> artifactLocations = importService.getArtifactLocations(deploymentSpec, serviceSpec);
-
-    assertTrue(artifactLocations.contains(URI.create("dist/main.js")));
-    assertTrue(artifactLocations.contains(URI.create("src/index.js")));
-  }
 
   @Test
   public void canExtractAndSaveArtifacts() throws IOException {
