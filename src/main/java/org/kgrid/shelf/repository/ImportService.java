@@ -1,14 +1,10 @@
 package org.kgrid.shelf.repository;
 
-import static org.kgrid.shelf.domain.KoFields.DEPLOYMENT_SPEC_TERM;
-import static org.kgrid.shelf.domain.KoFields.METADATA_FILENAME;
-import static org.kgrid.shelf.domain.KoFields.SERVICE_SPEC_TERM;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.jena.sparql.function.library.leviathan.log;
 import org.kgrid.shelf.domain.KoFields;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,31 +16,35 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.zeroturnaround.zip.ZipUtil;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static org.kgrid.shelf.domain.KoFields.*;
+
 @Service
 public class ImportService {
   @Autowired CompoundDigitalObjectStore cdoStore;
   @Autowired ApplicationContext applicationContext;
-  private ObjectMapper jsonMapper = new ObjectMapper();
-  YAMLMapper yamlMapper = new YAMLMapper();
+  private final ObjectMapper jsonMapper = new ObjectMapper();
+  private final YAMLMapper yamlMapper = new YAMLMapper();
 
   Logger log = LoggerFactory.getLogger(ImportService.class);
 
-  public URI importZip(URI zipUri) throws IOException {
+  public URI importZip(URI zipUri) {
     Resource zipResource = applicationContext.getResource(zipUri.toString());
     URI id = importZip(zipResource);
     return id;
   }
 
   public URI importZip(MultipartFile zippedKo) {
-    Resource zipResource = null;
+    Resource zipResource;
     try {
       zipResource = new ByteArrayResource(zippedKo.getBytes());
     } catch (IOException e) {
@@ -55,28 +55,24 @@ public class ImportService {
   }
 
   public URI importZip(Resource zipResource) {
-    URI id = URI.create("");
+
+    URI id;
     try {
+      File koBase = createKoBase(zipResource);
       // URIs are relative to `metadata.json`; can be resolved against zip base and `@id`
-      Map<KoFields, URI> koParts = getMetadataURIs(zipResource.getInputStream());
-
+      JsonNode metadata = getSpecification(koBase, URI.create(METADATA_FILENAME.asStr()));
       // get KO base URI (`@id`)
-      id = getId(koParts.get(METADATA_FILENAME), zipResource.getInputStream());
+      id = getId(metadata);
+      Map<KoFields, URI> koParts = getKoParts(metadata);
 
-      // get zip base metadata URI from `metadata.json` artifact relative URI
-      URI zipBase = getZipBase(koParts.get(METADATA_FILENAME));
-      koParts.replace(METADATA_FILENAME, URI.create(METADATA_FILENAME.asStr()));
-
-      JsonNode deploymentSpec = getSpecification(
-          koParts.get(DEPLOYMENT_SPEC_TERM), zipResource.getInputStream(), zipBase);
-      JsonNode serviceSpec = getSpecification(
-          koParts.get(SERVICE_SPEC_TERM), zipResource.getInputStream(), zipBase);
+      JsonNode deploymentSpec = getSpecification(koBase, koParts.get(DEPLOYMENT_SPEC_TERM));
+      JsonNode serviceSpec = getSpecification(koBase, koParts.get(SERVICE_SPEC_TERM));
 
       // fetch all artifact locations from deployment spec (and possibly payload).
       List<URI> artifacts = getArtifactLocations(deploymentSpec, serviceSpec);
       artifacts.addAll(koParts.values());
 
-      extractAndSaveArtifacts(zipResource, artifacts, id, zipBase);
+      copyArtifactsToShelf(koBase, id, artifacts);
     } catch (Exception e) {
       final String errorMsg = "Error importing: " + zipResource.getDescription();
       log.warn(errorMsg);
@@ -85,52 +81,53 @@ public class ImportService {
     return id;
   }
 
-  public URI getZipBase(URI manifestLocation) {
-    return URI.create(StringUtils.removeEnd(
-        manifestLocation.toString(),
-        METADATA_FILENAME.asStr()
-    ));
+  private File createKoBase(Resource zipResource) throws IOException {
+    String koName = StringUtils.removeEnd(zipResource.getFilename(), ".zip");
+    File parentDir = unzipToTemp(zipResource.getInputStream());
+    FileUtils.forceDeleteOnExit(parentDir);
+    File koBase = new File(parentDir, koName);
+    return koBase;
   }
 
-  public Map<KoFields, URI> getMetadataURIs(InputStream zipStream) {
-
-    Map<KoFields, URI> koPieces = new HashMap<>();
-
-    ZipUtil.iterate(
-        zipStream,
-        (inputStream, zipEntry) -> {
-          if (zipEntry.getName().endsWith(METADATA_FILENAME.asStr())) {
-            final JsonNode metadataNode = jsonMapper.readTree(inputStream.readAllBytes());
-            final URI metadataLocation = URI.create(zipEntry.getName());
-
-            koPieces.put(METADATA_FILENAME, metadataLocation);
-            koPieces.put(
-                DEPLOYMENT_SPEC_TERM,
-                URI.create(metadataNode.at("/" + DEPLOYMENT_SPEC_TERM.asStr()).asText()));
-            koPieces.put(
-                SERVICE_SPEC_TERM,
-               URI.create(metadataNode.at("/" + SERVICE_SPEC_TERM.asStr()).asText()));
-          }
-        });
-
-    return koPieces;
+  private File unzipToTemp(InputStream inputStream) {
+    try {
+      File temp = Files.createTempDirectory("ko").toFile();
+      ZipUtil.unpack(inputStream, temp);
+      return temp;
+    } catch (IOException e) {
+      throw new ImportExportException("Cannot create temporary directory to unpack zip", e);
+    }
   }
 
-  public JsonNode getSpecification(URI specLocation, InputStream zipStream,
-      URI zipBase) throws IOException {
+  public Map<KoFields, URI> getKoParts(JsonNode metadataNode) {
 
-    final String location = zipBase.resolve(specLocation).toString();
-    final byte[] content = ZipUtil.unpackEntry(zipStream, location);
-    final JsonNode jsonNode = yamlMapper.readTree(content);
+    Map<KoFields, URI> koParts = new HashMap<>();
+    koParts.put(METADATA_FILENAME, URI.create(METADATA_FILENAME.asStr()));
+    koParts.put(
+        DEPLOYMENT_SPEC_TERM,
+        URI.create(metadataNode.at("/" + DEPLOYMENT_SPEC_TERM.asStr()).asText()));
+    koParts.put(
+        SERVICE_SPEC_TERM, URI.create(metadataNode.at("/" + SERVICE_SPEC_TERM.asStr()).asText()));
+    return koParts;
+  }
+
+  public JsonNode getSpecification(File koBase, URI specName) throws IOException {
+
+    final File specFile = new File(koBase, specName.toString());
+
+    JsonNode jsonNode;
+    if (specName.getPath().endsWith(".json")) {
+      jsonNode = jsonMapper.readTree(specFile);
+    } else {
+      jsonNode = yamlMapper.readTree(specFile);
+    }
 
     return jsonNode;
   }
 
-  public URI getId(URI metadataLocation, InputStream zipStream) throws IOException {
-    final byte[] content = ZipUtil.unpackEntry(zipStream, metadataLocation.toString());
-    final String str = jsonMapper.readTree(content).get("@id").asText() + "/";
-    final URI uri = URI.create(str);
-    return uri;
+  public URI getId(JsonNode metadata) {
+    String id = metadata.get("@id").asText() + "/";
+    return URI.create(id);
   }
 
   public List<URI> getArtifactLocations(JsonNode deploymentSpec, JsonNode serviceSpec) {
@@ -150,24 +147,17 @@ public class ImportService {
     return artifacts;
   }
 
-  public void extractAndSaveArtifacts(
-      Resource zipResource, List<URI> artifacts, URI identifier, URI zipBase) {
+  public void copyArtifactsToShelf(File koBase, URI identifier, List<URI> artifacts) {
     artifacts.forEach(
-        (artifact) -> {
-          URI cdoUri;
-          final byte[] data;
-          URI zipURI = zipBase.resolve(artifact);
-          cdoUri = identifier.resolve(artifact);
-          try (InputStream zipStream = zipResource.getInputStream()) {
-            data = ZipUtil.unpackEntry(zipStream, zipURI.toString());
+        artifact -> {
+          File artifactFile = new File(koBase, artifact.toString());
+          try {
+            final byte[] data = Files.readAllBytes(artifactFile.toPath());
+            cdoStore.saveBinary(data, identifier.resolve(artifact).toString());
           } catch (IOException e) {
             throw new ImportExportException(
-                "Cannot save " + zipURI + " -> " + cdoUri,
-                e);
+                "Cannot read in file " + artifactFile + " to copy onto shelf", e);
           }
-          cdoStore.saveBinary(
-              data,
-              cdoUri.toString());
         });
   }
 }

@@ -2,12 +2,7 @@ package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.io.Files;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.InputStream;
-import java.util.zip.ZipFile;
-import org.apache.jena.rdfxml.xmlinput.AResource;
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,21 +14,19 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
+import org.zeroturnaround.zip.ZipUtil;
 
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
 import java.util.Map;
-import org.zeroturnaround.zip.ZipUtil;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.isNotNull;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
@@ -43,50 +36,65 @@ public class ImportServiceTest {
   @Spy ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
   @Mock CompoundDigitalObjectStore cdoStore;
 
-  @InjectMocks
-  ImportService importService;
+  @InjectMocks ImportService importService;
 
   URI resourceUri;
   Resource zippedKo;
+  File tempDir;
+  File tempKo;
+  JsonNode metadata;
 
   @Before
-  public void setUp() {
-//    applicationContext = new ClassPathXmlApplicationContext();
+  public void setUp() throws IOException {
+    //    applicationContext = new ClassPathXmlApplicationContext();
     // /[kgrid-shelf]/src/test/resources/fixtures/import-export/kozip.zip
-    resourceUri = URI.create("file:src/test/resources/fixtures/import-export/kozip.zip");
+    resourceUri = URI.create("file:src/test/resources/fixtures/import-export/mycoolko.zip");
     zippedKo = applicationContext.getResource(resourceUri.toString());
+    tempDir = Files.createTempDir();
+    tempKo = new File(tempDir, "mycoolko");
+    ZipUtil.unpack(zippedKo.getInputStream(), tempDir);
+    FileUtils.forceDeleteOnExit(tempDir);
+    metadata =
+        ZipImportExportTestHelper.generateMetadata(
+            ZipImportExportTestHelper.SERVICE_YAML_PATH,
+            ZipImportExportTestHelper.DEPLOYMENT_YAML_PATH,
+            true,
+            true,
+            true,
+            true);
   }
 
   @Test
-  public void metadataCanBeExtractedToJsonNode() throws IOException {
+  public void metadataCanBeExtractedToJsonNode() {
 
-    Map<KoFields, URI> metadataURIs = importService.getMetadataURIs(zippedKo.getInputStream());
+    JsonNode metadata =
+        ZipImportExportTestHelper.generateMetadata(
+            ZipImportExportTestHelper.SERVICE_YAML_PATH,
+            ZipImportExportTestHelper.DEPLOYMENT_YAML_PATH,
+            true,
+            true,
+            true,
+            true);
+    Map<KoFields, URI> metadataURIs = importService.getKoParts(metadata);
 
     assertEquals(3, metadataURIs.size());
-    assertTrue(metadataURIs.containsValue(URI.create("mycoolko/metadata.json")));
+    assertTrue(metadataURIs.containsValue(URI.create("metadata.json")));
   }
 
   @Test
   public void serviceSpecCanBeExtractedToJsonNode() throws IOException {
-    Map<KoFields, URI> metadataURIs = importService.getMetadataURIs(zippedKo.getInputStream());
-    URI zipBase = importService.getZipBase(metadataURIs.get(KoFields.METADATA_FILENAME));
+    File tempKo = new File(tempDir, "mycoolko");
+    Map<KoFields, URI> metadataURIs = importService.getKoParts(metadata);
     JsonNode serviceSpec =
-        importService.getSpecification(
-            metadataURIs.get(KoFields.SERVICE_SPEC_TERM), zippedKo.getInputStream(), zipBase);
+        importService.getSpecification(tempKo, metadataURIs.get(KoFields.SERVICE_SPEC_TERM));
 
     assertTrue(serviceSpec.has("paths"));
   }
 
   @Test
   public void canGetListOfArtifactLocations() throws IOException {
-
-    URI zipBase = URI.create("mycoolko");
-    JsonNode deploymentSpec =
-        importService.getSpecification(
-            URI.create("mycoolko/deployment.yaml"), zippedKo.getInputStream(), zipBase);
-    JsonNode serviceSpec =
-        importService.getSpecification(
-            URI.create("mycoolko/service.yaml"), zippedKo.getInputStream(), zipBase);
+    JsonNode deploymentSpec = importService.getSpecification(tempKo, URI.create("deployment.yaml"));
+    JsonNode serviceSpec = importService.getSpecification(tempKo, URI.create("service.yaml"));
     List<URI> artifactLocations = importService.getArtifactLocations(deploymentSpec, serviceSpec);
 
     assertEquals("dist/main.js", artifactLocations.get(0).toString());
@@ -97,24 +105,22 @@ public class ImportServiceTest {
 
     resourceUri = URI.create("file:src/test/resources/fixtures/import-export/artifact-array.zip");
     zippedKo = applicationContext.getResource(resourceUri.toString());
-    URI zipBase = URI.create("mycoolko");
+    File multiartifactDir = Files.createTempDir();
+    ZipUtil.unpack(zippedKo.getInputStream(), multiartifactDir);
+    tempKo = new File(multiartifactDir, "artifact-array");
+    FileUtils.forceDeleteOnExit(multiartifactDir);
 
-    JsonNode deploymentSpec =
-        importService.getSpecification(
-            URI.create("mycoolko/deployment.yaml"), zippedKo.getInputStream(), zipBase);
-    JsonNode serviceSpec =
-        importService.getSpecification(
-            URI.create("mycoolko/service.yaml"), zippedKo.getInputStream(), zipBase);
+    JsonNode deploymentSpec = importService.getSpecification(tempKo, URI.create("deployment.yaml"));
+    JsonNode serviceSpec = importService.getSpecification(tempKo, URI.create("service.yaml"));
     List<URI> artifactLocations = importService.getArtifactLocations(deploymentSpec, serviceSpec);
 
     assertTrue(artifactLocations.contains(URI.create("dist/main.js")));
     assertTrue(artifactLocations.contains(URI.create("src/index.js")));
   }
 
-
   @Test
   public void canExtractAndSaveArtifacts() throws IOException {
-    resourceUri = URI.create("file:src/test/resources/fixtures/import-export/kozip.zip");
+    resourceUri = URI.create("file:src/test/resources/fixtures/import-export/mycoolko.zip");
 
     importService.importZip(resourceUri);
 
@@ -123,6 +129,7 @@ public class ImportServiceTest {
     verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/deployment.yaml"));
     verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/dist/main.js"));
   }
+
   @Test
   public void canExtractAndSaveMultipleArtifacts() throws IOException {
     resourceUri = URI.create("file:src/test/resources/fixtures/import-export/artifact-array.zip");
@@ -137,47 +144,59 @@ public class ImportServiceTest {
   }
 
   @Test
-  public void noDeploymentLogsThrowsAndSkips() throws IOException {
-    resourceUri = URI.create("file:src/test/resources/fixtures/import-export/missing-deployment.zip");
+  public void noDeploymentLogsThrowsAndSkips() {
+    resourceUri =
+        URI.create("file:src/test/resources/fixtures/import-export/missing-deployment.zip");
 
-    Throwable cause = assertThrows(ImportExportException.class, () -> {
-      importService.importZip(resourceUri);
-    }).getCause();
+    Throwable cause =
+        assertThrows(
+                ImportExportException.class,
+                () -> {
+                  importService.importZip(resourceUri);
+                })
+            .getCause();
 
-    assertEquals(IllegalArgumentException.class,cause.getClass());
+    assertEquals(FileNotFoundException.class, cause.getClass());
   }
 
   @Test
-  public void badMetadataLogsThrowsAndSkips() throws IOException {
+  public void badMetadataLogsThrowsAndSkips() {
     resourceUri = URI.create("file:src/test/resources/fixtures/import-export/bad-kometadata.zip");
 
-    Throwable cause = assertThrows(ImportExportException.class, () -> {
-      importService.importZip(resourceUri);
-    }).getCause();
+    Throwable cause =
+        assertThrows(
+                ImportExportException.class,
+                () -> {
+                  importService.importZip(resourceUri);
+                })
+            .getCause();
 
-    assertEquals(cause.getClass(), NullPointerException.class);
+    assertEquals(FileNotFoundException.class, cause.getClass());
   }
 
   @Test
   public void noMetadataLogsThrowsAndSkips() throws IOException {
 
-    ByteArrayInputStream funnyZipStream = ZipImportExportTestHelper.packZipForImport(
-        null,
-        ZipImportExportTestHelper.DEPLOYMENT_BYTES,
-        null,
-        null
-    );
+    ByteArrayInputStream funnyZipStream =
+        ZipImportExportTestHelper.packZipForImport(
+            null, ZipImportExportTestHelper.DEPLOYMENT_BYTES, null, null);
 
-    final File test = File.createTempFile("test", ".zip");
-    Files.write(funnyZipStream.readAllBytes(), test);
+    final File test = Files.createTempDir();
+    File zipTest = new File(test, "naan-name-version.zip");
+    Files.write(funnyZipStream.readAllBytes(), zipTest);
+    FileUtils.forceDeleteOnExit(test);
 
-    final FileSystemResource zipResource = new FileSystemResource(test);
+    final FileSystemResource zipResource = new FileSystemResource(zipTest);
 
-    Throwable cause = assertThrows(ImportExportException.class, () -> {
-      importService.importZip(zipResource);
-    }).getCause();
+    Throwable cause =
+        assertThrows(
+                ImportExportException.class,
+                () -> {
+                  importService.importZip(zipResource);
+                })
+            .getCause();
 
-    assertEquals(cause.getClass(), NullPointerException.class);
+    assertEquals(FileNotFoundException.class, cause.getClass());
   }
 
   @Test
@@ -188,6 +207,5 @@ public class ImportServiceTest {
 
     verify(cdoStore, times(4)).saveBinary(any(), any());
     verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
-
   }
 }
