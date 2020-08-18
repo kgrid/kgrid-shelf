@@ -6,7 +6,6 @@ import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kgrid.shelf.domain.KoFields;
 import org.kgrid.shelf.service.ImportExportException;
 import org.kgrid.shelf.service.ImportService;
 import org.mockito.InjectMocks;
@@ -24,10 +23,9 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
-import java.util.List;
-import java.util.Map;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -38,8 +36,7 @@ public class ImportServiceTest {
   @Spy ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
   @Mock CompoundDigitalObjectStore cdoStore;
 
-  @InjectMocks
-  ImportService importService;
+  @InjectMocks ImportService importService;
 
   URI resourceUri;
   Resource zippedKo;
@@ -66,24 +63,6 @@ public class ImportServiceTest {
             true,
             true);
   }
-
-  @Test
-  public void metadataCanBeExtractedToJsonNode() {
-
-    JsonNode metadata =
-        ZipImportExportTestHelper.generateMetadata(
-            ZipImportExportTestHelper.SERVICE_YAML_PATH,
-            ZipImportExportTestHelper.DEPLOYMENT_YAML_PATH,
-            true,
-            true,
-            true,
-            true);
-    Map<KoFields, URI> metadataURIs = importService.getKoParts(metadata);
-
-    assertEquals(3, metadataURIs.size());
-    assertTrue(metadataURIs.containsValue(URI.create("metadata.json")));
-  }
-
 
   @Test
   public void canExtractAndSaveArtifacts() throws IOException {
