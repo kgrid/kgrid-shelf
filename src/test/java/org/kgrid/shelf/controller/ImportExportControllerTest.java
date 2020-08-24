@@ -8,8 +8,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.service.ImportService;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
+import org.kgrid.shelf.service.ImportService;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
@@ -84,15 +84,6 @@ public class ImportExportControllerTest {
     verify(mockImportService, times(4)).importZip(any(URI.class));
   }
 
-  @Test
-  public void afterPropertiesSet_emptyLocationNeverTriesToImport() {
-    importExportController = getImportExportControllerForManifestList(null);
-
-    importExportController.afterPropertiesSet();
-
-    verify(mockKnowledgeObjectRepository, never()).importZip((InputStream) any());
-  }
-
   @Test(expected = IllegalArgumentException.class)
   public void afterPropertiesSet_malformedManifestThrowsIllegalArgumentException()
       throws IOException {
@@ -104,19 +95,6 @@ public class ImportExportControllerTest {
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
     importExportController.afterPropertiesSet();
-  }
-
-  @Test
-  public void afterPropertiesSet_DoesNothingIfUnreadableManifestResourceIsLoaded()
-      throws IOException {
-    when(mockMapper.readTree(mockResourceInputStream)).thenThrow(new IOException());
-
-    importExportController =
-        getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
-
-    importExportController.afterPropertiesSet();
-
-    verify(mockKnowledgeObjectRepository, never()).importZip((InputStream) any());
   }
 
   @Test

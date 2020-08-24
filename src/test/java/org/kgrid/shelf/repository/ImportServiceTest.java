@@ -1,8 +1,8 @@
 package org.kgrid.shelf.repository;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.common.io.Files;
 import org.apache.commons.io.FileUtils;
+import org.apache.jena.ext.com.google.common.io.Files;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;

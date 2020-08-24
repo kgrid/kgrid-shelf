@@ -14,12 +14,9 @@ import org.kgrid.shelf.domain.KoFields;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.mock.web.MockMultipartFile;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.FileSystems;
 import java.util.*;
@@ -35,7 +32,6 @@ public class KnowledgeObjectRepositoryTest {
 
   @Mock CompoundDigitalObjectStore compoundDigitalObjectStore;
 
-  @Mock ZipImportService zipImportService;
   @Mock ZipExportService zipExportService;
 
   private ArkId helloWorld1ArkId = new ArkId("hello", "world", "v0.1.0");
@@ -97,9 +93,7 @@ public class KnowledgeObjectRepositoryTest {
         .thenReturn((ObjectNode) helloWorld2Metadata);
     when(compoundDigitalObjectStore.getMetadata(badLocation))
         .thenReturn((ObjectNode) noSpecMetadata);
-    repository =
-        new KnowledgeObjectRepository(
-            compoundDigitalObjectStore, zipImportService, zipExportService);
+    repository = new KnowledgeObjectRepository(compoundDigitalObjectStore, zipExportService);
   }
 
   @Test
@@ -280,29 +274,6 @@ public class KnowledgeObjectRepositoryTest {
   public void getKoRepoLocation_returnsDataStoreLocation() {
     when(compoundDigitalObjectStore.getAbsoluteLocation("")).thenReturn("good");
     assertEquals("good", repository.getKoRepoLocation());
-  }
-
-  @Test
-  public void importZip_importsFile() {
-    MultipartFile file = new MockMultipartFile("hello", "hello".getBytes());
-    when(zipImportService.importKO(any(), eq(compoundDigitalObjectStore)))
-        .thenReturn(helloWorld1ArkId);
-    assertEquals(helloWorld1ArkId, repository.importZip(file));
-  }
-
-  @Test(expected = ShelfException.class)
-  public void importZip_throwsException() throws IOException {
-    MultipartFile file = Mockito.mock(MultipartFile.class);
-    when(file.getInputStream()).thenThrow(IOException.class);
-    repository.importZip(file);
-  }
-
-  @Test
-  public void importZip_importsStream() {
-    InputStream stream = Mockito.mock(InputStream.class);
-    when(zipImportService.importKO(stream, compoundDigitalObjectStore))
-        .thenReturn(helloWorld1ArkId);
-    assertEquals(helloWorld1ArkId, repository.importZip(stream));
   }
 
   @Test

@@ -13,11 +13,9 @@ import org.kgrid.shelf.domain.KoFields;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,7 +29,6 @@ public class KnowledgeObjectRepository {
 
   private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
   private CompoundDigitalObjectStore dataStore;
-  private ZipImportService zipImportService;
   private ZipExportService zipExportService;
   // Map of Ark -> Version -> File Location for rapid object lookup
   private static final Map<String, Map<String, String>> objectLocations = new HashMap<>();
@@ -40,11 +37,8 @@ public class KnowledgeObjectRepository {
 
   @Autowired
   KnowledgeObjectRepository(
-      CompoundDigitalObjectStore compoundDigitalObjectStore,
-      ZipImportService zis,
-      ZipExportService zes) {
+      CompoundDigitalObjectStore compoundDigitalObjectStore, ZipExportService zes) {
     this.dataStore = compoundDigitalObjectStore;
-    this.zipImportService = zis;
     this.zipExportService = zes;
     // Initialize the map of folder names -> ark ids
     refreshObjectMap();
@@ -216,23 +210,6 @@ public class KnowledgeObjectRepository {
   public String getKoRepoLocation() {
 
     return this.dataStore.getAbsoluteLocation("");
-  }
-
-  public ArkId importZip(MultipartFile zippedKO) {
-    try {
-      ArkId arkId = zipImportService.importKO(zippedKO.getInputStream(), dataStore);
-      refreshObjectMap();
-      return arkId;
-    } catch (IOException e) {
-      throw new ShelfException("Cannot load zip file with filename " + zippedKO.getName(), e);
-    }
-  }
-
-  public ArkId importZip(InputStream zipStream) {
-
-    ArkId arkId = zipImportService.importKO(zipStream, dataStore);
-    refreshObjectMap();
-    return arkId;
   }
 
   // Used by activator
