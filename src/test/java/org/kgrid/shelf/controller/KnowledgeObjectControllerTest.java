@@ -177,11 +177,8 @@ public class KnowledgeObjectControllerTest {
 
   @Test
   public void getBinary_ThrowsNoSuchFile_WhenBinaryIsNull() {
-    NoSuchFileException exception =
-        assertThrows(
-            NoSuchFileException.class,
-            () -> koController.getBinary("not", "gunna", "findit", mockServletRequest));
-    assertEquals(exception.getMessage(), "Cannot fetch file at ");
+    ResponseEntity<Object> response = koController.getBinary("not", "gunna", "findit", mockServletRequest);
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
   }
 
   @Test

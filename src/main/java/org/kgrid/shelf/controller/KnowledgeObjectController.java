@@ -113,12 +113,12 @@ public class KnowledgeObjectController extends ShelfExceptionHandler {
     }
 
     @GetMapping(path = "/{naan}/{name}/{version}/**", produces = MediaType.ALL_VALUE)
-    public Object getBinary(
+    public ResponseEntity<Object> getBinary(
             @PathVariable String naan,
             @PathVariable String name,
             @PathVariable String version,
             HttpServletRequest request)
-            throws NoSuchFileException {
+            {
 
         log.info("getting ko resource " + naan + "/" + name + "/" + version);
 
@@ -132,9 +132,9 @@ public class KnowledgeObjectController extends ShelfExceptionHandler {
 
         byte[] binary = shelf.getBinary(arkId, childPath);
         if (binary != null) {
-            return binary;
+            return new ResponseEntity<>(binary, HttpStatus.OK);
         } else {
-            throw new NoSuchFileException("Cannot fetch file at " + childPath);
+            return new ResponseEntity<>(HttpStatus.NOT_FOUND);
         }
     }
 
