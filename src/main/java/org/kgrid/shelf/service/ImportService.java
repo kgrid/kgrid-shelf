@@ -28,8 +28,7 @@ public class ImportService {
 
   public URI importZip(URI zipUri) {
     Resource zipResource = applicationContext.getResource(zipUri.toString());
-    URI id = importZip(zipResource);
-    return id;
+    return importZip(zipResource);
   }
 
   public URI importZip(MultipartFile zippedKo) {
@@ -39,12 +38,10 @@ public class ImportService {
     } catch (IOException e) {
       throw new ImportExportException("Couldn't handle file upload " + zippedKo.getName(), e);
     }
-    URI id = importZip(zipResource);
-    return id;
+    return importZip(zipResource);
   }
 
   public URI importZip(Resource zipResource) {
-
     URI id;
     try {
       ZipImportReader reader = new ZipImportReader(zipResource);
