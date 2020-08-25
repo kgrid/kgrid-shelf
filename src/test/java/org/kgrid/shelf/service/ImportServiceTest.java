@@ -1,4 +1,4 @@
-package org.kgrid.shelf.repository;
+package org.kgrid.shelf.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.commons.io.FileUtils;
@@ -6,8 +6,8 @@ import org.apache.jena.ext.com.google.common.io.Files;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.kgrid.shelf.service.ImportExportException;
-import org.kgrid.shelf.service.ImportService;
+import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
+import org.kgrid.shelf.repository.ZipImportExportTestHelper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;

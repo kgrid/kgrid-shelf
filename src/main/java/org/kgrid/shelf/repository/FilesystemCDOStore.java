@@ -76,12 +76,12 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public String getAbsoluteLocation(String... relativePathParts) {
+  public URI getAbsoluteLocation(String... relativePathParts) {
     Path shelf = Paths.get(localStorageURI);
     if (relativePathParts == null || relativePathParts.length == 0) {
-      return shelf.toString();
+      return shelf.toUri();
     }
-    return Paths.get(shelf.toString(), relativePathParts).toString();
+    return Paths.get(shelf.toString(), relativePathParts).toUri();
   }
 
   @Override

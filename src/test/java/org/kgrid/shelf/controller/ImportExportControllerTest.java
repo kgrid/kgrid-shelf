@@ -9,6 +9,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
+import org.kgrid.shelf.service.ExportService;
 import org.kgrid.shelf.service.ImportService;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -52,10 +53,12 @@ public class ImportExportControllerTest {
   private HttpServletResponse servletResponse;
   private MultipartFile mulitPartFile;
   private ImportService mockImportService;
+  private ExportService mockExportService;
 
   @Before
   public void setup() throws Exception {
     mockImportService = Mockito.mock(ImportService.class);
+    mockExportService = Mockito.mock(ExportService.class);
     mockKnowledgeObjectRepository = Mockito.mock(KnowledgeObjectRepository.class);
     mockApplicationContext = Mockito.mock(ApplicationContext.class);
     mockMapper = Mockito.mock(ObjectMapper.class);
@@ -112,7 +115,7 @@ public class ImportExportControllerTest {
   }
 
   @Test
-  public void exportKnowledgeObjectVersion_SetsContentHeaderOnServletResponse() {
+  public void exportKnowledgeObjectVersion_SetsContentHeaderOnServletResponse() throws IOException {
     importExportController =
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
@@ -123,7 +126,8 @@ public class ImportExportControllerTest {
   }
 
   @Test
-  public void exportKnowledgeObjectVersion_AddsContentDispositionHeaderToResponse() {
+  public void exportKnowledgeObjectVersion_AddsContentDispositionHeaderToResponse()
+      throws IOException {
     importExportController =
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
@@ -150,7 +154,7 @@ public class ImportExportControllerTest {
     importExportController.exportKnowledgeObjectVersion(
         GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
 
-    verify(mockKnowledgeObjectRepository).extractZip(validArkId, mockServletOutputStream);
+    verify(mockExportService).zipKnowledgeObject(validArkId, mockServletOutputStream);
   }
 
   @Test
@@ -165,8 +169,8 @@ public class ImportExportControllerTest {
   }
 
   @Test
-  public void exportKnowledgeObjectVersion_HandlesIOExceptionFromKORepo() throws IOException {
-    doThrow(new IOException("OPE")).when(mockKnowledgeObjectRepository).extractZip(any(), any());
+  public void exportKnowledgeObjectVersion_HandlesIOExceptionFromKORepo() {
+    doThrow(new IOException("OPE")).when(mockExportService).zipKnowledgeObject(any(), any());
     importExportController =
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
@@ -190,7 +194,7 @@ public class ImportExportControllerTest {
   }
 
   @Test
-  public void exportKnowledgeObject_SetsContentHeaderOnServletResponse() {
+  public void exportKnowledgeObject_SetsContentHeaderOnServletResponse() throws IOException {
     importExportController =
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
@@ -201,7 +205,7 @@ public class ImportExportControllerTest {
   }
 
   @Test
-  public void exportKnowledgeObject_AddsContentDispositionHeaderToResponse() {
+  public void exportKnowledgeObject_AddsContentDispositionHeaderToResponse() throws IOException {
     importExportController =
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
@@ -228,7 +232,7 @@ public class ImportExportControllerTest {
     importExportController.exportKnowledgeObject(
         GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
 
-    verify(mockKnowledgeObjectRepository).extractZip(validArkId, mockServletOutputStream);
+    verify(mockExportService).zipKnowledgeObject(validArkId, mockServletOutputStream);
   }
 
   @Test
@@ -244,7 +248,7 @@ public class ImportExportControllerTest {
 
   @Test
   public void exportKnowledgeObject_HandlesIOExceptionFromKORepo() throws IOException {
-    doThrow(new IOException("OPE")).when(mockKnowledgeObjectRepository).extractZip(any(), any());
+    doThrow(new IOException("OPE")).when(mockExportService).zipKnowledgeObject(any(), any());
     importExportController =
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
@@ -267,7 +271,8 @@ public class ImportExportControllerTest {
   }
 
   @Test
-  public void exportKnowledgeObject_AddsContentDispositionHeaderToResponse_WhenArkIsVersionless() {
+  public void exportKnowledgeObject_AddsContentDispositionHeaderToResponse_WhenArkIsVersionless()
+      throws IOException {
     importExportController =
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
@@ -287,8 +292,8 @@ public class ImportExportControllerTest {
 
     importExportController.exportKnowledgeObject(GOOD_NAAN, GOOD_NAME, null, servletResponse);
 
-    verify(mockKnowledgeObjectRepository)
-        .extractZip(new ArkId(GOOD_NAAN, GOOD_NAME), mockServletOutputStream);
+    verify(mockExportService)
+        .zipKnowledgeObject(new ArkId(GOOD_NAAN, GOOD_NAME), mockServletOutputStream);
   }
 
   @Test
@@ -328,7 +333,7 @@ public class ImportExportControllerTest {
   private ImportExportController getImportExportControllerForManifestList(String[] manifests) {
     ImportExportController controller =
         new ImportExportController(
-            mockImportService, mockKnowledgeObjectRepository, null, manifests);
+            mockImportService, mockExportService, mockKnowledgeObjectRepository, null, manifests);
     controller.applicationContext = mockApplicationContext;
     controller.mapper = mockMapper;
     return controller;

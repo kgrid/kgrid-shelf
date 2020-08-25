@@ -18,11 +18,12 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.FileSystems;
 import java.util.*;
 
-import static org.junit.jupiter.api.Assertions.assertArrayEquals;
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -272,8 +273,8 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getKoRepoLocation_returnsDataStoreLocation() {
-    when(compoundDigitalObjectStore.getAbsoluteLocation("")).thenReturn("good");
-    assertEquals("good", repository.getKoRepoLocation());
+    when(compoundDigitalObjectStore.getAbsoluteLocation("")).thenReturn(URI.create("good"));
+    assertEquals(URI.create("good"), repository.getKoRepoLocation());
   }
 
   @Test

@@ -9,6 +9,7 @@ import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.KnowledgeObjectWrapper;
 import org.kgrid.shelf.domain.KoFields;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -150,6 +152,14 @@ public class KnowledgeObjectRepository {
     return dataStore.getMetadata(nodeLoc);
   }
 
+  public KnowledgeObjectWrapper getKow(ArkId arkId) {
+    JsonNode metadata = findKnowledgeObjectMetadata(arkId);
+    KnowledgeObjectWrapper kow = new KnowledgeObjectWrapper(metadata);
+    kow.addService(findServiceSpecification(arkId, metadata));
+    kow.addDeployment(findDeploymentSpecification(arkId, metadata));
+    return kow;
+  }
+
   /**
    * Find the Service Specification for the version
    *
@@ -207,7 +217,7 @@ public class KnowledgeObjectRepository {
     return objectLocations.get(arkId.getDashArk()).get(arkId.getVersion());
   }
 
-  public String getKoRepoLocation() {
+  public URI getKoRepoLocation() {
 
     return this.dataStore.getAbsoluteLocation("");
   }

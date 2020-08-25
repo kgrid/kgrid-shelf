@@ -4,13 +4,14 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.kgrid.shelf.ShelfException;
 
+import java.net.URI;
 import java.util.List;
 
 public interface CompoundDigitalObjectStore {
 
   List<String> getChildren(String... relativeLocationParts);
 
-  String getAbsoluteLocation(String... relativeLocationParts);
+  URI getAbsoluteLocation(String... relativeLocationParts);
 
   ObjectNode getMetadata(String... relativeLocationParts);
 

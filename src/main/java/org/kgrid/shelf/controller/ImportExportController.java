@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
+import org.kgrid.shelf.service.ExportService;
 import org.kgrid.shelf.service.ImportService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -41,14 +42,18 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
 
   ImportService importService;
 
+  ExportService exportService;
+
   public ImportExportController(
       ImportService importService,
+      ExportService exportService,
       KnowledgeObjectRepository shelf,
       Optional<KnowledgeObjectDecorator> kod,
       @Value("${kgrid.shelf.manifest:}") String[] startupManifestLocations) {
     super(shelf, kod);
     this.startupManifestLocations = startupManifestLocations;
     this.importService = importService;
+    this.exportService = exportService;
   }
 
   @Override
@@ -90,10 +95,7 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
       @PathVariable String version,
       HttpServletResponse response) {
 
-    log.info("get ko zip for " + naan + "/" + name);
-    ArkId arkId = new ArkId(naan, name, version);
-
-    exportZip(response, arkId);
+    exportKnowledgeObject(naan, name, version, response);
   }
 
   @GetMapping(
@@ -114,7 +116,20 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
       log.info("get ko zip for " + naan + "/" + name);
       arkId = new ArkId(naan, name);
     }
-    exportZip(response, arkId);
+    response.setHeader("Content-Type", "application/octet-stream");
+    response.addHeader(
+        "Content-Disposition", "attachment; filename=\"" + arkId.getFullDashArk() + ".zip\"");
+    try {
+      exportService.zipKnowledgeObject(arkId, response.getOutputStream());
+    } catch (IOException ex) {
+      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+    } finally {
+      try {
+        response.getOutputStream().close();
+      } catch (IOException e) {
+        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+      }
+    }
   }
 
   @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -160,29 +175,6 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
         });
     response.put("Added", arkList);
     return new ResponseEntity<>(response, HttpStatus.CREATED);
-  }
-
-  protected void exportZip(HttpServletResponse response, ArkId arkId) {
-
-    response.setHeader("Content-Type", "application/octet-stream");
-    response.addHeader(
-        "Content-Disposition",
-        "attachment; filename=\""
-            + (arkId.hasVersion()
-                ? arkId.getDashArk() + "-" + arkId.getVersion()
-                : arkId.getDashArk())
-            + ".zip\"");
-    try {
-      shelf.extractZip(arkId, response.getOutputStream());
-    } catch (IOException ex) {
-      response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-    } finally {
-      try {
-        response.getOutputStream().close();
-      } catch (IOException e) {
-        response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-      }
-    }
   }
 
   private HttpHeaders addKOHeaderLocation(URI id) {

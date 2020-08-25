@@ -11,10 +11,8 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.assertEquals;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KnowledgeObjectWrapperTest {
@@ -32,15 +30,6 @@ public class KnowledgeObjectWrapperTest {
             true,
             true);
     kow = new KnowledgeObjectWrapper(metadata);
-  }
-
-  @Test
-  public void metadataCanBeExtractedToJsonNode() {
-
-    Map<KoFields, URI> metadataURIs = kow.getKoParts();
-
-    assertEquals(3, metadataURIs.size());
-    assertTrue(metadataURIs.containsValue(URI.create("metadata.json")));
   }
 
   @Test

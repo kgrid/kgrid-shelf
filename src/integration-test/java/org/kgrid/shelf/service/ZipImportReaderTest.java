@@ -16,10 +16,7 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URI;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
-import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.Assert.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ZipImportReaderTest {
@@ -43,14 +40,14 @@ public class ZipImportReaderTest {
   public void canCreateNewZipImportReader() throws IOException {
     importReader = new ZipImportReader(zippedKo);
     assertTrue(
-        importReader.getKoBase().toString().endsWith("mycoolko"), "Ko base ends with mycoolko");
+        "Ko base ends with mycoolko", importReader.getKoBase().toString().endsWith("mycoolko"));
   }
 
   @Test
   public void canGetJsonMetadata() throws IOException {
     importReader = new ZipImportReader(zippedKo);
     JsonNode metadata = importReader.getMetadata(URI.create(KoFields.METADATA_FILENAME.asStr()));
-    assertFalse(metadata.isEmpty(), "Ko reader gets json metadata");
+    assertFalse("Ko reader gets json metadata", metadata.isEmpty());
     assertEquals(
         "Metadata in temp folder has deployment spec",
         "deployment.yaml",
@@ -61,7 +58,7 @@ public class ZipImportReaderTest {
   public void canGetYamlMetadata() throws IOException {
     importReader = new ZipImportReader(zippedKo);
     JsonNode metadata = importReader.getMetadata(URI.create("deployment.yaml"));
-    assertFalse(metadata.isEmpty(), "Ko reader gets yaml deployment");
+    assertFalse("Ko reader gets yaml deployment", metadata.isEmpty());
     assertEquals(
         "Deployment spec has endpoint",
         "{\"/welcome\"",
@@ -72,7 +69,7 @@ public class ZipImportReaderTest {
   public void canGetBinary() throws IOException {
     importReader = new ZipImportReader(zippedKo);
     byte[] artifact = importReader.getBinary(URI.create("dist/main.js"));
-    assertFalse(artifact.length < 1, "Ko reader gets artifact");
+    assertFalse("Ko reader gets artifact", artifact.length < 1);
     assertEquals(
         "Artifact in temp folder is js code", "var welcome", new String(artifact).substring(0, 11));
   }

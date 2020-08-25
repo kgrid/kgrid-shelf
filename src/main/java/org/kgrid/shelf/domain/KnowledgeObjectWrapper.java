@@ -58,7 +58,7 @@ public class KnowledgeObjectWrapper {
     return id;
   }
 
-  public Map<KoFields, URI> getKoParts() {
+  private Map<KoFields, URI> getKoParts() {
     Map<KoFields, URI> koParts = new HashMap<>();
     koParts.put(METADATA_FILENAME, URI.create(METADATA_FILENAME.asStr()));
     koParts.put(

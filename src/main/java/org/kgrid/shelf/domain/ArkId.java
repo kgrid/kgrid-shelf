@@ -64,6 +64,15 @@ public final class ArkId implements Comparable {
   }
 
   @JsonIgnore
+  public String getFullDashArk() {
+    if (version != null) {
+      return naan + "-" + name + "-" + version;
+    } else {
+      return naan + "-" + name;
+    }
+  }
+
+  @JsonIgnore
   public String getSlashArk() {
     return naan + "/" + name;
   }

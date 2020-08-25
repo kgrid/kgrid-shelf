@@ -127,8 +127,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public String getAbsoluteLocation(String... relativePathParts) {
-    return pathBuilder(relativePathParts);
+  public URI getAbsoluteLocation(String... relativePathParts) {
+    return URI.create(pathBuilder(relativePathParts));
   }
 
   @Override
@@ -144,7 +144,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
     try {
 
-      if (path.getHost().contains(getAbsoluteLocation(""))) {
+      if (path.getHost().contains(getAbsoluteLocation("").toString())) {
         throw new ShelfResourceNotFound(
             "Binary resource not located on this CDO shelf "
                 + getAbsoluteLocation("")
@@ -328,7 +328,9 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     try {
 
       if (ResourceUtils.isUrl(objectURI)
-          && ResourceUtils.toURI(objectURI).getHost().contains(getAbsoluteLocation(""))) {
+          && ResourceUtils.toURI(objectURI)
+              .getHost()
+              .contains(getAbsoluteLocation("").toString())) {
         throw new ShelfResourceNotFound(
             "Metadata resource not located on this CDO shelf "
                 + getAbsoluteLocation("")

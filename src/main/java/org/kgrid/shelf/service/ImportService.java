@@ -72,7 +72,7 @@ public class ImportService {
     return id;
   }
 
-  public void copyArtifactsToShelf(ZipImportReader reader, KnowledgeObjectWrapper kow) {
+  private void copyArtifactsToShelf(ZipImportReader reader, KnowledgeObjectWrapper kow) {
     List<URI> artifacts = kow.getArtifactLocations();
     URI identifier = kow.getId();
     artifacts.forEach(
