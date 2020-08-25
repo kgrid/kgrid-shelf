@@ -10,6 +10,7 @@ import org.junit.runner.RunWith;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.kgrid.shelf.service.ExportService;
+import org.kgrid.shelf.service.ImportExportException;
 import org.kgrid.shelf.service.ImportService;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -51,7 +52,7 @@ public class ImportExportControllerTest {
   private ServletOutputStream mockServletOutputStream;
   private ImportExportController importExportController;
   private HttpServletResponse servletResponse;
-  private MultipartFile mulitPartFile;
+  private MultipartFile multiPartFile;
   private ImportService mockImportService;
   private ExportService mockExportService;
 
@@ -68,7 +69,7 @@ public class ImportExportControllerTest {
     validArkId = new ArkId(GOOD_NAAN, GOOD_NAME, GOOD_VERSION);
     ObjectNode manifestNode = getManifestNode();
     servletResponse = mock(HttpServletResponse.class);
-    mulitPartFile = mock(MultipartFile.class);
+    multiPartFile = mock(MultipartFile.class);
 
     when(mockResource.getInputStream()).thenReturn(mockResourceInputStream);
     when(mockApplicationContext.getResource(GOOD_MANIFEST_PATH)).thenReturn(mockResource);
@@ -169,8 +170,9 @@ public class ImportExportControllerTest {
   }
 
   @Test
-  public void exportKnowledgeObjectVersion_HandlesIOExceptionFromKORepo() {
-    doThrow(new IOException("OPE")).when(mockExportService).zipKnowledgeObject(any(), any());
+  public void exportKnowledgeObjectVersion_HandlesIOExceptionFromExportService() {
+    doThrow(new ImportExportException("From Controller", new IOException("from ExportService")))
+            .when(mockExportService).zipKnowledgeObject(any(), any());
     importExportController =
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
@@ -247,8 +249,9 @@ public class ImportExportControllerTest {
   }
 
   @Test
-  public void exportKnowledgeObject_HandlesIOExceptionFromKORepo() throws IOException {
-    doThrow(new IOException("OPE")).when(mockExportService).zipKnowledgeObject(any(), any());
+  public void exportKnowledgeObject_HandlesIOExceptionFromKORepo() {
+    doThrow(new ImportExportException("OPE", new IOException("from Export Service")))
+            .when(mockExportService).zipKnowledgeObject(any(), any());
     importExportController =
         getImportExportControllerForManifestList(new String[] {GOOD_MANIFEST_PATH});
 
@@ -317,7 +320,7 @@ public class ImportExportControllerTest {
 
     // Do it!
     ResponseEntity<Map<String, String>> mapResponseEntity =
-        importExportController.depositKnowledgeObject(mulitPartFile);
+        importExportController.depositKnowledgeObject(multiPartFile);
 
     assertEquals(expectedHeaders, mapResponseEntity.getHeaders());
   }

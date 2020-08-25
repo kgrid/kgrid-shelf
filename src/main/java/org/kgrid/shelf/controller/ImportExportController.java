@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.kgrid.shelf.service.ExportService;
+import org.kgrid.shelf.service.ImportExportException;
 import org.kgrid.shelf.service.ImportService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -121,7 +122,7 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
         "Content-Disposition", "attachment; filename=\"" + arkId.getFullDashArk() + ".zip\"");
     try {
       exportService.zipKnowledgeObject(arkId, response.getOutputStream());
-    } catch (IOException ex) {
+    } catch (ImportExportException | IOException ex) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     } finally {
       try {
