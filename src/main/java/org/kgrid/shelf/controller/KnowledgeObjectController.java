@@ -59,18 +59,16 @@ public class KnowledgeObjectController extends ShelfExceptionHandler {
         }
 
         if (results == null || results.size() == 0) {
-            throw new IllegalArgumentException("Object not found with id " + naan + "-" + name);
+            return new ResponseEntity<>(results, HttpStatus.NOT_FOUND);
         }
-
         return new ResponseEntity<>(results, HttpStatus.OK);
     }
 
     @GetMapping(path = "/{naan}/{name}/{version}", produces = MediaType.APPLICATION_JSON_VALUE)
-    public JsonNode getKnowledgeObjectOldVersion(
+    public ResponseEntity<JsonNode> getKnowledgeObjectOldVersion(
             @PathVariable String naan, @PathVariable String name, @PathVariable String version) {
-        return findKnowledgeObject(naan, name, version).getBody();
+        return findKnowledgeObject(naan, name, version);
     }
-
 
     @GetMapping(
             path = "/{naan}/{name}/{version}/service",

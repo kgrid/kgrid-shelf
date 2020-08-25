@@ -84,6 +84,12 @@ public class KnowledgeObjectControllerTest {
   }
 
   @Test
+  public void findKnowledgeObject_cantFindObject_returns404(){
+    ResponseEntity<JsonNode> response = koController.findKnowledgeObject("grse", NAME, null);
+    assertEquals(response.getStatusCode(), HttpStatus.NOT_FOUND);
+  }
+
+  @Test
   public void findKnowledgeObject_ChecksForFcRepoNaan() {
     IllegalArgumentException exception =
         assertThrows(
@@ -93,15 +99,6 @@ public class KnowledgeObjectControllerTest {
         "Cannot connect to fcrepo at the same address as the shelf. "
             + "Make sure shelf and fcrepo configuration is correct.",
         exception.getMessage());
-  }
-
-  @Test
-  public void findKnowledgeObject_ThrowsIfObjectNotFound() {
-    IllegalArgumentException exception =
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> koController.findKnowledgeObject("object", "not", "found"));
-    assertEquals("Object not found with id object-not", exception.getMessage());
   }
 
   @Test
@@ -130,11 +127,8 @@ public class KnowledgeObjectControllerTest {
 
   @Test
   public void findKnowledgeObjectOldVersion_ThrowsIfObjectNotFound() {
-    IllegalArgumentException exception =
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> koController.getKnowledgeObjectOldVersion("object", "not", "found"));
-    assertEquals("Object not found with id object-not", exception.getMessage());
+    ResponseEntity<JsonNode> response = koController.getKnowledgeObjectOldVersion("object", "not", "found");
+    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
   }
 
   @Test
