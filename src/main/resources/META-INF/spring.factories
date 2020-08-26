@@ -1,5 +1,4 @@
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
   org.kgrid.shelf.controller.WebControllerConfig,\
   org.kgrid.shelf.repository.CompoundDigitalObjectStoreFactory,\
-  org.kgrid.shelf.repository.KnowledgeObjectRepository,\
-  org.kgrid.shelf.repository.ZipExportService
+  org.kgrid.shelf.repository.KnowledgeObjectRepository

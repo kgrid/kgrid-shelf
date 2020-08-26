@@ -7,6 +7,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.rules.TemporaryFolder;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.service.ExportService;
 import org.kgrid.shelf.service.ImportService;
 import org.zeroturnaround.zip.ZipUtil;
 
@@ -44,13 +45,10 @@ public class FedoraZipExportServiceTest {
   @Test
   public void exportCompoundDigitalObject() throws IOException {
 
-    ZipExportService zipExportService = new ZipExportService();
+    ExportService exportService = new ExportService();
 
-    ByteArrayOutputStream outputStream =
-        zipExportService.exportObject(
-            new ArkId("hello", "world"),
-            new ArkId("hello", "world").getDashArk(),
-            compoundDigitalObjectStore);
+    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+    exportService.zipKnowledgeObject(new ArkId("hello", "world"), outputStream);
 
     writeZip(outputStream);
 

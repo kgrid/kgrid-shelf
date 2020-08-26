@@ -12,12 +12,8 @@ import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KoFields;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.FileSystems;
 import java.util.*;
@@ -32,8 +28,6 @@ public class KnowledgeObjectRepositoryTest {
   KnowledgeObjectRepository repository;
 
   @Mock CompoundDigitalObjectStore compoundDigitalObjectStore;
-
-  @Mock ZipExportService zipExportService;
 
   private ArkId helloWorld1ArkId = new ArkId("hello", "world", "v0.1.0");
   private ArkId helloWorld2ArkId = new ArkId("hello", "world", "v0.2.0");
@@ -94,7 +88,7 @@ public class KnowledgeObjectRepositoryTest {
         .thenReturn((ObjectNode) helloWorld2Metadata);
     when(compoundDigitalObjectStore.getMetadata(badLocation))
         .thenReturn((ObjectNode) noSpecMetadata);
-    repository = new KnowledgeObjectRepository(compoundDigitalObjectStore, zipExportService);
+    repository = new KnowledgeObjectRepository(compoundDigitalObjectStore);
   }
 
   @Test
@@ -142,28 +136,6 @@ public class KnowledgeObjectRepositoryTest {
   public void editMetadataThrowsCorrectError() {
     String badMetadata = "{\"@id\" : \"goodbye-world}";
     repository.editMetadata(helloWorld1ArkId, badMetadata);
-  }
-
-  @Test
-  public void extractZip_getsCorrectZip() throws IOException {
-    OutputStream oStream = Mockito.mock(OutputStream.class);
-    when(zipExportService.exportObject(
-            helloWorld1ArkId, helloWorld1Location, compoundDigitalObjectStore))
-        .thenReturn(new ByteArrayOutputStream());
-    repository.extractZip(helloWorld1ArkId, oStream);
-    verify(zipExportService)
-        .exportObject(helloWorld1ArkId, helloWorld1Location, compoundDigitalObjectStore);
-  }
-
-  @Test
-  public void extractZip_writesToOutputStream() throws IOException {
-    OutputStream oStream = Mockito.mock(OutputStream.class);
-    ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
-    when(zipExportService.exportObject(
-            helloWorld1ArkId, helloWorld1Location, compoundDigitalObjectStore))
-        .thenReturn(byteArrayOutputStream);
-    repository.extractZip(helloWorld1ArkId, oStream);
-    verify(oStream).write(byteArrayOutputStream.toByteArray());
   }
 
   @Test

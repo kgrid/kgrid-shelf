@@ -17,7 +17,6 @@ import org.springframework.stereotype.Service;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -31,17 +30,14 @@ public class KnowledgeObjectRepository {
 
   private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
   private CompoundDigitalObjectStore dataStore;
-  private ZipExportService zipExportService;
   // Map of Ark -> Version -> File Location for rapid object lookup
   private static final Map<String, Map<String, String>> objectLocations = new HashMap<>();
   // Map of Ark -> Metadata location for displaying to end user
   private static final Map<ArkId, JsonNode> knowledgeObjects = new HashMap<>();
 
   @Autowired
-  KnowledgeObjectRepository(
-      CompoundDigitalObjectStore compoundDigitalObjectStore, ZipExportService zes) {
+  KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore) {
     this.dataStore = compoundDigitalObjectStore;
-    this.zipExportService = zes;
     // Initialize the map of folder names -> ark ids
     refreshObjectMap();
   }
@@ -72,19 +68,6 @@ public class KnowledgeObjectRepository {
     dataStore.saveMetadata(jsonMetadata, metadataPath.toString());
 
     return dataStore.getMetadata(metadataPath.toString());
-  }
-
-  /**
-   * Extract ZIP file of the KO
-   *
-   * @param arkId ark id of the object
-   * @param outputStream zipped file in outputstream
-   * @throws IOException if the system can't extract the zip file to the filesystem
-   */
-  public void extractZip(ArkId arkId, OutputStream outputStream) throws IOException {
-
-    String koPath = resolveArkIdToLocation(arkId);
-    outputStream.write(zipExportService.exportObject(arkId, koPath, dataStore).toByteArray());
   }
 
   public Map<ArkId, JsonNode> findAll() {
