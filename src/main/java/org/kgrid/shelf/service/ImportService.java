@@ -34,7 +34,7 @@ public class ImportService {
   public URI importZip(MultipartFile zippedKo) {
     Resource zipResource;
     try {
-      zipResource = new ByteArrayResource(zippedKo.getBytes());
+      zipResource = new ByteArrayResource(zippedKo.getBytes(), zippedKo.getOriginalFilename());
     } catch (IOException e) {
       throw new ImportExportException("Couldn't handle file upload " + zippedKo.getName(), e);
     }

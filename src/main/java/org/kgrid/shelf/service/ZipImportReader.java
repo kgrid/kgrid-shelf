@@ -25,11 +25,19 @@ public class ZipImportReader {
   }
 
   private File createKoBase(Resource zipResource) throws IOException {
-    String koName = StringUtils.removeEnd(zipResource.getFilename(), ".zip");
+    String filename = zipResource.getFilename();
+    String koName;
+    if (filename != null) {
+      koName = StringUtils.removeEnd(filename, ".zip");
+    } else {
+      koName =
+          StringUtils.removeEnd(
+              StringUtils.removeStart(zipResource.getDescription(), "Byte array resource ["),
+              ".zip]");
+    }
     File parentDir = unzipToTemp(zipResource.getInputStream());
     FileUtils.forceDeleteOnExit(parentDir);
-    File koBase = new File(parentDir, koName);
-    return koBase;
+    return new File(parentDir, koName);
   }
 
   private File unzipToTemp(InputStream inputStream) {
