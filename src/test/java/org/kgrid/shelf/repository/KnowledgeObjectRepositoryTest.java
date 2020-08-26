@@ -9,6 +9,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KoFields;
 import org.mockito.Mock;
@@ -183,7 +184,7 @@ public class KnowledgeObjectRepositoryTest {
     assertEquals(array, repository.findKnowledgeObjectMetadata(new ArkId("hello", "world")));
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test(expected = ShelfResourceNotFound.class)
   public void findKOMetadata_nullArk() {
     repository.findKnowledgeObjectMetadata(null);
   }

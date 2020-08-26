@@ -84,12 +84,6 @@ public class KnowledgeObjectControllerTest {
   }
 
   @Test
-  public void findKnowledgeObject_cantFindObject_returns404(){
-    ResponseEntity<JsonNode> response = koController.findKnowledgeObject("grse", NAME, null);
-    assertEquals(response.getStatusCode(), HttpStatus.NOT_FOUND);
-  }
-
-  @Test
   public void findKnowledgeObject_ChecksForFcRepoNaan() {
     IllegalArgumentException exception =
         assertThrows(
@@ -126,12 +120,6 @@ public class KnowledgeObjectControllerTest {
   }
 
   @Test
-  public void findKnowledgeObjectOldVersion_ThrowsIfObjectNotFound() {
-    ResponseEntity<JsonNode> response = koController.getKnowledgeObjectOldVersion("object", "not", "found");
-    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
-  }
-
-  @Test
   public void getServiceDescriptionJson_CallsFindServiceSpecOnKoRepo() {
     koController.getServiceDescriptionJson(NAAN, NAME, VERSION);
     verify(koRepo).findServiceSpecification(validArk);
@@ -152,8 +140,9 @@ public class KnowledgeObjectControllerTest {
 
   @Test
   public void getServiceDescriptionYaml_ReturnsYaml() throws JsonProcessingException {
-    Object serviceDescriptionYaml = koController.getServiceDescriptionYaml(NAAN, NAME, VERSION);
-    assertEquals("---\nkey: \"value\"\n", serviceDescriptionYaml.toString());
+    ResponseEntity<String> serviceDescriptionYaml =
+        koController.getServiceDescriptionYaml(NAAN, NAME, VERSION);
+    assertEquals("---\nkey: \"value\"\n", serviceDescriptionYaml.getBody());
   }
 
   @Test
@@ -165,20 +154,15 @@ public class KnowledgeObjectControllerTest {
 
   @Test
   public void getServiceDescriptionYamlOldVersion_ReturnsYaml() throws JsonProcessingException {
-    Object serviceDescriptionYaml = koController.getOldServiceDescriptionYaml(NAAN, NAME, VERSION);
-    assertEquals("---\nkey: \"value\"\n", serviceDescriptionYaml.toString());
+    ResponseEntity<String> serviceDescriptionYaml =
+        koController.getOldServiceDescriptionYaml(NAAN, NAME, VERSION);
+    assertEquals("---\nkey: \"value\"\n", serviceDescriptionYaml.getBody());
   }
 
   @Test
   public void getBinary_CallsGetBinaryOnKoRepo() throws NoSuchFileException {
     koController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
     verify(koRepo).getBinary(validArk, childpath);
-  }
-
-  @Test
-  public void getBinary_ThrowsNoSuchFile_WhenBinaryIsNull() {
-    ResponseEntity<Object> response = koController.getBinary("not", "gunna", "findit", mockServletRequest);
-    assertEquals(HttpStatus.NOT_FOUND, response.getStatusCode());
   }
 
   @Test

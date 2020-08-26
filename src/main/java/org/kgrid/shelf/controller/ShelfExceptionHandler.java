@@ -22,86 +22,87 @@ import java.util.Optional;
 @RestController
 public abstract class ShelfExceptionHandler {
 
-    protected Logger log = LoggerFactory.getLogger(this.getClass().getName());
-    protected Optional<KnowledgeObjectDecorator> kod;
-    protected KnowledgeObjectRepository shelf;
+  protected Logger log = LoggerFactory.getLogger(this.getClass().getName());
+  protected Optional<KnowledgeObjectDecorator> kod;
+  protected KnowledgeObjectRepository shelf;
 
-    @Autowired
-    public ShelfExceptionHandler(KnowledgeObjectRepository shelf, Optional<KnowledgeObjectDecorator> kod) {
-        this.shelf = shelf;
-        this.kod = kod;
-    }
+  @Autowired
+  public ShelfExceptionHandler(
+      KnowledgeObjectRepository shelf, Optional<KnowledgeObjectDecorator> kod) {
+    this.shelf = shelf;
+    this.kod = kod;
+  }
 
-    //Exception handling:
-    @ExceptionHandler(NullPointerException.class)
-    public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NullPointerException e,
-                                                                              WebRequest request) {
+  // Exception handling:
+  @ExceptionHandler(NullPointerException.class)
+  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(
+      NullPointerException e, WebRequest request) {
 
-        return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
-                HttpStatus.NOT_FOUND);
-    }
+    return new ResponseEntity<>(
+        getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+  }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(
-            IllegalArgumentException e, WebRequest request) {
+  @ExceptionHandler(IllegalArgumentException.class)
+  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(
+      IllegalArgumentException e, WebRequest request) {
 
-        return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST),
-                HttpStatus.BAD_REQUEST);
-    }
+    return new ResponseEntity<>(
+        getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
+  }
 
-    @ExceptionHandler(IOException.class)
-    public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(IOException e,
-                                                                              WebRequest request) {
+  @ExceptionHandler(IOException.class)
+  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(
+      IOException e, WebRequest request) {
 
-        return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
-                HttpStatus.NOT_FOUND);
-    }
+    return new ResponseEntity<>(
+        getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+  }
 
-    @ExceptionHandler(NoSuchFileException.class)
-    public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NoSuchFileException e,
-                                                                              WebRequest request) {
+  @ExceptionHandler(NoSuchFileException.class)
+  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(
+      NoSuchFileException e, WebRequest request) {
 
-        return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
-                HttpStatus.NOT_FOUND);
-    }
+    return new ResponseEntity<>(
+        getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+  }
 
-    @ExceptionHandler(NoSuchFieldException.class)
-    public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(NoSuchFieldException e,
-                                                                              WebRequest request) {
+  @ExceptionHandler(NoSuchFieldException.class)
+  public ResponseEntity<Map<String, String>> handleObjectNotFoundExceptions(
+      NoSuchFieldException e, WebRequest request) {
 
-        return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND),
-                HttpStatus.NOT_FOUND);
-    }
+    return new ResponseEntity<>(
+        getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+  }
 
-    @ExceptionHandler(ShelfResourceNotFound.class)
-    public ResponseEntity<Map<String, String>> handleShelfResourceNotFoundExceptions(ShelfException e,
-                                                                                     WebRequest request) {
+  @ExceptionHandler(ShelfResourceNotFound.class)
+  public ResponseEntity<Map<String, String>> handleShelfResourceNotFoundExceptions(
+      ShelfException e, WebRequest request) {
 
-        return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST),
-                HttpStatus.BAD_REQUEST);
-    }
+    return new ResponseEntity<>(
+        getErrorMap(request, e.getMessage(), HttpStatus.NOT_FOUND), HttpStatus.NOT_FOUND);
+  }
 
-    @ExceptionHandler(ShelfException.class)
-    public ResponseEntity<Map<String, String>> handleGeneralShelfExceptions(ShelfException e,
-                                                                            WebRequest request) {
+  @ExceptionHandler(ShelfException.class)
+  public ResponseEntity<Map<String, String>> handleGeneralShelfExceptions(
+      ShelfException e, WebRequest request) {
 
-        return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST),
-                HttpStatus.BAD_REQUEST);
-    }
+    return new ResponseEntity<>(
+        getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
+  }
 
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, String>> handleGeneralExceptions(Exception e,
-                                                                       WebRequest request) {
-        return new ResponseEntity<>(getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST),
-                HttpStatus.BAD_REQUEST);
-    }
+  @ExceptionHandler(Exception.class)
+  public ResponseEntity<Map<String, String>> handleGeneralExceptions(
+      Exception e, WebRequest request) {
+    return new ResponseEntity<>(
+        getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
+  }
 
-    private Map<String, String> getErrorMap(WebRequest request, String message, HttpStatus status) {
-        Map<String, String> errorInfo = new HashMap<>();
-        errorInfo.put("Status", status.toString());
-        errorInfo.put("Error", message);
-        errorInfo.put("Request", request.getDescription(false));
-        errorInfo.put("Time", new Date().toString());
-        return errorInfo;
-    }
+  private Map<String, String> getErrorMap(WebRequest request, String message, HttpStatus status) {
+    Map<String, String> errorInfo = new HashMap<>();
+    errorInfo.put("Status", status.toString());
+    errorInfo.put("Error", message);
+    errorInfo.put("Request", request.getDescription(false));
+    errorInfo.put("Time", new Date().toString());
+    return errorInfo;
+  }
 }

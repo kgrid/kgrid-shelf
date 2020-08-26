@@ -8,6 +8,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObjectWrapper;
 import org.kgrid.shelf.domain.KoFields;
@@ -115,11 +116,12 @@ public class KnowledgeObjectRepository {
   public JsonNode findKnowledgeObjectMetadata(ArkId arkId) {
 
     if (arkId == null) {
-      throw new IllegalArgumentException("Cannot find metadata for null ark id");
+      throw new ShelfResourceNotFound("Cannot find metadata for null ark id");
     }
     Map<String, String> versionMap = objectLocations.get(arkId.getDashArk());
     if (versionMap == null) {
-      throw new ShelfException("Object location not found for ark id " + arkId.getDashArkVersion());
+      throw new ShelfResourceNotFound(
+          "Object location not found for ark id " + arkId.getDashArkVersion());
     }
 
     if (!arkId.hasVersion()) {
@@ -129,7 +131,7 @@ public class KnowledgeObjectRepository {
     }
     String nodeLoc = versionMap.get(arkId.getVersion());
     if (nodeLoc == null) {
-      throw new ShelfException(
+      throw new ShelfResourceNotFound(
           "Cannot load metadata, " + arkId.getDashArkVersion() + " not found on shelf");
     }
     return dataStore.getMetadata(nodeLoc);
@@ -195,7 +197,8 @@ public class KnowledgeObjectRepository {
   private String resolveArkIdToLocation(ArkId arkId) {
     if (objectLocations.get(arkId.getDashArk()) == null
         || objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()) == null) {
-      throw new ShelfException("Cannot resolve " + arkId + " to a location in the KO repository");
+      throw new ShelfResourceNotFound(
+          "Cannot resolve " + arkId + " to a location in the KO repository");
     }
     return objectLocations.get(arkId.getDashArk()).get(arkId.getVersion());
   }
