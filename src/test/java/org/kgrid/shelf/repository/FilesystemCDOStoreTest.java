@@ -84,13 +84,13 @@ public class FilesystemCDOStoreTest {
 
   @Test
   public void getAbsoluteLocationReturnsCorrectShelf() {
-    assertEquals(folder.getRoot().getAbsolutePath(), koStore.getAbsoluteLocation(""));
+    assertEquals(folder.getRoot().toURI(), koStore.getAbsoluteLocation(""));
   }
 
   @Test
   public void getAbsoluteLocationReturnsObject() {
     assertEquals(
-        Paths.get(folder.getRoot().getPath(), helloDirName).toString(),
+        Paths.get(folder.getRoot().getPath(), helloDirName).toUri(),
         koStore.getAbsoluteLocation(helloDirName));
   }
 

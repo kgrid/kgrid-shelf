@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
+import org.kgrid.shelf.service.ExportService;
+import org.kgrid.shelf.service.ImportExportException;
+import org.kgrid.shelf.service.ImportService;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.InputStream;
@@ -40,12 +44,20 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
     @Autowired
     ObjectMapper mapper;
 
+    ImportService importService;
+
+    ExportService exportService;
+
     public ImportExportController(
+            ImportService importService,
+            ExportService exportService,
             KnowledgeObjectRepository shelf,
             Optional<KnowledgeObjectDecorator> kod,
             @Value("${kgrid.shelf.manifest:}") String[] startupManifestLocations) {
         super(shelf, kod);
         this.startupManifestLocations = startupManifestLocations;
+        this.importService = importService;
+        this.exportService = exportService;
     }
 
     @Override
@@ -87,10 +99,7 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
             @PathVariable String version,
             HttpServletResponse response) {
 
-        log.info("get ko zip for " + naan + "/" + name);
-        ArkId arkId = new ArkId(naan, name, version);
-
-        exportZip(response, arkId);
+        exportKnowledgeObject(naan, name, version, response);
     }
 
     @GetMapping(
@@ -111,7 +120,19 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
             log.info("get ko zip for " + naan + "/" + name);
             arkId = new ArkId(naan, name);
         }
-        exportZip(response, arkId);
+        response.setHeader("Content-Type", "application/octet-stream");
+        response.addHeader(
+                "Content-Disposition", "attachment; filename=\"" + arkId.getFullDashArk() + ".zip\"");
+        ServletOutputStream outputStream = null;
+        try {
+            outputStream = response.getOutputStream();
+            exportService.zipKnowledgeObject(arkId, outputStream);
+            outputStream.close();
+        } catch (ImportExportException e) {
+            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
+        } catch (IOException e) {
+            response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
+        }
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -119,11 +140,11 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
             @RequestParam("ko") MultipartFile zippedKo) {
 
         log.info("Add ko via zip");
-        ArkId arkId = shelf.importZip(zippedKo);
+        URI id = importService.importZip(zippedKo);
 
         Map<String, String> response = new HashMap<String, String>();
-        HttpHeaders headers = addKOHeaderLocation(arkId);
-        response.put("Added", arkId.getDashArk());
+        HttpHeaders headers = addKOHeaderLocation(id);
+        response.put("Added", id.toString());
 
         return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
     }
@@ -145,52 +166,25 @@ public class ImportExportController extends ShelfExceptionHandler implements Ini
         log.info("importing {} kos", uris.size());
         uris.forEach(
                 ko -> {
-                    String koLocation = ko.asText();
+                    URI koUri = URI.create(ko.asText());
                     try {
-                        Resource koURL = applicationContext.getResource(koLocation);
-                        log.info("import {}", koLocation);
-                        InputStream zipStream = koURL.getInputStream();
-                        ArkId arkId = shelf.importZip(zipStream);
-                        arkList.add(arkId.toString());
+                        log.info("import {}", koUri);
+                        URI result = importService.importZip(koUri);
+                        arkList.add(result.toString());
                     } catch (Exception ex) {
-                        log.warn("Error importing {}, {}", koLocation, ex.getMessage());
+                        log.warn("Error importing {}, {}", koUri, ex.getMessage());
                     }
                 });
         response.put("Added", arkList);
-        return new ResponseEntity<Map<String, Object>>(response, HttpStatus.CREATED);
+        return new ResponseEntity<>(response, HttpStatus.CREATED);
     }
 
-    protected void exportZip(HttpServletResponse response, ArkId arkId) {
+    private HttpHeaders addKOHeaderLocation(URI id) {
+        URI loc = ServletUriComponentsBuilder.fromCurrentRequestUri().build().toUri();
 
-        response.setHeader("Content-Type", "application/octet-stream");
-        response.addHeader(
-                "Content-Disposition",
-                "attachment; filename=\""
-                        + (arkId.hasVersion()
-                        ? arkId.getDashArk() + "-" + arkId.getVersion()
-                        : arkId.getDashArk())
-                        + ".zip\"");
-        try {
-            shelf.extractZip(arkId, response.getOutputStream());
-        } catch (IOException ex) {
-            response.setStatus(HttpServletResponse.SC_NOT_FOUND);
-        } finally {
-            try {
-                response.getOutputStream().close();
-            } catch (IOException e) {
-                response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
-            }
-        }
-    }
-
-    private HttpHeaders addKOHeaderLocation(ArkId arkId) {
-        URI loc =
-                ServletUriComponentsBuilder.fromCurrentRequestUri()
-                        .pathSegment(arkId.getSlashArk())
-                        .build()
-                        .toUri();
         HttpHeaders headers = new HttpHeaders();
-        headers.setLocation(loc);
+
+        headers.setLocation(loc.resolve(id));
         return headers;
     }
 }

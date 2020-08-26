@@ -8,17 +8,17 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
+import org.kgrid.shelf.domain.KnowledgeObjectWrapper;
 import org.kgrid.shelf.domain.KoFields;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.net.URI;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -31,21 +31,14 @@ public class KnowledgeObjectRepository {
 
   private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
   private CompoundDigitalObjectStore dataStore;
-  private ZipImportService zipImportService;
-  private ZipExportService zipExportService;
   // Map of Ark -> Version -> File Location for rapid object lookup
   private static final Map<String, Map<String, String>> objectLocations = new HashMap<>();
   // Map of Ark -> Metadata location for displaying to end user
   private static final Map<ArkId, JsonNode> knowledgeObjects = new HashMap<>();
 
   @Autowired
-  KnowledgeObjectRepository(
-      CompoundDigitalObjectStore compoundDigitalObjectStore,
-      ZipImportService zis,
-      ZipExportService zes) {
+  KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore) {
     this.dataStore = compoundDigitalObjectStore;
-    this.zipImportService = zis;
-    this.zipExportService = zes;
     // Initialize the map of folder names -> ark ids
     refreshObjectMap();
   }
@@ -76,19 +69,6 @@ public class KnowledgeObjectRepository {
     dataStore.saveMetadata(jsonMetadata, metadataPath.toString());
 
     return dataStore.getMetadata(metadataPath.toString());
-  }
-
-  /**
-   * Extract ZIP file of the KO
-   *
-   * @param arkId ark id of the object
-   * @param outputStream zipped file in outputstream
-   * @throws IOException if the system can't extract the zip file to the filesystem
-   */
-  public void extractZip(ArkId arkId, OutputStream outputStream) throws IOException {
-
-    String koPath = resolveArkIdToLocation(arkId);
-    outputStream.write(zipExportService.exportObject(arkId, koPath, dataStore).toByteArray());
   }
 
   public Map<ArkId, JsonNode> findAll() {
@@ -136,11 +116,12 @@ public class KnowledgeObjectRepository {
   public JsonNode findKnowledgeObjectMetadata(ArkId arkId) {
 
     if (arkId == null) {
-      throw new IllegalArgumentException("Cannot find metadata for null ark id");
+      throw new ShelfResourceNotFound("Cannot find metadata for null ark id");
     }
     Map<String, String> versionMap = objectLocations.get(arkId.getDashArk());
     if (versionMap == null) {
-      throw new ShelfException("Object location not found for ark id " + arkId.getDashArkVersion());
+      throw new ShelfResourceNotFound(
+          "Object location not found for ark id " + arkId.getDashArkVersion());
     }
 
     if (!arkId.hasVersion()) {
@@ -150,10 +131,18 @@ public class KnowledgeObjectRepository {
     }
     String nodeLoc = versionMap.get(arkId.getVersion());
     if (nodeLoc == null) {
-      throw new ShelfException(
+      throw new ShelfResourceNotFound(
           "Cannot load metadata, " + arkId.getDashArkVersion() + " not found on shelf");
     }
     return dataStore.getMetadata(nodeLoc);
+  }
+
+  public KnowledgeObjectWrapper getKow(ArkId arkId) {
+    JsonNode metadata = findKnowledgeObjectMetadata(arkId);
+    KnowledgeObjectWrapper kow = new KnowledgeObjectWrapper(metadata);
+    kow.addService(findServiceSpecification(arkId, metadata));
+    kow.addDeployment(findDeploymentSpecification(arkId, metadata));
+    return kow;
   }
 
   /**
@@ -208,31 +197,15 @@ public class KnowledgeObjectRepository {
   private String resolveArkIdToLocation(ArkId arkId) {
     if (objectLocations.get(arkId.getDashArk()) == null
         || objectLocations.get(arkId.getDashArk()).get(arkId.getVersion()) == null) {
-      throw new ShelfException("Cannot resolve " + arkId + " to a location in the KO repository");
+      throw new ShelfResourceNotFound(
+          "Cannot resolve " + arkId + " to a location in the KO repository");
     }
     return objectLocations.get(arkId.getDashArk()).get(arkId.getVersion());
   }
 
-  public String getKoRepoLocation() {
+  public URI getKoRepoLocation() {
 
     return this.dataStore.getAbsoluteLocation("");
-  }
-
-  public ArkId importZip(MultipartFile zippedKO) {
-    try {
-      ArkId arkId = zipImportService.importKO(zippedKO.getInputStream(), dataStore);
-      refreshObjectMap();
-      return arkId;
-    } catch (IOException e) {
-      throw new ShelfException("Cannot load zip file with filename " + zippedKO.getName(), e);
-    }
-  }
-
-  public ArkId importZip(InputStream zipStream) {
-
-    ArkId arkId = zipImportService.importKO(zipStream, dataStore);
-    refreshObjectMap();
-    return arkId;
   }
 
   // Used by activator
@@ -264,7 +237,7 @@ public class KnowledgeObjectRepository {
     }
   }
 
-  private void refreshObjectMap() {
+  public void refreshObjectMap() {
     objectLocations.clear();
     knowledgeObjects.clear();
 
