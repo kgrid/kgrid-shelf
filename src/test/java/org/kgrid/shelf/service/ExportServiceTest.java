@@ -3,10 +3,10 @@ package org.kgrid.shelf.service;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kgrid.shelf.TestHelper;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KnowledgeObjectWrapper;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
-import org.kgrid.shelf.repository.ZipImportExportTestHelper;
 import org.mockito.*;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
@@ -37,12 +37,11 @@ public class ExportServiceTest {
 
   @Before
   public void setUp() throws IOException {
-    arkId = ZipImportExportTestHelper.ARK_ID;
+    arkId = TestHelper.ARK_ID;
 
-    kow = new KnowledgeObjectWrapper(ZipImportExportTestHelper.generateMetadata());
+    kow = new KnowledgeObjectWrapper(TestHelper.generateMetadata());
     when(knowledgeObjectRepository.getKoRepoLocation()).thenReturn(URI.create("file:/root/"));
-    when(knowledgeObjectRepository.getObjectLocation(arkId))
-        .thenReturn(ZipImportExportTestHelper.KO_PATH);
+    when(knowledgeObjectRepository.getObjectLocation(arkId)).thenReturn(TestHelper.KO_PATH);
     when(knowledgeObjectRepository.getKow(arkId)).thenReturn(kow);
   }
 

@@ -5,7 +5,6 @@ import org.apache.jena.ext.com.google.common.io.Files;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
-import org.kgrid.shelf.repository.ZipImportExportTestHelper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -24,6 +23,8 @@ import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.kgrid.shelf.TestHelper.DEPLOYMENT_BYTES;
+import static org.kgrid.shelf.TestHelper.packZipForImport;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
@@ -86,9 +87,7 @@ public class ImportServiceTest {
   @Test
   public void importZip_givenResource_noMetadataLogsThrowsAndSkips() throws IOException {
 
-    ByteArrayInputStream funnyZipStream =
-        ZipImportExportTestHelper.packZipForImport(
-            null, ZipImportExportTestHelper.DEPLOYMENT_BYTES, null, null);
+    ByteArrayInputStream funnyZipStream = packZipForImport(null, DEPLOYMENT_BYTES, null, null);
 
     final File test = Files.createTempDir();
     File zipTest = new File(test, "naan-name-version.zip");

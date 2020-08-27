@@ -1,5 +1,6 @@
 package org.kgrid.shelf.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
@@ -21,18 +22,13 @@ import org.springframework.test.util.ReflectionTestUtils;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.Map;
 
+import static org.kgrid.shelf.TestHelper.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ManifestReaderTest extends TestCase {
-
-  private static final String GOOD_MANIFEST_PATH = "GOOD_MANIFEST_PATH";
-  private static final String BAD_MANIFEST_PATH = "BAD_MANIFEST_PATH";
-  private static final String RESOURCE_1_URI = "RESOURCE_1_URI";
-  private static final String RESOURCE_2_URI = "RESOURCE_2_URI";
 
   @Mock ImportService importService;
   @Spy ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
@@ -51,9 +47,14 @@ public class ManifestReaderTest extends TestCase {
     mockResource = Mockito.mock(Resource.class);
     when(applicationContext.getResource(GOOD_MANIFEST_PATH)).thenReturn(mockResource);
     when(applicationContext.getResource(BAD_MANIFEST_PATH)).thenThrow(new NullPointerException());
+    when(mockResource.getURI()).thenReturn(URI.create(GOOD_MANIFEST_PATH));
     when(mapper.readTree(mockResourceInputStream)).thenReturn(manifestNode);
     when(mockResource.getInputStream()).thenReturn(mockResourceInputStream);
     when(mapper.createArrayNode()).thenReturn(new ObjectMapper().createArrayNode());
+    when(importService.importZip(URI.create(RESOLVED_RELATIVE_RESOURCE_URI)))
+        .thenReturn(URI.create(RELATIVE_RESOURCE_URI));
+    when(importService.importZip(URI.create(ABSOLUTE_RESOURCE_URI)))
+        .thenReturn(URI.create(ABSOLUTE_RESOURCE_URI));
   }
 
   @Test
@@ -95,19 +96,43 @@ public class ManifestReaderTest extends TestCase {
     ReflectionTestUtils.setField(
         manifestReader, "startupManifestLocations", new String[] {GOOD_MANIFEST_PATH});
 
-    when(importService.importZip(URI.create(RESOURCE_1_URI))).thenThrow(RuntimeException.class);
-    final URI resource2 = URI.create(RESOURCE_2_URI);
+    when(importService.importZip(URI.create(RELATIVE_RESOURCE_URI)))
+        .thenThrow(RuntimeException.class);
+    final URI resource2 = URI.create(ABSOLUTE_RESOURCE_URI);
     when(importService.importZip(resource2)).thenReturn(resource2);
 
-    Map<String, ArrayNode> map = manifestReader.loadManifest(getManifestNode());
-    assertEquals(1, map.get("Added").size());
+    ArrayNode kos = manifestReader.loadManifest(getManifestNode());
+    assertEquals(1, kos.size());
   }
 
-  private ObjectNode getManifestNode() {
-    ObjectNode node = JsonNodeFactory.instance.objectNode();
-    ArrayNode uris = node.putArray("manifest");
-    uris.add(RESOURCE_1_URI);
-    uris.add(RESOURCE_2_URI);
-    return node;
+  @Test
+  public void afterPropertiesSet_ResolvesRelativeUrisButNotAbsoluteOnes() throws IOException {
+    ReflectionTestUtils.setField(
+        manifestReader, "startupManifestLocations", new String[] {GOOD_MANIFEST_PATH});
+    JsonNode manifestNode = getManifestNode();
+    when(mapper.readTree(mockResourceInputStream)).thenReturn(manifestNode);
+    manifestReader.afterPropertiesSet();
+    verify(importService).importZip(URI.create(RESOLVED_RELATIVE_RESOURCE_URI));
+    verify(importService).importZip(URI.create(ABSOLUTE_RESOURCE_URI));
+  }
+
+  @Test
+  public void loadManifest_doesntFailWhenNoBaseUrl() {
+    ReflectionTestUtils.setField(
+        manifestReader, "startupManifestLocations", new String[] {GOOD_MANIFEST_PATH});
+    JsonNode manifestNode = getManifestNode();
+    manifestReader.loadManifest(manifestNode);
+
+    verify(importService).importZip(URI.create(RELATIVE_RESOURCE_URI));
+    verify(importService).importZip(URI.create(ABSOLUTE_RESOURCE_URI));
+  }
+
+  @Test
+  public void loadManifests_loadsListOfManifests() {
+    when(applicationContext.getResource(GOOD_MANIFEST_PATH)).thenReturn(mockResource);
+
+    ArrayNode addedObjects = manifestReader.loadManifests(getManifestListNode());
+    assertEquals(RELATIVE_RESOURCE_URI, addedObjects.get(0).asText());
+    assertEquals(ABSOLUTE_RESOURCE_URI, addedObjects.get(1).asText());
   }
 }

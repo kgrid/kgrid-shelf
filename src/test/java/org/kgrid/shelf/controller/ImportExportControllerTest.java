@@ -1,5 +1,7 @@
 package org.kgrid.shelf.controller;
 
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -11,7 +13,6 @@ import org.kgrid.shelf.service.ImportService;
 import org.kgrid.shelf.service.ManifestReader;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.springframework.context.ApplicationContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -22,24 +23,19 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.URI;
 import java.util.Map;
 
 import static org.junit.Assert.assertEquals;
+import static org.kgrid.shelf.TestHelper.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ImportExportControllerTest {
 
-  private static final String GOOD_NAAN = "naan";
-  private static final String GOOD_NAME = "name";
-  private static final String GOOD_VERSION = "version";
   private KnowledgeObjectRepository mockKnowledgeObjectRepository;
-  private ApplicationContext mockApplicationContext;
   private ArkId validArkId;
-  private InputStream mockResourceInputStream;
   private ServletOutputStream mockServletOutputStream;
   private ImportExportController importExportController;
   private HttpServletResponse servletResponse;
@@ -53,12 +49,10 @@ public class ImportExportControllerTest {
     mockImportService = Mockito.mock(ImportService.class);
     mockExportService = Mockito.mock(ExportService.class);
     mockKnowledgeObjectRepository = Mockito.mock(KnowledgeObjectRepository.class);
-    mockApplicationContext = Mockito.mock(ApplicationContext.class);
-    mockResourceInputStream = Mockito.mock(InputStream.class);
     mockServletOutputStream = Mockito.mock(ServletOutputStream.class);
     mockManifestReader = Mockito.mock(ManifestReader.class);
 
-    validArkId = new ArkId(GOOD_NAAN, GOOD_NAME, GOOD_VERSION);
+    validArkId = new ArkId(NAAN, NAME, VERSION);
     servletResponse = mock(HttpServletResponse.class);
     multiPartFile = mock(MultipartFile.class);
     when(servletResponse.getOutputStream()).thenReturn(mockServletOutputStream);
@@ -74,8 +68,7 @@ public class ImportExportControllerTest {
   @Test
   public void exportKnowledgeObjectVersion_SetsContentHeaderOnServletResponse() {
 
-    importExportController.exportKnowledgeObjectVersion(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION, servletResponse);
 
     verify(servletResponse).setHeader("Content-Type", "application/octet-stream");
   }
@@ -83,26 +76,18 @@ public class ImportExportControllerTest {
   @Test
   public void exportKnowledgeObjectVersion_AddsContentDispositionHeaderToResponse() {
 
-    importExportController.exportKnowledgeObjectVersion(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION, servletResponse);
 
     verify(servletResponse)
         .addHeader(
             "Content-Disposition",
-            "attachment; filename=\""
-                + GOOD_NAAN
-                + "-"
-                + GOOD_NAME
-                + "-"
-                + GOOD_VERSION
-                + ".zip\"");
+            "attachment; filename=\"" + NAAN + "-" + NAME + "-" + VERSION + ".zip\"");
   }
 
   @Test
   public void exportKnowledgeObjectVersion_CallsExtractZipWithOutputStream() {
 
-    importExportController.exportKnowledgeObjectVersion(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION, servletResponse);
 
     verify(mockExportService).zipKnowledgeObject(validArkId, mockServletOutputStream);
   }
@@ -110,8 +95,7 @@ public class ImportExportControllerTest {
   @Test
   public void exportKnowledgeObjectVersion_ClosesResponseOutputStream() throws IOException {
 
-    importExportController.exportKnowledgeObjectVersion(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION, servletResponse);
 
     verify(mockServletOutputStream).close();
   }
@@ -122,8 +106,7 @@ public class ImportExportControllerTest {
         .when(mockExportService)
         .zipKnowledgeObject(any(), any());
 
-    importExportController.exportKnowledgeObjectVersion(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION, servletResponse);
 
     verify(servletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
   }
@@ -133,8 +116,7 @@ public class ImportExportControllerTest {
       throws IOException {
     doThrow(new IOException("OPE")).when(mockServletOutputStream).close();
 
-    importExportController.exportKnowledgeObjectVersion(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION, servletResponse);
 
     verify(servletResponse).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
   }
@@ -142,8 +124,7 @@ public class ImportExportControllerTest {
   @Test
   public void exportKnowledgeObject_SetsContentHeaderOnServletResponse() {
 
-    importExportController.exportKnowledgeObject(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObject(NAAN, NAME, VERSION, servletResponse);
 
     verify(servletResponse).setHeader("Content-Type", "application/octet-stream");
   }
@@ -151,26 +132,18 @@ public class ImportExportControllerTest {
   @Test
   public void exportKnowledgeObject_AddsContentDispositionHeaderToResponse() {
 
-    importExportController.exportKnowledgeObject(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObject(NAAN, NAME, VERSION, servletResponse);
 
     verify(servletResponse)
         .addHeader(
             "Content-Disposition",
-            "attachment; filename=\""
-                + GOOD_NAAN
-                + "-"
-                + GOOD_NAME
-                + "-"
-                + GOOD_VERSION
-                + ".zip\"");
+            "attachment; filename=\"" + NAAN + "-" + NAME + "-" + VERSION + ".zip\"");
   }
 
   @Test
   public void exportKnowledgeObject_CallsExtractZipWithOutputStream() {
 
-    importExportController.exportKnowledgeObject(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObject(NAAN, NAME, VERSION, servletResponse);
 
     verify(mockExportService).zipKnowledgeObject(validArkId, mockServletOutputStream);
   }
@@ -178,8 +151,7 @@ public class ImportExportControllerTest {
   @Test
   public void exportKnowledgeObject_ClosesResponseOutputStream() throws IOException {
 
-    importExportController.exportKnowledgeObject(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObject(NAAN, NAME, VERSION, servletResponse);
 
     verify(mockServletOutputStream).close();
   }
@@ -190,8 +162,7 @@ public class ImportExportControllerTest {
         .when(mockExportService)
         .zipKnowledgeObject(any(), any());
 
-    importExportController.exportKnowledgeObject(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObject(NAAN, NAME, VERSION, servletResponse);
 
     verify(servletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
   }
@@ -200,8 +171,7 @@ public class ImportExportControllerTest {
   public void exportKnowledgeObject_HandlesIOExceptionFromClosingOStream() throws IOException {
     doThrow(new IOException("OPE")).when(mockServletOutputStream).close();
 
-    importExportController.exportKnowledgeObject(
-        GOOD_NAAN, GOOD_NAME, GOOD_VERSION, servletResponse);
+    importExportController.exportKnowledgeObject(NAAN, NAME, VERSION, servletResponse);
 
     verify(servletResponse).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
   }
@@ -209,21 +179,18 @@ public class ImportExportControllerTest {
   @Test
   public void exportKnowledgeObject_AddsContentDispositionHeaderToResponse_WhenArkIsVersionless() {
 
-    importExportController.exportKnowledgeObject(GOOD_NAAN, GOOD_NAME, null, servletResponse);
+    importExportController.exportKnowledgeObject(NAAN, NAME, null, servletResponse);
 
     verify(servletResponse)
-        .addHeader(
-            "Content-Disposition",
-            "attachment; filename=\"" + GOOD_NAAN + "-" + GOOD_NAME + ".zip\"");
+        .addHeader("Content-Disposition", "attachment; filename=\"" + NAAN + "-" + NAME + ".zip\"");
   }
 
   @Test
   public void exportKnowledgeObject_CallsExtractZipWithOutputStream_WhenArkIsVersionless() {
 
-    importExportController.exportKnowledgeObject(GOOD_NAAN, GOOD_NAME, null, servletResponse);
+    importExportController.exportKnowledgeObject(NAAN, NAME, null, servletResponse);
 
-    verify(mockExportService)
-        .zipKnowledgeObject(new ArkId(GOOD_NAAN, GOOD_NAME), mockServletOutputStream);
+    verify(mockExportService).zipKnowledgeObject(new ArkId(NAAN, NAME), mockServletOutputStream);
   }
 
   @Test
@@ -235,7 +202,7 @@ public class ImportExportControllerTest {
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(request));
 
     when(mockImportService.importZip((MultipartFile) any()))
-        .thenReturn(URI.create(GOOD_NAAN + "/" + GOOD_NAME));
+        .thenReturn(URI.create(NAAN + "/" + NAME));
 
     HttpHeaders expectedHeaders = new HttpHeaders();
     expectedHeaders.setLocation(URI.create("http://localhost/requestUri/naan/name"));
@@ -244,5 +211,19 @@ public class ImportExportControllerTest {
         importExportController.depositKnowledgeObject(multiPartFile);
 
     assertEquals(expectedHeaders, mapResponseEntity.getHeaders());
+  }
+
+  @Test
+  public void depositManifest_SendsListToManifestReader() {
+    ObjectNode manifest = getManifestNode();
+    importExportController.depositManifest(manifest);
+    verify(mockManifestReader, times(1)).loadManifest(manifest);
+  }
+
+  @Test
+  public void depositManifests_SendsManifestsToManifestReader() {
+    ArrayNode manifestList = getManifestListNode();
+    importExportController.depositManifests(manifestList);
+    verify(mockManifestReader, times(1)).loadManifests(manifestList);
   }
 }
