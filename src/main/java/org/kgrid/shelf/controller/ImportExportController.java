@@ -109,24 +109,19 @@ public class ImportExportController extends ShelfExceptionHandler {
   }
 
   @PostMapping(path = "/manifest", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Map<String, ArrayNode>> depositManifest(@RequestBody JsonNode manifest) {
+  public ResponseEntity<ArrayNode> depositManifest(@RequestBody JsonNode manifest) {
 
     log.info("Add kos from manifest {}", manifest.asText());
 
-    Map<String, ArrayNode> addedKos = new HashMap<>();
-    addedKos.put("Added", manifestReader.loadManifest(manifest));
-    return new ResponseEntity<>(addedKos, HttpStatus.CREATED);
+    return new ResponseEntity<>(manifestReader.loadManifest(manifest), HttpStatus.CREATED);
   }
 
   @PostMapping(path = "/manifest-list", consumes = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<Map<String, ArrayNode>> depositManifests(
-      @RequestBody JsonNode manifestList) {
+  public ResponseEntity<ArrayNode> depositManifests(@RequestBody JsonNode manifestList) {
 
     log.info("Adding kos from list of manifests {}", manifestList.asText());
 
-    Map<String, ArrayNode> addedKos = new HashMap<>();
-    addedKos.put("Added", manifestReader.loadManifests(manifestList));
-    return new ResponseEntity<>(addedKos, HttpStatus.CREATED);
+    return new ResponseEntity<>(manifestReader.loadManifests(manifestList), HttpStatus.CREATED);
   }
 
   private HttpHeaders addKOHeaderLocation(URI id) {
