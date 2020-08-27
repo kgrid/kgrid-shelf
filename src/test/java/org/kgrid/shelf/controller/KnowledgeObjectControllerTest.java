@@ -23,20 +23,17 @@ import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.kgrid.shelf.TestHelper.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @RunWith(MockitoJUnitRunner.class)
 public class KnowledgeObjectControllerTest {
 
-  private static final String NAAN = "naan";
-  private static final String NAME = "name";
-  private static final String VERSION = "version";
   private KnowledgeObjectRepository koRepo;
   private KnowledgeObjectController koController;
   private final ObjectMapper objectMapper = new ObjectMapper();
   private final HashMap<ArkId, JsonNode> koMap = new HashMap<>();
-  private final ArkId validArk = new ArkId(NAAN, NAME, VERSION);
   private final ArkId arkNoVersion = new ArkId(NAAN, NAME);
   private MockHttpServletRequest mockServletRequest;
   private final String childpath = "childpath";
@@ -47,16 +44,16 @@ public class KnowledgeObjectControllerTest {
     koRepo = Mockito.mock(KnowledgeObjectRepository.class);
     koController = new KnowledgeObjectController(koRepo, null);
     JsonNode koNode = objectMapper.readTree("{\"key\":\"value\"}");
-    koMap.put(validArk, koNode);
+    koMap.put(ARK_ID, koNode);
     mockServletRequest = new MockHttpServletRequest();
     String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + childpath;
     mockServletRequest.setRequestURI(requestUri);
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
     when(koRepo.findAll()).thenReturn(koMap);
-    when(koRepo.findKnowledgeObjectMetadata(validArk)).thenReturn(koNode);
+    when(koRepo.findKnowledgeObjectMetadata(ARK_ID)).thenReturn(koNode);
     when(koRepo.findKnowledgeObjectMetadata(arkNoVersion)).thenReturn(koNode);
-    when(koRepo.findServiceSpecification(validArk)).thenReturn(koNode);
-    when(koRepo.getBinary(validArk, childpath)).thenReturn("byteArray".getBytes());
+    when(koRepo.findServiceSpecification(ARK_ID)).thenReturn(koNode);
+    when(koRepo.getBinary(ARK_ID, childpath)).thenReturn("byteArray".getBytes());
   }
 
   @Test
@@ -74,7 +71,7 @@ public class KnowledgeObjectControllerTest {
   @Test
   public void findKnowledgeObject_CallsFindMetadataOnKoRepo_WhenVersionIsSupplied() {
     koController.findKnowledgeObject(NAAN, NAME, VERSION);
-    verify(koRepo).findKnowledgeObjectMetadata(validArk);
+    verify(koRepo).findKnowledgeObjectMetadata(ARK_ID);
   }
 
   @Test
@@ -98,7 +95,7 @@ public class KnowledgeObjectControllerTest {
   @Test
   public void findKnowledgeObjectOldVersion_CallsFindMetadataOnKoRepo_WhenVersionIsSupplied() {
     koController.getKnowledgeObjectOldVersion(NAAN, NAME, VERSION);
-    verify(koRepo).findKnowledgeObjectMetadata(validArk);
+    verify(koRepo).findKnowledgeObjectMetadata(ARK_ID);
   }
 
   @Test
@@ -122,20 +119,20 @@ public class KnowledgeObjectControllerTest {
   @Test
   public void getServiceDescriptionJson_CallsFindServiceSpecOnKoRepo() {
     koController.getServiceDescriptionJson(NAAN, NAME, VERSION);
-    verify(koRepo).findServiceSpecification(validArk);
+    verify(koRepo).findServiceSpecification(ARK_ID);
   }
 
   @Test
   public void getServiceDescriptionJsonOldVersion_CallsFindServiceSpecOnKoRepo() {
     koController.getServiceDescriptionOldVersionJson(NAAN, NAME, VERSION);
-    verify(koRepo).findServiceSpecification(validArk);
+    verify(koRepo).findServiceSpecification(ARK_ID);
   }
 
   @Test
   public void getServiceDescriptionYaml_CallsFindServiceSpecOnKoRepo()
       throws JsonProcessingException {
     koController.getServiceDescriptionYaml(NAAN, NAME, VERSION);
-    verify(koRepo).findServiceSpecification(validArk);
+    verify(koRepo).findServiceSpecification(ARK_ID);
   }
 
   @Test
@@ -149,7 +146,7 @@ public class KnowledgeObjectControllerTest {
   public void getServiceDescriptionYamlOldVersion_CallsFindServiceSpecOnKoRepo()
       throws JsonProcessingException {
     koController.getOldServiceDescriptionYaml(NAAN, NAME, VERSION);
-    verify(koRepo).findServiceSpecification(validArk);
+    verify(koRepo).findServiceSpecification(ARK_ID);
   }
 
   @Test
@@ -162,7 +159,7 @@ public class KnowledgeObjectControllerTest {
   @Test
   public void getBinary_CallsGetBinaryOnKoRepo() throws NoSuchFileException {
     koController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
-    verify(koRepo).getBinary(validArk, childpath);
+    verify(koRepo).getBinary(ARK_ID, childpath);
   }
 
   @Test
@@ -189,18 +186,18 @@ public class KnowledgeObjectControllerTest {
   @Test
   public void editVersionMetadata_CallsEditMetadataOnKoRepo() {
     koController.editVersionMetadata(NAAN, NAME, VERSION, metadataString);
-    verify(koRepo).editMetadata(validArk, metadataString);
+    verify(koRepo).editMetadata(ARK_ID, metadataString);
   }
 
   @Test
   public void editVersionMetadata_GetsNewMetadataFromKoRepo() {
     koController.editVersionMetadata(NAAN, NAME, VERSION, metadataString);
-    verify(koRepo).findKnowledgeObjectMetadata(validArk);
+    verify(koRepo).findKnowledgeObjectMetadata(ARK_ID);
   }
 
   @Test
   public void editVersionMetadata_ReturnsNewMetadata() throws JsonProcessingException {
-    when(koRepo.findKnowledgeObjectMetadata(validArk))
+    when(koRepo.findKnowledgeObjectMetadata(ARK_ID))
         .thenReturn(objectMapper.readTree(metadataString));
     ResponseEntity<JsonNode> newMetaData =
         koController.editVersionMetadata(NAAN, NAME, VERSION, metadataString);
@@ -223,7 +220,7 @@ public class KnowledgeObjectControllerTest {
   @Test
   public void deleteKnowledgeObject_callsDeleteOnKoRepo_WithVersion() {
     koController.deleteKnowledgeObject(NAAN, NAME, VERSION);
-    verify(koRepo).delete(validArk);
+    verify(koRepo).delete(ARK_ID);
   }
 
   @Test

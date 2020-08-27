@@ -21,6 +21,8 @@ import java.util.*;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.kgrid.shelf.TestHelper.PAYLOAD_PATH;
+import static org.kgrid.shelf.TestHelper.SERVICE_YAML_PATH;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -205,7 +207,7 @@ public class KnowledgeObjectRepositoryTest {
   public void findServiceSpec_getsCorrectSpec() {
     String deployment = "{\"This is a service spec\": \"yay\"}";
     when(compoundDigitalObjectStore.getBinary(
-            helloWorld1Location + FileSystems.getDefault().getSeparator() + "service.yaml"))
+            helloWorld1Location + FileSystems.getDefault().getSeparator() + SERVICE_YAML_PATH))
         .thenReturn(deployment.getBytes());
     JsonNode serviceSpec = repository.findServiceSpecification(helloWorld1ArkId);
     assertEquals("yay", serviceSpec.get("This is a service spec").asText());
@@ -230,18 +232,16 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void getBinary_returnsBinary() {
     byte[] binaryData = "I'm a binary!".getBytes();
-    String childPath = "src/index.js";
-    when(compoundDigitalObjectStore.getBinary(helloWorld1Location, childPath))
+    when(compoundDigitalObjectStore.getBinary(helloWorld1Location, PAYLOAD_PATH))
         .thenReturn(binaryData);
-    byte[] binaryResult = repository.getBinary(helloWorld1ArkId, childPath);
+    byte[] binaryResult = repository.getBinary(helloWorld1ArkId, PAYLOAD_PATH);
     assertArrayEquals(binaryData, binaryResult);
   }
 
   @Test(expected = ShelfException.class)
   public void getBinary_missingArkThrowsException() {
     ArkId missingArk = new ArkId("missing", "help");
-    String childPath = "src/index.js";
-    repository.getBinary(missingArk, childPath);
+    repository.getBinary(missingArk, PAYLOAD_PATH);
   }
 
   @Test

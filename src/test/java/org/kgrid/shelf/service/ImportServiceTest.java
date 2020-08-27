@@ -1,12 +1,10 @@
 package org.kgrid.shelf.service;
 
 import org.apache.commons.io.FileUtils;
-import org.apache.commons.io.IOUtils;
 import org.apache.jena.ext.com.google.common.io.Files;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
-import org.kgrid.shelf.repository.ZipImportExportTestHelper;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -15,125 +13,115 @@ import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.*;
+import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
+import static org.kgrid.shelf.TestHelper.DEPLOYMENT_BYTES;
+import static org.kgrid.shelf.TestHelper.packZipForImport;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ImportServiceTest {
 
-    @Spy
-    ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
-    @Mock
-    CompoundDigitalObjectStore cdoStore;
+  @Spy ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
+  @Mock CompoundDigitalObjectStore cdoStore;
+  @InjectMocks ImportService importService;
+  URI resourceUri;
 
-    @InjectMocks
-    ImportService importService;
+  @Test
+  public void importZip_givenUri_canExtractAndSaveArtifacts() {
+    resourceUri = URI.create("file:src/test/resources/fixtures/import-export/mycoolko.zip");
 
-    URI resourceUri;
+    importService.importZip(resourceUri);
 
-    @Test
-    public void importZip_givenUri_canExtractAndSaveArtifacts() {
-        resourceUri = URI.create("file:src/test/resources/fixtures/import-export/mycoolko.zip");
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/service.yaml"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/deployment.yaml"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/dist/main.js"));
+  }
 
-        importService.importZip(resourceUri);
+  @Test
+  public void importZip_givenUri_canExtractAndSaveMultipleArtifacts() {
+    resourceUri = URI.create("file:src/test/resources/fixtures/import-export/artifact-array.zip");
 
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/service.yaml"));
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/deployment.yaml"));
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/dist/main.js"));
-    }
+    importService.importZip(resourceUri);
 
-    @Test
-    public void importZip_givenUri_canExtractAndSaveMultipleArtifacts() {
-        resourceUri = URI.create("file:src/test/resources/fixtures/import-export/artifact-array.zip");
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/service.yaml"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/deployment.yaml"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/dist/main.js"));
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/src/index.js"));
+  }
 
-        importService.importZip(resourceUri);
+  @Test
+  public void importZip_givenUri_noDeploymentLogsThrowsAndSkips() {
+    resourceUri =
+        URI.create("file:src/test/resources/fixtures/import-export/missing-deployment.zip");
 
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/service.yaml"));
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/deployment.yaml"));
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/dist/main.js"));
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/src/index.js"));
-    }
+    Throwable cause =
+        assertThrows(ImportExportException.class, () -> importService.importZip(resourceUri))
+            .getCause();
 
-    @Test
-    public void importZip_givenUri_noDeploymentLogsThrowsAndSkips() {
-        resourceUri =
-                URI.create("file:src/test/resources/fixtures/import-export/missing-deployment.zip");
+    assertEquals(FileNotFoundException.class, cause.getClass());
+  }
 
-        Throwable cause =
-                assertThrows(
-                        ImportExportException.class,
-                        () -> importService.importZip(resourceUri))
-                        .getCause();
+  @Test
+  public void importZip_givenUri_badMetadataLogsThrowsAndSkips() {
+    resourceUri = URI.create("file:src/test/resources/fixtures/import-export/bad-kometadata.zip");
 
-        assertEquals(FileNotFoundException.class, cause.getClass());
-    }
+    Throwable cause =
+        assertThrows(ImportExportException.class, () -> importService.importZip(resourceUri))
+            .getCause();
 
-    @Test
-    public void importZip_givenUri_badMetadataLogsThrowsAndSkips() {
-        resourceUri = URI.create("file:src/test/resources/fixtures/import-export/bad-kometadata.zip");
+    assertEquals(FileNotFoundException.class, cause.getClass());
+  }
 
-        Throwable cause =
-                assertThrows(
-                        ImportExportException.class,
-                        () -> importService.importZip(resourceUri))
-                        .getCause();
+  @Test
+  public void importZip_givenResource_noMetadataLogsThrowsAndSkips() throws IOException {
 
-        assertEquals(FileNotFoundException.class, cause.getClass());
-    }
+    ByteArrayInputStream funnyZipStream = packZipForImport(null, DEPLOYMENT_BYTES, null, null);
 
-    @Test
-    public void importZip_givenResource_noMetadataLogsThrowsAndSkips() throws IOException {
+    final File test = Files.createTempDir();
+    File zipTest = new File(test, "naan-name-version.zip");
+    Files.write(funnyZipStream.readAllBytes(), zipTest);
+    FileUtils.forceDeleteOnExit(test);
 
-        ByteArrayInputStream funnyZipStream =
-                ZipImportExportTestHelper.packZipForImport(
-                        null, ZipImportExportTestHelper.DEPLOYMENT_BYTES, null, null);
+    final FileSystemResource zipResource = new FileSystemResource(zipTest);
 
-        final File test = Files.createTempDir();
-        File zipTest = new File(test, "naan-name-version.zip");
-        Files.write(funnyZipStream.readAllBytes(), zipTest);
-        FileUtils.forceDeleteOnExit(test);
+    Throwable cause =
+        assertThrows(ImportExportException.class, () -> importService.importZip(zipResource))
+            .getCause();
 
-        final FileSystemResource zipResource = new FileSystemResource(zipTest);
+    assertEquals(FileNotFoundException.class, cause.getClass());
+  }
 
-        Throwable cause =
-                assertThrows(
-                        ImportExportException.class,
-                        () -> importService.importZip(zipResource))
-                        .getCause();
+  @Test
+  public void importZip_givenUri_canLoadHelloWorld() {
+    resourceUri = URI.create("file:src/test/resources/static/hello-world-v1.3.zip");
 
-        assertEquals(FileNotFoundException.class, cause.getClass());
-    }
+    importService.importZip(resourceUri);
 
-    @Test
-    public void importZip_givenUri_canLoadHelloWorld() {
-        resourceUri = URI.create("file:src/test/resources/static/hello-world-v1.3.zip");
+    verify(cdoStore, times(4)).saveBinary(any(), any());
+    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
+  }
 
-        importService.importZip(resourceUri);
+  @Test
+  public void importZip_givenZipFile_throwsImportExportException_WhenGetBytesFails()
+      throws IOException {
+    MultipartFile mockFile = Mockito.mock(MultipartFile.class);
+    when(mockFile.getBytes()).thenThrow(new IOException("boom"));
+    Throwable cause =
+        assertThrows(ImportExportException.class, () -> importService.importZip(mockFile))
+            .getCause();
 
-        verify(cdoStore, times(4)).saveBinary(any(), any());
-        verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
-    }
-
-    @Test
-    public void importZip_givenZipFile_throwsImportExportException_WhenGetBytesFails() throws IOException {
-        MultipartFile mockFile = Mockito.mock(MultipartFile.class);
-        when(mockFile.getBytes()).thenThrow(new IOException("boom"));
-        Throwable cause =
-                assertThrows(
-                        ImportExportException.class,
-                        () -> importService.importZip(mockFile))
-                        .getCause();
-
-        assertEquals(IOException.class, cause.getClass());
-    }
+    assertEquals(IOException.class, cause.getClass());
+  }
 }

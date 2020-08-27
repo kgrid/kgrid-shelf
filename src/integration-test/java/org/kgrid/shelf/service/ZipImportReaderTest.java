@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.URI;
 
 import static org.junit.Assert.*;
+import static org.kgrid.shelf.TestHelper.DEPLOYMENT_YAML_PATH;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ZipImportReaderTest {
@@ -29,8 +30,7 @@ public class ZipImportReaderTest {
   Resource zippedKo;
 
   @Before
-  public void setUp() throws IOException {
-    // /[kgrid-shelf]/src/test/resources/fixtures/import-export/mycoolko.zip
+  public void setUp() {
     resourceUri = URI.create("file:src/test/resources/fixtures/import-export/mycoolko.zip");
 
     zippedKo = applicationContext.getResource(resourceUri.toString());
@@ -50,7 +50,7 @@ public class ZipImportReaderTest {
     assertFalse("Ko reader gets json metadata", metadata.isEmpty());
     assertEquals(
         "Metadata in temp folder has deployment spec",
-        "deployment.yaml",
+        DEPLOYMENT_YAML_PATH,
         metadata.get(KoFields.DEPLOYMENT_SPEC_TERM.asStr()).asText());
   }
 
@@ -75,7 +75,7 @@ public class ZipImportReaderTest {
   }
 
   @Test
-  public void throwsErrorOnBadResource() throws IOException {
+  public void throwsErrorOnBadResource() {
     resourceUri = URI.create("file:src/test/resources/fixtures/import-export/badZip.zip");
 
     zippedKo = applicationContext.getResource(resourceUri.toString());
@@ -91,7 +91,7 @@ public class ZipImportReaderTest {
   }
 
   @Test
-  public void throwsErrorOnMissingResource() throws IOException {
+  public void throwsErrorOnMissingResource() {
     resourceUri = URI.create("file:src/test/resources/fixtures/import-export/missingZip.zip");
 
     zippedKo = applicationContext.getResource(resourceUri.toString());
