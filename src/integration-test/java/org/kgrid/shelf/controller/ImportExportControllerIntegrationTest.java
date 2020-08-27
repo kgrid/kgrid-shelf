@@ -14,6 +14,7 @@ import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStoreFactory;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
+import org.kgrid.shelf.service.ManifestReader;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -28,13 +29,18 @@ import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 import static org.junit.Assert.assertTrue;
 
 @RunWith(SpringJUnit4ClassRunner.class)
 @SpringBootTest(
-    classes = {ShelfGateway.class, ImportExportControllerIntegrationTest.TestConfig.class},
+    classes = {
+      ShelfGateway.class,
+      ManifestReader.class,
+      ImportExportControllerIntegrationTest.TestConfig.class
+    },
     webEnvironment = WebEnvironment.RANDOM_PORT)
 public class ImportExportControllerIntegrationTest {
 
@@ -111,7 +117,7 @@ public class ImportExportControllerIntegrationTest {
   private String readAndPortFilter(Resource manifestResource, String port) throws IOException {
     String s;
     try (InputStream stream = manifestResource.getInputStream()) {
-      s = IOUtils.toString(stream, "UTF-8");
+      s = IOUtils.toString(stream, StandardCharsets.UTF_8);
     }
     return StringUtils.replace(s, "8080", port);
   }
