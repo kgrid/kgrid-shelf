@@ -30,11 +30,11 @@ import static org.mockito.Mockito.*;
 @RunWith(MockitoJUnitRunner.class)
 public class ManifestReaderTest extends TestCase {
 
-  @Mock ImportService importService;
-  @Spy ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
-  @Mock ObjectMapper mapper;
+  @Mock private ImportService importService;
+  @Spy private ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
+  @Mock private ObjectMapper mapper;
 
-  @InjectMocks ManifestReader manifestReader;
+  @InjectMocks private ManifestReader manifestReader;
 
   private InputStream mockResourceInputStream;
   private Resource mockResource;
@@ -98,7 +98,7 @@ public class ManifestReaderTest extends TestCase {
 
     when(importService.importZip(URI.create(RELATIVE_RESOURCE_URI)))
         .thenThrow(RuntimeException.class);
-    final URI resource2 = URI.create(ABSOLUTE_RESOURCE_URI);
+    URI resource2 = URI.create(ABSOLUTE_RESOURCE_URI);
     when(importService.importZip(resource2)).thenReturn(resource2);
 
     ArrayNode kos = manifestReader.loadManifest(getManifestNode());
@@ -134,5 +134,17 @@ public class ManifestReaderTest extends TestCase {
     ArrayNode addedObjects = manifestReader.loadManifests(getManifestListNode());
     assertEquals(RELATIVE_RESOURCE_URI, addedObjects.get(0).asText());
     assertEquals(ABSOLUTE_RESOURCE_URI, addedObjects.get(1).asText());
+  }
+
+  @Test
+  public void loadManifests_catchesExceptionWhenFailingToCreateKoUri() throws IOException {
+    ReflectionTestUtils.setField(
+        manifestReader, "startupManifestLocations", new String[] {GOOD_MANIFEST_PATH});
+    JsonNode manifestNode = getManifestNodeWithBadUri();
+    when(mapper.readTree(mockResourceInputStream)).thenReturn(manifestNode);
+    manifestReader.afterPropertiesSet();
+
+    verify(importService).importZip(URI.create(RESOLVED_RELATIVE_RESOURCE_URI));
+    verify(importService).importZip(URI.create(ABSOLUTE_RESOURCE_URI));
   }
 }

@@ -120,4 +120,13 @@ public class TestHelper {
     node.add(BAD_MANIFEST_PATH);
     return node;
   }
+
+  public static ObjectNode getManifestNodeWithBadUri() {
+    ObjectNode node = JsonNodeFactory.instance.objectNode();
+    ArrayNode uris = node.putArray("manifest");
+    uris.add(RELATIVE_RESOURCE_URI);
+    uris.add("bad uri to ko.zip");
+    uris.add(ABSOLUTE_RESOURCE_URI);
+    return node;
+  }
 }

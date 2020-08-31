@@ -25,7 +25,7 @@ public class ManifestReader implements InitializingBean {
   @Value("${kgrid.shelf.manifest:}")
   String[] startupManifestLocations;
 
-  Logger log = LoggerFactory.getLogger(ManifestReader.class);
+  private Logger log = LoggerFactory.getLogger(ManifestReader.class);
 
   @Override
   public void afterPropertiesSet() {
@@ -60,7 +60,7 @@ public class ManifestReader implements InitializingBean {
   public ArrayNode loadManifests(JsonNode manifestList) {
     ArrayNode loadedObjects = new ObjectMapper().createArrayNode();
     for (JsonNode node : manifestList) {
-      final ArrayNode objects = loadManifestFromLocation(node.asText());
+      ArrayNode objects = loadManifestFromLocation(node.asText());
       if (objects != null) {
         loadedObjects.addAll(objects);
       }
@@ -73,7 +73,7 @@ public class ManifestReader implements InitializingBean {
     return loadManifest(manifest, null);
   }
 
-  public ArrayNode loadManifest(JsonNode manifest, URI baseUri) {
+  private ArrayNode loadManifest(JsonNode manifest, URI baseUri) {
 
     if (!manifest.has("manifest")) {
       throw new IllegalArgumentException(
@@ -85,16 +85,16 @@ public class ManifestReader implements InitializingBean {
     log.info("importing {} kos", uris.size());
     uris.forEach(
         ko -> {
-          URI koUri = URI.create(ko.asText());
-          if (baseUri != null && !koUri.isAbsolute()) {
-            koUri = baseUri.resolve(koUri);
-          }
           try {
+            URI koUri = URI.create(ko.asText());
+            if (baseUri != null && !koUri.isAbsolute()) {
+              koUri = baseUri.resolve(koUri);
+            }
             log.info("import {}", koUri);
             URI result = importService.importZip(koUri);
             arkList.add(result.toString());
           } catch (Exception ex) {
-            log.warn("Error importing {}, {}", koUri, ex.getMessage());
+            log.warn("Error importing {}, {}", ko.asText(), ex.getMessage());
           }
         });
     return arkList;
