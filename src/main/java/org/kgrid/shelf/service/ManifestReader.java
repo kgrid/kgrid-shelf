@@ -52,7 +52,7 @@ public class ManifestReader implements InitializingBean {
       URI baseURI = getBaseUri(manifestResource);
       return loadManifest(manifest, baseURI);
     } catch (IOException e) {
-      log.warn(e.getMessage());
+      log.warn("Failed to load manifest; {}", e.getMessage());
       return null;
     }
   }

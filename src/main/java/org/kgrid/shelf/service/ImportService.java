@@ -63,7 +63,7 @@ public class ImportService {
 
     } catch (Exception e) {
       final String errorMsg = "Error importing: " + zipResource.getDescription();
-      log.warn(errorMsg);
+      log.warn(e.getMessage());
       throw new ImportExportException(errorMsg, e);
     }
     return id;
