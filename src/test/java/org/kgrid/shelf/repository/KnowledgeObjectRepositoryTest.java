@@ -33,18 +33,22 @@ public class KnowledgeObjectRepositoryTest {
 
   private final ArkId helloWorld1ArkId = new ArkId("hello", "world", "v0.1.0");
   private final ArkId helloWorld2ArkId = new ArkId("hello", "world", "v0.2.0");
+  private final ArkId versionedArk = new ArkId("versioned", "ark", "v0.1.0");
   private final ArkId noSpecArkId = new ArkId("bad", "bad", "bad");
   private final URI helloWorld1Location = URI.create(helloWorld1ArkId.getFullDashArk() + "/");
   private final URI helloWorld2Location = URI.create(helloWorld2ArkId.getFullDashArk() + "/");
+  private final URI versionedArkLocation = URI.create(versionedArk.getFullDashArk() + "/");
   private final URI badLocation = URI.create(noSpecArkId.getFullDashArk());
   private JsonNode helloWorld1Metadata;
   private JsonNode helloWorld2Metadata;
+  private JsonNode versionedArkMetadata;
   private JsonNode noSpecMetadata;
 
   @Before
   public void setUp() throws Exception {
 
-    List<URI> koLocations = Arrays.asList(helloWorld1Location, helloWorld2Location, badLocation);
+    List<URI> koLocations =
+        Arrays.asList(helloWorld1Location, helloWorld2Location, versionedArkLocation, badLocation);
     helloWorld1Metadata =
         new ObjectMapper()
             .readTree(
@@ -78,6 +82,23 @@ public class KnowledgeObjectRepositoryTest {
                     + "  \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
                     + "}");
 
+    versionedArkMetadata =
+        new ObjectMapper()
+            .readTree(
+                "{\n"
+                    + "  \"@id\" : \"versioned/ark/v0.1.0\",\n"
+                    + "  \"@type\" : \"koio:KnowledgeObject\",\n"
+                    + "  \"identifier\" : \"ark:/versioned/ark/v0.1.0\",\n"
+                    + "  \"version\":\"v0.1.0\",\n"
+                    + "  \"title\" : \"Hello World Title\",\n"
+                    + "  \"contributors\" : \"Kgrid Team\",\n"
+                    + "  \"keywords\":[\"Hello\",\"example\"],\n"
+                    + "  \"hasServiceSpecification\": \"service2.yaml\",\n"
+                    + "  \"hasDeploymentSpecification\": \"deployment.yaml\",\n"
+                    + "  \"hasPayload\": \"src/index.js\",\n"
+                    + "  \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
+                    + "}");
+
     noSpecMetadata =
         new ObjectMapper().readTree("{  \"identifier\" : \"ark:/bad/bad\",\n\"version\":\"bad\"}");
     when(compoundDigitalObjectStore.getChildren()).thenReturn(koLocations);
@@ -87,6 +108,8 @@ public class KnowledgeObjectRepositoryTest {
         .thenReturn((ObjectNode) helloWorld2Metadata);
     when(compoundDigitalObjectStore.getMetadata(badLocation))
         .thenReturn((ObjectNode) noSpecMetadata);
+    when(compoundDigitalObjectStore.getMetadata(versionedArkLocation))
+        .thenReturn((ObjectNode) versionedArkMetadata);
     repository = new KnowledgeObjectRepository(compoundDigitalObjectStore);
   }
 
@@ -142,6 +165,7 @@ public class KnowledgeObjectRepositoryTest {
     Map<ArkId, JsonNode> map = new HashMap<>();
     map.put(helloWorld1ArkId, helloWorld1Metadata);
     map.put(helloWorld2ArkId, helloWorld2Metadata);
+    map.put(versionedArk, versionedArkMetadata);
     map.put(noSpecArkId, noSpecMetadata);
     assertEquals(repository.findAll(), map);
   }
@@ -254,5 +278,10 @@ public class KnowledgeObjectRepositoryTest {
     when(compoundDigitalObjectStore.getMetadata(hellov4Location))
         .thenReturn((ObjectNode) v4Metadata);
     assertEquals(hellov4Location, repository.getObjectLocation(hellov4));
+  }
+
+  @Test
+  public void getObjectLocation_withVersionedIdentifier() {
+    assertEquals(versionedArkLocation, repository.getObjectLocation(versionedArk));
   }
 }

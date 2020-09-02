@@ -247,17 +247,18 @@ public class KnowledgeObjectRepository {
         }
 
         if (!metadata.has(KoFields.VERSION.asStr())) {
-          log.warn(
-              "Folder with metadata "
-                  + path
-                  + " is missing a version field, will default to reverse alphabetical lookup");
+          log.warn("Folder with metadata " + path + " is missing a version field.");
           arkId = new ArkId(metadata.get(KoFields.IDENTIFIER.asStr()).asText());
         } else {
-          arkId =
-              new ArkId(
-                  metadata.get(KoFields.IDENTIFIER.asStr()).asText()
-                      + "/"
-                      + metadata.get(KoFields.VERSION.asStr()).asText());
+          if (metadata.get(KoFields.IDENTIFIER.asStr()).asText().matches(ArkId.arkIdRegex())) {
+            arkId =
+                new ArkId(
+                    metadata.get(KoFields.IDENTIFIER.asStr()).asText()
+                        + "/"
+                        + metadata.get(KoFields.VERSION.asStr()).asText());
+          } else {
+            arkId = new ArkId(metadata.get(KoFields.IDENTIFIER.asStr()).asText());
+          }
         }
 
         if (objectLocations.get(arkId.getSlashArk()) != null

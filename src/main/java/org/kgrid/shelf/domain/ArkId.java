@@ -15,9 +15,9 @@ public final class ArkId implements Comparable {
   private final String naan;
   private final String name;
   private final String version;
+  private static final String arkIdRegex = "ark:/(\\w+)/(\\w+)";
 
   public ArkId(String path) {
-    String arkIdRegex = "ark:/(\\w+)/(\\w+)";
     Matcher arkIdMatcher = Pattern.compile(arkIdRegex).matcher(path);
     // Use [a-zA-Z0-9._\-]+ instead of just \w+ for the version because want to allow periods,
     // dashes and underscores in versions
@@ -72,6 +72,11 @@ public final class ArkId implements Comparable {
     } else {
       return naan + "-" + name;
     }
+  }
+
+  @JsonIgnore
+  public static String arkIdRegex() {
+    return arkIdRegex;
   }
 
   @JsonIgnore
