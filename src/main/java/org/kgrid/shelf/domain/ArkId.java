@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 public final class ArkId implements Comparable {
 
-  private static final String ARK_FORMAT = "ark:/%s/%s";
+  private static final String ARK_FORMAT = "ark:/%s/%s/%s";
   private final String naan;
   private final String name;
   private final String version;
@@ -50,15 +50,17 @@ public final class ArkId implements Comparable {
   }
 
   public String getFullArk() {
-    return String.format(ARK_FORMAT, naan, name);
+    return String.format(ARK_FORMAT, naan, name, version);
   }
 
   @JsonIgnore
+  @Deprecated
   public String getDashArk() {
     return naan + "-" + name;
   }
 
   @JsonIgnore
+  @Deprecated
   public String getDashArkVersion() {
     return naan + "-" + name + "/" + version;
   }

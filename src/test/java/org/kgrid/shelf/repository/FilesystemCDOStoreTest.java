@@ -16,6 +16,7 @@ import org.kgrid.shelf.domain.ArkId;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -27,14 +28,13 @@ public class FilesystemCDOStoreTest {
 
   private CompoundDigitalObjectStore koStore;
   private ArkId arkId;
-  private String helloDirName = "hello-world-v0.1.0";
+  private URI helloDirName = URI.create("hello-world-v0.1.0/");
 
   @Rule public TemporaryFolder folder = new TemporaryFolder();
 
   @Before
   public void setUp() throws Exception {
-    FileUtils.copyDirectory(
-        new File("src/test/resources/shelf"), new File(folder.getRoot().getPath()));
+    FileUtils.copyDirectory(new File("src/test/resources/shelf"), folder.getRoot());
     String connectionURL = "filesystem:" + folder.getRoot().toURI();
     arkId = new ArkId("hello", "world", "v0.1.0");
     koStore = new FilesystemCDOStore(connectionURL);
@@ -56,23 +56,30 @@ public class FilesystemCDOStoreTest {
   }
 
   @Test
-  public void shelfHas4Objects() {
-    assertTrue(koStore.getChildren("").size() == 4);
+  public void getChildren_returnsCorrectListOfDirectories() {
+    URI myFirstKo = URI.create("My%20First%20Ko/");
+    assertTrue("shelf has My First Ko", koStore.getChildren().contains(myFirstKo));
+    URI helloWorld1 = URI.create("hello-world-v0.1.0/");
+    assertTrue("shelf has hello world v0.1.0", koStore.getChildren().contains(helloWorld1));
+    URI helloWorld2 = URI.create("hello-world-v0.2.0/");
+    assertTrue("shelf has hello world v0.2.0", koStore.getChildren().contains(helloWorld2));
+    URI helloWorld3 = URI.create("hello-world-v0.3.0/");
+    assertTrue("shelf has hello world v0.3.0", koStore.getChildren().contains(helloWorld3));
   }
 
   @Test
   public void shelfHasHelloWorldObject() {
-    assertNotNull(koStore.getChildren((arkId.getDashArk() + "-" + arkId.getVersion())));
+    assertNotNull(koStore.getMetadata(URI.create(arkId.getFullDashArk())));
   }
 
   @Test(expected = ShelfResourceNotFound.class)
-  public void cannotGetChildrenOfBadPath() {
-    koStore.getChildren("asdasdkas");
+  public void cannotGetMetadataOfBadPath() {
+    koStore.getMetadata(URI.create("asdasdkas"));
   }
 
   @Test(expected = ShelfResourceNotFound.class)
   public void testMetaDataNotFound() {
-    ObjectNode koNode = koStore.getMetadata("hello-xxxxxx");
+    ObjectNode koNode = koStore.getMetadata(URI.create("hello-xxxxxx"));
     assertEquals("Hello  World Title", koNode.findValue("title").textValue());
   }
 
@@ -84,13 +91,13 @@ public class FilesystemCDOStoreTest {
 
   @Test
   public void getAbsoluteLocationReturnsCorrectShelf() {
-    assertEquals(folder.getRoot().toURI(), koStore.getAbsoluteLocation(""));
+    assertEquals(folder.getRoot().toURI(), koStore.getAbsoluteLocation(null));
   }
 
   @Test
   public void getAbsoluteLocationReturnsObject() {
     assertEquals(
-        Paths.get(folder.getRoot().getPath(), helloDirName).toUri(),
+        Paths.get(folder.getRoot().getPath(), helloDirName.toString()).toUri(),
         koStore.getAbsoluteLocation(helloDirName));
   }
 
@@ -102,20 +109,22 @@ public class FilesystemCDOStoreTest {
                 + "    var name = inputs.name;%n"
                 + "    return \"Welcome to Knowledge Grid, \" + name;%n"
                 + "}");
-    assertEquals(code, new String(koStore.getBinary(helloDirName, "src", "index.js")));
+    assertEquals(
+        code, new String(koStore.getBinary(helloDirName.resolve("src/").resolve("index.js"))));
   }
 
   @Test(expected = ShelfResourceNotFound.class)
   public void getMissingBinaryThrowsError() {
-    byte[] koNode = koStore.getBinary("hello-xxxxxx");
+    byte[] koNode = koStore.getBinary(URI.create("hello-xxxxxx"));
   }
 
   @Test
   public void createMetadataCreatesFileWithMetadata() throws IOException {
     String metadataContent = String.format("{%n  \"@id\" : \"ark:/naan/name\"%n}");
     JsonNode metadata = new ObjectMapper().readTree(metadataContent);
-    koStore.saveMetadata(metadata, helloDirName, "metadata2.json");
-    Path metadataPath = Paths.get(folder.getRoot().getPath(), helloDirName, "metadata2.json");
+    koStore.saveMetadata(metadata, helloDirName.resolve("metadata2.json"));
+    Path metadataPath =
+        Paths.get(folder.getRoot().getPath(), helloDirName.toString(), "metadata2.json");
     assertEquals(metadata, new ObjectMapper().readTree(Files.readAllBytes(metadataPath)));
   }
 
@@ -123,15 +132,15 @@ public class FilesystemCDOStoreTest {
   public void cantCreateMetadataThrowsEx() throws IOException {
     String metadataContent = "{\n  \"@id\" : \"ark:/naan/name\"\n}";
     JsonNode metadata = new ObjectMapper().readTree(metadataContent);
-    koStore.saveMetadata(metadata, "NOTHERE", "metadata2.json");
+    koStore.saveMetadata(metadata, URI.create("NOTHERE/").resolve("metadata2.json"));
   }
 
   @Test
   public void createBinaryCreatesFileWithBinary() throws IOException {
     String binaryContent = "blah";
     byte[] bytes = binaryContent.getBytes();
-    koStore.saveBinary(bytes, helloDirName, "binary.txt");
-    Path binaryPath = Paths.get(folder.getRoot().getPath(), helloDirName, "binary.txt");
+    koStore.saveBinary(bytes, helloDirName.resolve("binary.txt"));
+    Path binaryPath = Paths.get(folder.getRoot().getPath(), helloDirName.toString(), "binary.txt");
     assertArrayEquals(bytes, Files.readAllBytes(binaryPath));
   }
 
@@ -139,9 +148,9 @@ public class FilesystemCDOStoreTest {
   public void cantCreateBinaryThrowsEx() throws IOException {
     String binaryContent = "blah";
     byte[] bytes = binaryContent.getBytes();
-    String filename = "test.txt";
+    URI filename = URI.create("test.txt");
     koStore.saveBinary(bytes, filename);
-    Path binaryPath = Paths.get(folder.getRoot().getPath(), filename);
+    Path binaryPath = Paths.get(folder.getRoot().getPath(), filename.toString());
     binaryPath.toFile().setWritable(false);
     koStore.saveBinary(bytes, filename);
     assertArrayEquals(bytes, Files.readAllBytes(binaryPath));
@@ -149,17 +158,17 @@ public class FilesystemCDOStoreTest {
 
   @Test
   public void createContainerCreatesDirectory() {
-    koStore.createContainer("container");
+    koStore.createContainer(URI.create("container"));
     Path containerPath = Paths.get(folder.getRoot().getPath(), "container");
     assertTrue(Files.isDirectory(containerPath));
   }
 
   @Test
   public void deleteRemovesDirectory() throws JsonProcessingException {
-    koStore.createContainer("new-ko");
+    koStore.createContainer(URI.create("new-ko"));
     Path binaryPath = Paths.get(folder.getRoot().getPath(), "new-ko");
     assertTrue(Files.exists(binaryPath));
-    koStore.delete("new-ko");
+    koStore.delete(URI.create("new-ko"));
     assertFalse(Files.exists(binaryPath));
   }
 

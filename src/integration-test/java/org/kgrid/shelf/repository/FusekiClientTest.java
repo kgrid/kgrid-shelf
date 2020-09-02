@@ -89,7 +89,7 @@ public class FusekiClientTest {
   @AfterClass
   public static void teardown() throws Exception {
 
-    compoundDigitalObjectStore.delete("hello-world");
-    compoundDigitalObjectStore.delete("ri-bmicalc");
+    compoundDigitalObjectStore.delete(URI.create("hello-world"));
+    compoundDigitalObjectStore.delete(URI.create("ri-bmicalc"));
   }
 }

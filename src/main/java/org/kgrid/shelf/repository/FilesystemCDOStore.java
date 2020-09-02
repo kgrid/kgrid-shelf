@@ -22,7 +22,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -32,7 +31,7 @@ import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 @Qualifier("filesystem")
 public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
-  private URI localStorageURI;
+  private Path localStorageDir;
 
   private final Logger log = LoggerFactory.getLogger(FilesystemCDOStore.class);
 
@@ -40,53 +39,52 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       @Value("${kgrid.shelf.cdostore.url:filesystem:file://shelf}") String connectionURI) {
     URI uri = URI.create(connectionURI.substring(connectionURI.indexOf(':') + 1));
     if (uri.getHost() == null) {
-      this.localStorageURI = uri; // Absolute path
+      this.localStorageDir = Paths.get(uri);
     } else {
-      final Path path = Paths.get(uri.getHost(), uri.getPath());
-      this.localStorageURI = path.toUri();
+      this.localStorageDir = Paths.get(uri.getHost(), uri.getPath());
     }
     try {
-      final Path location = Paths.get(localStorageURI);
+      final Path location = localStorageDir;
       Files.createDirectories(location);
     } catch (IOException e) {
-      log.error("Unable to find or create shelf at %s", localStorageURI);
+      log.error("Unable to find or create shelf at %s", localStorageDir);
     }
   }
 
   @Override
-  public List<String> getChildren(String... filePathParts) {
+  public List<URI> getChildren() {
 
-    return getChildren(1, filePathParts);
+    return getChildren(1);
   }
 
-  public List<String> getChildren(int maxDepth, String... filePathParts) {
-    Path path = Paths.get(Paths.get(localStorageURI).toString(), filePathParts);
-    List<String> children;
+  public List<URI> getChildren(int maxDepth) {
+    List<URI> children;
     try {
       children =
-          Files.walk(path, maxDepth, FOLLOW_LINKS)
+          Files.walk(localStorageDir, maxDepth, FOLLOW_LINKS)
               .filter(Files::isDirectory)
-              .map(Object::toString)
+              .map(
+                  childPath ->
+                      URI.create(childPath.getFileName().toString().replaceAll(" ", "%20") + "/"))
               .collect(Collectors.toList());
       children.remove(0); // Remove the parent directory
     } catch (IOException ioEx) {
-      throw new ShelfResourceNotFound("Cannot read children at location " + path, ioEx);
+      throw new ShelfResourceNotFound("Cannot read children at location " + localStorageDir, ioEx);
     }
     return children;
   }
 
   @Override
-  public URI getAbsoluteLocation(String... relativePathParts) {
-    Path shelf = Paths.get(localStorageURI);
-    if (relativePathParts == null || relativePathParts.length == 0) {
-      return shelf.toUri();
+  public URI getAbsoluteLocation(URI relativePath) {
+    if (relativePath == null) {
+      return localStorageDir.toUri();
     }
-    return Paths.get(shelf.toString(), relativePathParts).toUri();
+    return localStorageDir.resolve(relativePath.toString()).toUri();
   }
 
   @Override
-  public ObjectNode getMetadata(String... relativePathParts) {
-    Path metadataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
+  public ObjectNode getMetadata(URI relativePath) {
+    Path metadataPath = localStorageDir.resolve(relativePath.toString());
     File metadataFile = metadataPath.toFile();
     if (metadataFile.isDirectory()
         || !metadataFile.getPath().endsWith(KoFields.METADATA_FILENAME.asStr())) {
@@ -106,8 +104,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public byte[] getBinary(String... relativePathParts) {
-    Path binaryPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
+  public byte[] getBinary(URI relativePath) {
+    Path binaryPath = localStorageDir.resolve(relativePath.toString());
     byte[] bytes;
     try {
       bytes = Files.readAllBytes(binaryPath);
@@ -118,8 +116,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveMetadata(JsonNode metadata, String... relativePathParts) {
-    Path metadataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
+  public void saveMetadata(JsonNode metadata, URI relativePath) {
+    Path metadataPath = localStorageDir.resolve(relativePath.toString());
     File metadataFile = metadataPath.toFile();
     if (metadataFile.isDirectory()) {
       metadataFile = metadataPath.resolve(KoFields.METADATA_FILENAME.asStr()).toFile();
@@ -133,8 +131,8 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveBinary(byte[] output, String... relativePathParts) {
-    Path dataPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
+  public void saveBinary(byte[] output, URI relativePath) {
+    Path dataPath = localStorageDir.resolve(relativePath.toString());
     File dataFile = dataPath.toFile();
     try (FileOutputStream fos = FileUtils.openOutputStream(dataFile)) {
       fos.write(output);
@@ -144,20 +142,20 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void createContainer(String... relativePathParts) {
-    Path containerPath = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
+  public void createContainer(URI relativePath) {
+    Path containerPath = localStorageDir.resolve(relativePath.toString());
     if (!containerPath.toFile().exists()) {
       containerPath.toFile().mkdirs();
     }
   }
 
   @Override
-  public void delete(String... relativePathParts) throws ShelfException {
-    Path path = Paths.get(Paths.get(localStorageURI).toString(), relativePathParts);
+  public void delete(URI relativePath) throws ShelfException {
+    Path path = localStorageDir.resolve(relativePath.toString());
     try {
       FileUtils.deleteDirectory(new File(path.toString()));
     } catch (IOException e) {
-      throw new ShelfException("Could not delete cdo " + Arrays.deepToString(relativePathParts), e);
+      throw new ShelfException("Could not delete cdo " + relativePath, e);
     }
   }
 
@@ -165,15 +163,15 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   @Override
   public String createTransaction() {
     String trxID = "trx-" + UUID.randomUUID().toString();
-    createContainer(trxID);
+    createContainer(URI.create(trxID));
     return trxID;
   }
 
   @Override
   public void commitTransaction(String transactionID) {
-    File tempFolder = new File(localStorageURI.getPath(), transactionID);
+    File tempFolder = new File(localStorageDir.toFile(), transactionID);
     try {
-      FileUtils.copyDirectory(tempFolder, new File(localStorageURI));
+      FileUtils.copyDirectory(tempFolder, localStorageDir.toFile());
       FileUtils.deleteDirectory(tempFolder);
     } catch (IOException e) {
       log.warn("Cannot copy files from temp directory to shelf " + e);
@@ -182,7 +180,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public void rollbackTransaction(String transactionID) {
-    File tempFolder = new File(localStorageURI.getPath(), transactionID);
+    File tempFolder = new File(localStorageDir.toFile(), transactionID);
     try {
       FileUtils.deleteDirectory(tempFolder);
     } catch (IOException e) {

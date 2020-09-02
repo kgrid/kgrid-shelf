@@ -76,8 +76,9 @@ public class ImportService {
         artifact -> {
           try {
             byte[] data = reader.getBinary(artifact);
-            cdoStore.saveBinary(data, identifier.resolve(artifact).toString());
+            cdoStore.saveBinary(data, identifier.resolve(artifact));
           } catch (IOException e) {
+            cdoStore.delete(identifier);
             throw new ImportExportException(
                 "Cannot read in file " + artifact + " to copy onto shelf", e);
           }

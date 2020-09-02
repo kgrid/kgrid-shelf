@@ -92,6 +92,6 @@ public class FedoraZipExportServiceTest {
 
   @After
   public void teardown() {
-    compoundDigitalObjectStore.delete("hello-world");
+    compoundDigitalObjectStore.delete(URI.create("hello-world/"));
   }
 }

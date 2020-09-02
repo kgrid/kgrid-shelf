@@ -42,10 +42,10 @@ public class ImportServiceTest {
 
     importService.importZip(resourceUri);
 
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/service.yaml"));
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/deployment.yaml"));
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/dist/main.js"));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/metadata.json")));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/service.yaml")));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/deployment.yaml")));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/dist/main.js")));
   }
 
   @Test
@@ -54,11 +54,11 @@ public class ImportServiceTest {
 
     importService.importZip(resourceUri);
 
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/service.yaml"));
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/deployment.yaml"));
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/dist/main.js"));
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/src/index.js"));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/metadata.json")));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/service.yaml")));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/deployment.yaml")));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/dist/main.js")));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/src/index.js")));
   }
 
   @Test
@@ -110,7 +110,7 @@ public class ImportServiceTest {
     importService.importZip(resourceUri);
 
     verify(cdoStore, times(4)).saveBinary(any(), any());
-    verify(cdoStore).saveBinary(isNotNull(), eq("hello-world/metadata.json"));
+    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/metadata.json")));
   }
 
   @Test

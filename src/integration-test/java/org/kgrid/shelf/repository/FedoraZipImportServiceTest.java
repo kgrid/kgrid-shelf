@@ -11,7 +11,6 @@ import org.kgrid.shelf.service.ImportService;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Paths;
 
 import static org.junit.Assert.*;
 
@@ -36,23 +35,22 @@ public class FedoraZipImportServiceTest {
         URI.create("file:src/test/resources/fixtures/import-export/hello-world.zip");
     service.importZip(helloWorldLoc);
 
-    ObjectNode metadata =
-        compoundDigitalObjectStore.getMetadata(new ArkId("hello", "world").getDashArk());
+    final ArkId arkId = new ArkId("hello", "world");
+    ObjectNode metadata = compoundDigitalObjectStore.getMetadata(URI.create(arkId.getDashArk()));
 
     assertNotNull(metadata);
 
     assertEquals("should have 2 versions", 3, metadata.findValue(IMPLEMENTATIONS_TERM).size());
 
     metadata =
-        compoundDigitalObjectStore.getMetadata(
-            new ArkId("hello", "world").getDashArk() + "/" + "v0.1.0");
+        compoundDigitalObjectStore.getMetadata(URI.create(arkId.getDashArk() + "/" + "v0.1.0"));
 
     assertEquals(
         "should have ",
         "http://localhost:8080/fcrepo/rest/hello-world/v0.1.0/service.yaml",
         metadata.findValue(SERVICE_SPEC_TERM).asText());
 
-    compoundDigitalObjectStore.delete("hello-world");
+    compoundDigitalObjectStore.delete(URI.create("hello-world"));
   }
 
   @Test
@@ -62,9 +60,9 @@ public class FedoraZipImportServiceTest {
 
     try {
       service.importZip(mycoolkoLoc);
+      final ArkId arkId = new ArkId("hello", "folder");
       ObjectNode metadata =
-          compoundDigitalObjectStore.getMetadata(
-              new ArkId("hello", "folder").getDashArk() + "/" + "v0.1.0");
+          compoundDigitalObjectStore.getMetadata(URI.create(arkId.getDashArk() + "/" + "v0.1.0"));
       assertEquals(
           "should have ",
           "http://localhost:8080/fcrepo/rest/hello-folder/v0.1.0/service-specification.yaml",
@@ -76,7 +74,7 @@ public class FedoraZipImportServiceTest {
           true);
     }
 
-    compoundDigitalObjectStore.delete("hello-folder");
+    compoundDigitalObjectStore.delete(URI.create("hello-folder"));
   }
 
   @Test
@@ -93,10 +91,9 @@ public class FedoraZipImportServiceTest {
     } catch (ShelfException se) {
 
       try {
-        ObjectNode metadata =
-            compoundDigitalObjectStore.getMetadata(
-                Paths.get(new ArkId("hello", "world").getDashArk()).toString());
-        assertTrue("Should throw exception", false);
+        compoundDigitalObjectStore.getMetadata(
+            URI.create((new ArkId("hello", "world").getDashArk())));
+        fail("Should throw exception");
       } catch (ShelfException e) {
         assertTrue(
             "Should not find  hello world because not defined in meatadata, not found will throw exception",
