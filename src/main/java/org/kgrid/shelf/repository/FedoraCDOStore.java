@@ -37,11 +37,9 @@ import java.util.stream.Collectors;
 public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private String userName;
-
   private final RestTemplateBuilder builder = new RestTemplateBuilder();
   private String password;
   private final String storagePath;
-
   private final Logger log = LoggerFactory.getLogger(FedoraCDOStore.class);
 
   public FedoraCDOStore(
@@ -52,15 +50,15 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     URI uri = URI.create(connectionURI.substring(connectionURI.indexOf(':') + 1));
     String paramDelimiter = "&", userKey = "user=", passKey = "password=";
     if (uri.getQuery() == null) {
-      this.storagePath = uri.toString();
+      storagePath = uri.toString();
     } else {
-      this.storagePath = uri.toString().substring(0, uri.toString().indexOf("?"));
+      storagePath = uri.toString().substring(0, uri.toString().indexOf("?"));
       String[] parameters = uri.getQuery().split(paramDelimiter);
       for (String parameter : parameters) {
         if (parameter.startsWith(userKey)) {
-          this.userName = parameter.substring(userKey.length());
+          userName = parameter.substring(userKey.length());
         } else if (parameter.startsWith(passKey)) {
-          this.password = parameter.substring(passKey.length());
+          password = parameter.substring(passKey.length());
         }
       }
     }
@@ -115,7 +113,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public URI getAbsoluteLocation(URI relativePath) {
-    final URI baseURI = URI.create(storagePath);
+    URI baseURI = URI.create(storagePath);
     if (relativePath == null) {
       return baseURI;
     }

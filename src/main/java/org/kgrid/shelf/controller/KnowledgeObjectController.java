@@ -56,7 +56,6 @@ public class KnowledgeObjectController extends ShelfExceptionHandler {
       arkId = new ArkId(naan, name);
       results = shelf.findKnowledgeObjectMetadata(arkId);
     }
-
     return new ResponseEntity<>(results, HttpStatus.OK);
   }
 

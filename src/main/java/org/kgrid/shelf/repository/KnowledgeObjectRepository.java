@@ -34,7 +34,7 @@ public class KnowledgeObjectRepository {
 
   @Autowired
   KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore) {
-    this.dataStore = compoundDigitalObjectStore;
+    dataStore = compoundDigitalObjectStore;
     // Initialize the map of folder names -> ark ids
     refreshObjectMap();
   }
@@ -184,7 +184,7 @@ public class KnowledgeObjectRepository {
   }
 
   public byte[] getBinary(ArkId arkId, String childPath) {
-    return this.dataStore.getBinary(resolveArkIdToLocation(arkId).resolve(childPath));
+    return dataStore.getBinary(resolveArkIdToLocation(arkId).resolve(childPath));
   }
 
   private URI resolveArkIdToLocation(ArkId arkId) {
@@ -198,7 +198,7 @@ public class KnowledgeObjectRepository {
 
   public URI getKoRepoLocation() {
 
-    return this.dataStore.getAbsoluteLocation(null);
+    return dataStore.getAbsoluteLocation(null);
   }
 
   // Used by activator
@@ -238,7 +238,6 @@ public class KnowledgeObjectRepository {
     for (URI path : dataStore.getChildren()) {
       try {
         ArkId arkId;
-
         JsonNode metadata = dataStore.getMetadata(path);
         if (!metadata.has(KoFields.IDENTIFIER.asStr())) {
           log.warn(

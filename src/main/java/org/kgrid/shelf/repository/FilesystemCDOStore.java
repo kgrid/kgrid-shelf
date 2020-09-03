@@ -32,6 +32,7 @@ import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   private Path localStorageDir;
+  private static int MAX_DEPTH = 3;
 
   private final Logger log = LoggerFactory.getLogger(FilesystemCDOStore.class);
 
@@ -39,12 +40,12 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       @Value("${kgrid.shelf.cdostore.url:filesystem:file://shelf}") String connectionURI) {
     URI uri = URI.create(connectionURI.substring(connectionURI.indexOf(':') + 1));
     if (uri.getHost() == null) {
-      this.localStorageDir = Paths.get(uri);
+      localStorageDir = Paths.get(uri);
     } else {
-      this.localStorageDir = Paths.get(uri.getHost(), uri.getPath());
+      localStorageDir = Paths.get(uri.getHost(), uri.getPath());
     }
     try {
-      final Path location = localStorageDir;
+      Path location = localStorageDir;
       Files.createDirectories(location);
     } catch (IOException e) {
       log.error("Unable to find or create shelf at %s", localStorageDir);
@@ -53,25 +54,28 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public List<URI> getChildren() {
-
-    return getChildren(1);
-  }
-
-  public List<URI> getChildren(int maxDepth) {
     List<URI> children;
     try {
       children =
-          Files.walk(localStorageDir, maxDepth, FOLLOW_LINKS)
-              .filter(Files::isDirectory)
-              .map(
-                  childPath ->
-                      URI.create(childPath.getFileName().toString().replaceAll(" ", "%20") + "/"))
+          Files.walk(localStorageDir, MAX_DEPTH, FOLLOW_LINKS)
+              .filter(this::pathContainsMetadata)
+              .map((childPath) -> getChildUri(childPath))
               .collect(Collectors.toList());
-      children.remove(0); // Remove the parent directory
     } catch (IOException ioEx) {
       throw new ShelfResourceNotFound("Cannot read children at location " + localStorageDir, ioEx);
     }
     return children;
+  }
+
+  private URI getChildUri(Path childPath) {
+    URI uri =
+        URI.create(
+            childPath
+                    .toString()
+                    .substring(localStorageDir.toString().length() + 1)
+                    .replaceAll(" ", "%20")
+                + "/");
+    return uri;
   }
 
   @Override
@@ -84,7 +88,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public ObjectNode getMetadata(URI relativePath) {
-    Path metadataPath = localStorageDir.resolve(relativePath.toString());
+    Path metadataPath = localStorageDir.resolve(relativePath.toString().replaceAll("%20", " "));
     File metadataFile = metadataPath.toFile();
     if (metadataFile.isDirectory()
         || !metadataFile.getPath().endsWith(KoFields.METADATA_FILENAME.asStr())) {
@@ -186,5 +190,10 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
     } catch (IOException e) {
       log.warn("Cannot rollback failed transaction " + e);
     }
+  }
+
+  private boolean pathContainsMetadata(Path path) {
+    return path.toFile().isDirectory()
+        && path.resolve(KoFields.METADATA_FILENAME.asStr()).toFile().exists();
   }
 }

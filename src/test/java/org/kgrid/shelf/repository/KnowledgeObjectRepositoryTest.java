@@ -256,7 +256,7 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getKoRepoLocation_returnsDataStoreLocation() {
-    final URI good = URI.create("good");
+    URI good = URI.create("good");
     when(compoundDigitalObjectStore.getAbsoluteLocation(null)).thenReturn(good);
     assertEquals(good, repository.getKoRepoLocation());
   }
