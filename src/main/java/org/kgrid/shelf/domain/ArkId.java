@@ -11,13 +11,13 @@ import java.util.regex.Pattern;
 
 public final class ArkId implements Comparable {
 
-  private static final String ARK_FORMAT = "ark:/%s/%s";
+  private static final String ARK_FORMAT = "ark:/%s/%s/%s";
   private final String naan;
   private final String name;
   private final String version;
+  private static final String arkIdRegex = "ark:/(\\w+)/(\\w+)";
 
   public ArkId(String path) {
-    String arkIdRegex = "ark:/(\\w+)/(\\w+)";
     Matcher arkIdMatcher = Pattern.compile(arkIdRegex).matcher(path);
     // Use [a-zA-Z0-9._\-]+ instead of just \w+ for the version because want to allow periods,
     // dashes and underscores in versions
@@ -50,15 +50,17 @@ public final class ArkId implements Comparable {
   }
 
   public String getFullArk() {
-    return String.format(ARK_FORMAT, naan, name);
+    return String.format(ARK_FORMAT, naan, name, version);
   }
 
   @JsonIgnore
+  @Deprecated
   public String getDashArk() {
     return naan + "-" + name;
   }
 
   @JsonIgnore
+  @Deprecated
   public String getDashArkVersion() {
     return naan + "-" + name + "/" + version;
   }
@@ -70,6 +72,11 @@ public final class ArkId implements Comparable {
     } else {
       return naan + "-" + name;
     }
+  }
+
+  @JsonIgnore
+  public static String arkIdRegex() {
+    return arkIdRegex;
   }
 
   @JsonIgnore

@@ -41,7 +41,8 @@ public class ExportServiceTest {
 
     kow = new KnowledgeObjectWrapper(TestHelper.generateMetadata());
     when(knowledgeObjectRepository.getKoRepoLocation()).thenReturn(URI.create("file:/root/"));
-    when(knowledgeObjectRepository.getObjectLocation(arkId)).thenReturn(TestHelper.KO_PATH);
+    when(knowledgeObjectRepository.getObjectLocation(arkId))
+        .thenReturn(URI.create(TestHelper.KO_PATH));
     when(knowledgeObjectRepository.getKow(arkId)).thenReturn(kow);
   }
 

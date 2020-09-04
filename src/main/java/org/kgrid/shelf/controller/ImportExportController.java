@@ -64,7 +64,7 @@ public class ImportExportController extends ShelfExceptionHandler {
     exportKnowledgeObject(naan, name, version, response);
   }
 
-  @GetMapping(produces = "application/zip")
+  @GetMapping(path = "/{naan}/{name}", produces = "application/zip")
   public void exportKnowledgeObject(
       @PathVariable String naan,
       @PathVariable String name,

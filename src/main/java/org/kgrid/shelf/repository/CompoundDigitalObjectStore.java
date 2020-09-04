@@ -9,21 +9,21 @@ import java.util.List;
 
 public interface CompoundDigitalObjectStore {
 
-  List<String> getChildren(String... relativeLocationParts);
+  List<URI> getChildren();
 
-  URI getAbsoluteLocation(String... relativeLocationParts);
+  URI getAbsoluteLocation(URI relativeLocation);
 
-  ObjectNode getMetadata(String... relativeLocationParts);
+  ObjectNode getMetadata(URI relativeLocation);
 
-  byte[] getBinary(String... relativeLocationParts);
+  byte[] getBinary(URI relativeLocation);
 
-  void createContainer(String... relativeLocationParts);
+  void createContainer(URI relativeLocation);
 
-  void saveMetadata(JsonNode metadata, String... relativeLocationParts);
+  void saveMetadata(JsonNode metadata, URI relativeLocation);
 
-  void saveBinary(byte[] data, String... relativeLocationParts);
+  void saveBinary(byte[] data, URI relativeLocation);
 
-  void delete(String... relativeLocationParts) throws ShelfException;
+  void delete(URI relativeLocation) throws ShelfException;
 
   String createTransaction();
 

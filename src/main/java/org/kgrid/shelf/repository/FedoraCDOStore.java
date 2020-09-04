@@ -18,7 +18,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
-import org.springframework.util.ResourceUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestTemplate;
@@ -27,7 +26,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -39,11 +37,9 @@ import java.util.stream.Collectors;
 public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
   private String userName;
-
-  private RestTemplateBuilder builder = new RestTemplateBuilder();
+  private final RestTemplateBuilder builder = new RestTemplateBuilder();
   private String password;
-  private String storagePath;
-
+  private final String storagePath;
   private final Logger log = LoggerFactory.getLogger(FedoraCDOStore.class);
 
   public FedoraCDOStore(
@@ -54,22 +50,22 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     URI uri = URI.create(connectionURI.substring(connectionURI.indexOf(':') + 1));
     String paramDelimiter = "&", userKey = "user=", passKey = "password=";
     if (uri.getQuery() == null) {
-      this.storagePath = uri.toString();
+      storagePath = uri.toString();
     } else {
-      this.storagePath = uri.toString().substring(0, uri.toString().indexOf("?"));
+      storagePath = uri.toString().substring(0, uri.toString().indexOf("?"));
       String[] parameters = uri.getQuery().split(paramDelimiter);
       for (String parameter : parameters) {
         if (parameter.startsWith(userKey)) {
-          this.userName = parameter.substring(userKey.length());
+          userName = parameter.substring(userKey.length());
         } else if (parameter.startsWith(passKey)) {
-          this.password = parameter.substring(passKey.length());
+          password = parameter.substring(passKey.length());
         }
       }
     }
   }
 
   @Override
-  public List<String> getChildren(String... relativePathParts) {
+  public List<URI> getChildren() {
     final String EXPANDED_CONTAINS = "http://www.w3.org/ns/ldp#contains";
     final String CONTAINS = "contains";
     final String GRAPH = "@graph";
@@ -82,88 +78,80 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
         "return=\"representation\";include=\"http://fedora.info/definitions/v4/repository#EmbedResources \"");
     header.putAll(authenticationHeader().getHeaders());
 
-    ObjectNode rdf = getJsonResource(pathBuilder(relativePathParts), header);
-    ArrayList<String> children = new ArrayList<>();
+    ObjectNode rdf = getJsonResource(null, header);
+    ArrayList<URI> children = new ArrayList<>();
     if (rdf.has(GRAPH) && rdf.get(GRAPH).get(0).has(CONTAINS)) {
       if (!rdf.get(GRAPH).get(0).get(CONTAINS).isArray()) {
-        children.add((rdf.get(GRAPH).get(0).get(CONTAINS).asText()));
+        children.add(URI.create(rdf.get(GRAPH).get(0).get(CONTAINS).asText()));
       } else {
         rdf.get(GRAPH)
             .get(0)
             .get(CONTAINS)
-            .forEach(jsonNode -> children.add(jsonNode.asText().substring(storagePath.length())));
+            .forEach(
+                jsonNode ->
+                    children.add(URI.create(jsonNode.asText().substring(storagePath.length()))));
       }
     } else if (rdf.has(CONTAINS)) {
       if (!rdf.get(CONTAINS).isArray()) {
-        children.add(rdf.get(CONTAINS).asText().substring(storagePath.length()));
+        children.add(URI.create(rdf.get(CONTAINS).asText().substring(storagePath.length())));
       } else {
         rdf.get(CONTAINS)
-            .forEach(jsonNode -> children.add(jsonNode.asText().substring(storagePath.length())));
+            .forEach(
+                jsonNode ->
+                    children.add(URI.create(jsonNode.asText().substring(storagePath.length()))));
       }
     } else if (rdf.has(EXPANDED_CONTAINS)) {
       rdf.get(EXPANDED_CONTAINS)
           .forEach(
-              jsonNode -> children.add(jsonNode.get(ID).asText().substring(storagePath.length())));
+              jsonNode ->
+                  children.add(
+                      URI.create(jsonNode.get(ID).asText().substring(storagePath.length()))));
     }
 
-    // At the top level fcrepo returns the full arkid/version when it is deposited with
-    // arkid/version
-    //  so we need to just return the arkid
-    if (relativePathParts.length == 0) {
-      return children.stream()
-          .map(
-              path -> {
-                String parent = StringUtils.substringBefore(path, "/");
-                if (parent != null && !parent.isEmpty()) {
-                  return parent;
-                } else {
-                  return path;
-                }
-              })
-          .filter(Objects::nonNull)
-          .collect(Collectors.toList());
+    return children.stream().filter(Objects::nonNull).collect(Collectors.toList());
+  }
+
+  @Override
+  public URI getAbsoluteLocation(URI relativePath) {
+    URI baseURI = URI.create(storagePath);
+    if (relativePath == null) {
+      return baseURI;
     }
-    return children;
+    return baseURI.resolve(relativePath);
   }
 
   @Override
-  public URI getAbsoluteLocation(String... relativePathParts) {
-    return URI.create(pathBuilder(relativePathParts));
+  public ObjectNode getMetadata(URI relativePath) {
+    return getJsonResource(relativePath);
   }
 
   @Override
-  public ObjectNode getMetadata(String... relativePathParts) {
-    return getJsonResource(pathBuilder(relativePathParts));
-  }
-
-  @Override
-  public byte[] getBinary(String... relativePathParts) {
-    URI path = URI.create(pathBuilder(relativePathParts));
+  public byte[] getBinary(URI relativePath) {
 
     RestTemplate restTemplate = builder.build();
 
     try {
 
-      if (path.getHost().contains(getAbsoluteLocation("").toString())) {
+      if (relativePath.getHost().contains(getAbsoluteLocation(null).toString())) {
         throw new ShelfResourceNotFound(
             "Binary resource not located on this CDO shelf "
-                + getAbsoluteLocation("")
+                + getAbsoluteLocation(null)
                 + " requested path "
-                + path);
+                + relativePath);
       }
 
       ResponseEntity<byte[]> response =
-          restTemplate.exchange(path, HttpMethod.GET, authenticationHeader(), byte[].class);
+          restTemplate.exchange(relativePath, HttpMethod.GET, authenticationHeader(), byte[].class);
       return response.getBody();
 
     } catch (HttpClientErrorException ex) {
-      throw new ShelfResourceNotFound("Binary resource not found " + path, ex);
+      throw new ShelfResourceNotFound("Binary resource not found " + relativePath, ex);
     }
   }
 
   @Override
-  public void saveMetadata(JsonNode node, String... relativePathParts) {
-    String path = pathBuilder(relativePathParts);
+  public void saveMetadata(JsonNode node, URI relativePath) {
+    String path = relativePath.toString();
     if (path.endsWith(KoFields.METADATA_FILENAME.asStr())) {
       path = StringUtils.substringBeforeLast(path, "/");
     }
@@ -176,7 +164,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
     log.info("Sending jsonLD node to the store at url " + node.toString());
 
-    RequestEntity request =
+    RequestEntity<String> request =
         RequestEntity.put(URI.create(destination.toString()))
             //        .header("Authorization",
             // authenticationHeader().getHeaders().getFirst("Authorization"))
@@ -189,39 +177,20 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void saveBinary(byte[] data, String... relativePathParts) {
-    URI destination = URI.create(pathBuilder(relativePathParts));
+  public void saveBinary(byte[] data, URI relativePath) {
     HttpClient instance =
         HttpClientBuilder.create().setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
     RestTemplate restTemplate =
         new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
 
-    RequestEntity request =
-        RequestEntity.put(destination)
+    RequestEntity<byte[]> request =
+        RequestEntity.put(relativePath)
             .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
             .body(data);
 
     ResponseEntity<String> response = restTemplate.exchange(request, String.class);
     log.info(response.toString());
-  }
-
-  private List<String> getAllFedoraDescendants(String start, int maxLevels) {
-    ArrayList<String> descendants = new ArrayList<>();
-    List<String> children;
-    try {
-      children = getChildren(start);
-    } catch (IllegalArgumentException e) {
-      return descendants;
-    }
-    if (maxLevels > 0 && children != null && !children.isEmpty()) {
-
-      for (String child : children) {
-        descendants.addAll(getAllFedoraDescendants(child, maxLevels - 1));
-      }
-      descendants.addAll(children);
-    }
-    return descendants;
   }
 
   @Override
@@ -233,10 +202,10 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     RestTemplate restTemplate =
         new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
 
-    RequestEntity request =
+    RequestEntity<Object> request =
         RequestEntity.post(destination)
             .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
-            .body(null);
+            .body("");
 
     ResponseEntity<String> response = restTemplate.exchange(request, String.class);
     String transactionId =
@@ -260,12 +229,12 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     RestTemplate restTemplate =
         new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
 
-    RequestEntity request =
+    RequestEntity<Object> request =
         RequestEntity.post(destination)
             .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
-            .body(null);
+            .body("");
 
-    ResponseEntity response = restTemplate.exchange(request, String.class);
+    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
 
     if (response.getStatusCode().equals(HttpStatus.NO_CONTENT)) {
       log.info("Committed transaction in fcrepo with ID " + transactionId);
@@ -287,12 +256,12 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     RestTemplate restTemplate =
         new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
 
-    RequestEntity request =
+    RequestEntity<Object> request =
         RequestEntity.post(destination)
             .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
-            .body(null);
+            .body("");
 
-    ResponseEntity response = restTemplate.exchange(request, String.class);
+    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
 
     if (response.getStatusCode().equals(HttpStatus.NO_CONTENT)) {
       log.info("Rolled back transaction in fcrepo with ID " + transactionId);
@@ -305,13 +274,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
-  /**
-   * Returns the node based on the uri path. By default returns json-ld, compacted, minimal (only
-   * returns triples released to the resource) representation of the resource
-   *
-   * @return json ld object node
-   */
-  private ObjectNode getJsonResource(String objectURI) {
+  private ObjectNode getJsonResource(URI objectLocation) {
     HttpHeaders header = new HttpHeaders();
     header.add("Accept", "application/ld+json; profile=\"http://www.w3.org/ns/json-ld#compacted\"");
     header.add(
@@ -319,21 +282,17 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
         "return=\"minimal\";include=\"http://fedora.info/definitions/v4/repository#EmbedResources \"");
     header.putAll(authenticationHeader().getHeaders());
 
-    return getJsonResource(objectURI, header);
+    return getJsonResource(objectLocation, header);
   }
 
-  /** */
-  private ObjectNode getJsonResource(String objectURI, HttpHeaders header) {
+  private ObjectNode getJsonResource(URI objectURI, HttpHeaders header) {
 
     try {
 
-      if (ResourceUtils.isUrl(objectURI)
-          && ResourceUtils.toURI(objectURI)
-              .getHost()
-              .contains(getAbsoluteLocation("").toString())) {
+      if (objectURI.getHost().contains(getAbsoluteLocation(null).toString())) {
         throw new ShelfResourceNotFound(
             "Metadata resource not located on this CDO shelf "
-                + getAbsoluteLocation("")
+                + getAbsoluteLocation(null)
                 + " requested path "
                 + objectURI);
       }
@@ -346,10 +305,8 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
 
       HttpEntity<String> entity = new HttpEntity<>("", header);
 
-      if (objectURI.endsWith(KoFields.METADATA_FILENAME.asStr())) {
-        objectURI =
-            objectURI.substring(
-                0, objectURI.length() - KoFields.METADATA_FILENAME.asStr().length());
+      if (objectURI.toString().endsWith(KoFields.METADATA_FILENAME.asStr())) {
+        objectURI = URI.create(StringUtils.substringBeforeLast(objectURI.toString(), "/"));
       }
       ResponseEntity<String> response =
           restTemplate.exchange(objectURI, HttpMethod.GET, entity, String.class);
@@ -368,13 +325,12 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     } catch (HttpClientErrorException
         | ResourceAccessException
         | NullPointerException
-        | URISyntaxException
         | IOException ex) {
       throw new ShelfResourceNotFound("Metadata resource not found  " + objectURI, ex);
     }
   }
 
-  public URI createContainer(URI uri) {
+  public URI createAutoNamedContainer(URI uri) {
     HttpClient instance =
         HttpClientBuilder.create().setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
@@ -398,16 +354,15 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void createContainer(String... relativePathParts) {
+  public void createContainer(URI relativePath) {
 
-    URI destination = URI.create(pathBuilder(relativePathParts));
     HttpClient instance =
         HttpClientBuilder.create().setRedirectStrategy(new DefaultRedirectStrategy()).build();
     RestTemplate restTemplate =
         new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
 
-    RequestEntity request =
-        RequestEntity.put(URI.create(destination.toString()))
+    RequestEntity<String> request =
+        RequestEntity.put(URI.create(relativePath.toString()))
             .header("Prefer", "handling=lenient; received=\"minimal\"")
             .contentType(new MediaType("application", "ld+json", StandardCharsets.UTF_8))
             .body("{}");
@@ -416,8 +371,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
-  public void delete(String... relativePathParts) throws ShelfException {
-    URI destination = URI.create(pathBuilder(relativePathParts));
+  public void delete(URI relativePath) throws ShelfException {
     HttpClient instance =
         HttpClientBuilder.create().setRedirectStrategy(new DefaultRedirectStrategy()).build();
 
@@ -425,36 +379,13 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
         new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
 
     try {
-      ResponseEntity<String> response =
-          restTemplate.exchange(
-              destination, HttpMethod.DELETE, authenticationHeader(), String.class);
+      restTemplate.exchange(relativePath, HttpMethod.DELETE, authenticationHeader(), String.class);
 
-      ResponseEntity<String> tombstoneResponse =
-          restTemplate.exchange(
-              destination + "/fcr:tombstone",
-              HttpMethod.DELETE,
-              authenticationHeader(),
-              String.class);
+      restTemplate.exchange(
+          relativePath + "/fcr:tombstone", HttpMethod.DELETE, authenticationHeader(), String.class);
 
     } catch (HttpClientErrorException exception) {
-      log.info("Issue deleting resource " + destination.toString());
+      log.info("Issue deleting resource " + relativePath.toString());
     }
-  }
-
-  private String pathBuilder(String... relativePathParts) {
-
-    // Handle absolute paths
-    if (ResourceUtils.isUrl(relativePathParts[0]) && relativePathParts.length == 1) {
-      return relativePathParts[0];
-    }
-
-    StringBuilder relativePath = new StringBuilder(storagePath);
-    for (String part : relativePathParts) {
-      if (!relativePath.toString().endsWith("/")) {
-        relativePath.append("/");
-      }
-      relativePath.append(part);
-    }
-    return relativePath.toString();
   }
 }

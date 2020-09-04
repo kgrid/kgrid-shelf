@@ -16,7 +16,6 @@ import org.mockito.Mock;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.net.URI;
-import java.nio.file.FileSystems;
 import java.util.*;
 
 import static org.junit.Assert.assertArrayEquals;
@@ -32,23 +31,24 @@ public class KnowledgeObjectRepositoryTest {
 
   @Mock CompoundDigitalObjectStore compoundDigitalObjectStore;
 
-  private ArkId helloWorld1ArkId = new ArkId("hello", "world", "v0.1.0");
-  private ArkId helloWorld2ArkId = new ArkId("hello", "world", "v0.2.0");
-  private ArkId noSpecArkId = new ArkId("bad", "bad", "bad");
-  private String helloWorld1Location =
-      helloWorld1ArkId.getDashArk() + "-" + helloWorld1ArkId.getVersion();
-  private String helloWorld2Location =
-      helloWorld2ArkId.getDashArk() + "-" + helloWorld2ArkId.getVersion();
+  private final ArkId helloWorld1ArkId = new ArkId("hello", "world", "v0.1.0");
+  private final ArkId helloWorld2ArkId = new ArkId("hello", "world", "v0.2.0");
+  private final ArkId versionedArk = new ArkId("versioned", "ark", "v0.1.0");
+  private final ArkId noSpecArkId = new ArkId("bad", "bad", "bad");
+  private final URI helloWorld1Location = URI.create(helloWorld1ArkId.getFullDashArk() + "/");
+  private final URI helloWorld2Location = URI.create(helloWorld2ArkId.getFullDashArk() + "/");
+  private final URI versionedArkLocation = URI.create(versionedArk.getFullDashArk() + "/");
+  private final URI badLocation = URI.create(noSpecArkId.getFullDashArk());
   private JsonNode helloWorld1Metadata;
   private JsonNode helloWorld2Metadata;
-  private List<String> koLocations;
+  private JsonNode versionedArkMetadata;
   private JsonNode noSpecMetadata;
-  private String badLocation = noSpecArkId.getDashArk() + "-" + noSpecArkId.getVersion();
 
   @Before
   public void setUp() throws Exception {
 
-    koLocations = Arrays.asList(helloWorld1Location, helloWorld2Location, badLocation);
+    List<URI> koLocations =
+        Arrays.asList(helloWorld1Location, helloWorld2Location, versionedArkLocation, badLocation);
     helloWorld1Metadata =
         new ObjectMapper()
             .readTree(
@@ -82,15 +82,34 @@ public class KnowledgeObjectRepositoryTest {
                     + "  \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
                     + "}");
 
+    versionedArkMetadata =
+        new ObjectMapper()
+            .readTree(
+                "{\n"
+                    + "  \"@id\" : \"versioned/ark/v0.1.0\",\n"
+                    + "  \"@type\" : \"koio:KnowledgeObject\",\n"
+                    + "  \"identifier\" : \"ark:/versioned/ark/v0.1.0\",\n"
+                    + "  \"version\":\"v0.1.0\",\n"
+                    + "  \"title\" : \"Hello World Title\",\n"
+                    + "  \"contributors\" : \"Kgrid Team\",\n"
+                    + "  \"keywords\":[\"Hello\",\"example\"],\n"
+                    + "  \"hasServiceSpecification\": \"service2.yaml\",\n"
+                    + "  \"hasDeploymentSpecification\": \"deployment.yaml\",\n"
+                    + "  \"hasPayload\": \"src/index.js\",\n"
+                    + "  \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
+                    + "}");
+
     noSpecMetadata =
         new ObjectMapper().readTree("{  \"identifier\" : \"ark:/bad/bad\",\n\"version\":\"bad\"}");
-    when(compoundDigitalObjectStore.getChildren("")).thenReturn(koLocations);
+    when(compoundDigitalObjectStore.getChildren()).thenReturn(koLocations);
     when(compoundDigitalObjectStore.getMetadata(helloWorld1Location))
         .thenReturn((ObjectNode) helloWorld1Metadata);
     when(compoundDigitalObjectStore.getMetadata(helloWorld2Location))
         .thenReturn((ObjectNode) helloWorld2Metadata);
     when(compoundDigitalObjectStore.getMetadata(badLocation))
         .thenReturn((ObjectNode) noSpecMetadata);
+    when(compoundDigitalObjectStore.getMetadata(versionedArkLocation))
+        .thenReturn((ObjectNode) versionedArkMetadata);
     repository = new KnowledgeObjectRepository(compoundDigitalObjectStore);
   }
 
@@ -117,11 +136,7 @@ public class KnowledgeObjectRepositoryTest {
     JsonNode metadata = new ObjectMapper().readTree(newMetadataStr);
     repository.editMetadata(helloWorld1ArkId, newMetadataStr);
     verify(compoundDigitalObjectStore)
-        .saveMetadata(
-            metadata,
-            helloWorld1Location
-                + FileSystems.getDefault().getSeparator()
-                + KoFields.METADATA_FILENAME.asStr());
+        .saveMetadata(metadata, helloWorld1Location.resolve(KoFields.METADATA_FILENAME.asStr()));
   }
 
   @Test
@@ -129,10 +144,7 @@ public class KnowledgeObjectRepositoryTest {
     String newMetadataStr = "{\"@id\" : \"goodbye-world\"}";
     repository.editMetadata(helloWorld1ArkId, newMetadataStr);
     verify(compoundDigitalObjectStore, times(1))
-        .getMetadata(
-            helloWorld1Location
-                + FileSystems.getDefault().getSeparator()
-                + KoFields.METADATA_FILENAME.asStr());
+        .getMetadata(helloWorld1Location.resolve(KoFields.METADATA_FILENAME.asStr()));
   }
 
   @Test(expected = ShelfException.class)
@@ -145,7 +157,7 @@ public class KnowledgeObjectRepositoryTest {
   public void findAll_refreshesMap() {
     repository.findAll();
     verify(compoundDigitalObjectStore, times(2)).getMetadata(helloWorld1Location);
-    verify(compoundDigitalObjectStore, times(2)).getChildren("");
+    verify(compoundDigitalObjectStore, times(2)).getChildren();
   }
 
   @Test
@@ -153,6 +165,7 @@ public class KnowledgeObjectRepositoryTest {
     Map<ArkId, JsonNode> map = new HashMap<>();
     map.put(helloWorld1ArkId, helloWorld1Metadata);
     map.put(helloWorld2ArkId, helloWorld2Metadata);
+    map.put(versionedArk, versionedArkMetadata);
     map.put(noSpecArkId, noSpecMetadata);
     assertEquals(repository.findAll(), map);
   }
@@ -161,8 +174,7 @@ public class KnowledgeObjectRepositoryTest {
   public void findDeploymentSpec_fetchesDeployment() {
     String deployment = "{\"This is a deployment spec\": \"yay\"}";
 
-    when(compoundDigitalObjectStore.getBinary(
-            helloWorld1Location + FileSystems.getDefault().getSeparator() + "deployment.yaml"))
+    when(compoundDigitalObjectStore.getBinary(helloWorld1Location.resolve("deployment.yaml")))
         .thenReturn(deployment.getBytes());
     JsonNode deploymentSpec = repository.findDeploymentSpecification(helloWorld1ArkId);
     assertEquals("yay", deploymentSpec.get("This is a deployment spec").asText());
@@ -206,8 +218,7 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void findServiceSpec_getsCorrectSpec() {
     String deployment = "{\"This is a service spec\": \"yay\"}";
-    when(compoundDigitalObjectStore.getBinary(
-            helloWorld1Location + FileSystems.getDefault().getSeparator() + SERVICE_YAML_PATH))
+    when(compoundDigitalObjectStore.getBinary(helloWorld1Location.resolve(SERVICE_YAML_PATH)))
         .thenReturn(deployment.getBytes());
     JsonNode serviceSpec = repository.findServiceSpecification(helloWorld1ArkId);
     assertEquals("yay", serviceSpec.get("This is a service spec").asText());
@@ -222,8 +233,7 @@ public class KnowledgeObjectRepositoryTest {
   public void findServiceSpec_noSpecifiedVersion() {
     ArkId versionless = new ArkId("hello", "world");
     String service = "{\"This is a service spec\": \"yay\"}";
-    when(compoundDigitalObjectStore.getBinary(
-            helloWorld2Location + FileSystems.getDefault().getSeparator() + "service2.yaml"))
+    when(compoundDigitalObjectStore.getBinary(helloWorld2Location.resolve("service2.yaml")))
         .thenReturn(service.getBytes());
     JsonNode serviceSpec = repository.findServiceSpecification(versionless);
     assertEquals("yay", serviceSpec.get("This is a service spec").asText());
@@ -232,7 +242,7 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void getBinary_returnsBinary() {
     byte[] binaryData = "I'm a binary!".getBytes();
-    when(compoundDigitalObjectStore.getBinary(helloWorld1Location, PAYLOAD_PATH))
+    when(compoundDigitalObjectStore.getBinary(helloWorld1Location.resolve(PAYLOAD_PATH)))
         .thenReturn(binaryData);
     byte[] binaryResult = repository.getBinary(helloWorld1ArkId, PAYLOAD_PATH);
     assertArrayEquals(binaryData, binaryResult);
@@ -246,8 +256,9 @@ public class KnowledgeObjectRepositoryTest {
 
   @Test
   public void getKoRepoLocation_returnsDataStoreLocation() {
-    when(compoundDigitalObjectStore.getAbsoluteLocation("")).thenReturn(URI.create("good"));
-    assertEquals(URI.create("good"), repository.getKoRepoLocation());
+    URI good = URI.create("good");
+    when(compoundDigitalObjectStore.getAbsoluteLocation(null)).thenReturn(good);
+    assertEquals(good, repository.getKoRepoLocation());
   }
 
   @Test
@@ -258,14 +269,19 @@ public class KnowledgeObjectRepositoryTest {
   @Test
   public void getObjectLocation_missingObjectIsNull() throws JsonProcessingException {
     ArkId hellov4 = new ArkId("hello", "world", "v0.4.0");
-    String hellov4Location = hellov4.getDashArk() + "-" + hellov4.getVersion();
-    List<String> location = Collections.singletonList("hello-world-v0.4.0");
-    when(compoundDigitalObjectStore.getChildren("")).thenReturn(location);
+    URI hellov4Location = URI.create(hellov4.getFullDashArk());
+    List<URI> location = Collections.singletonList(URI.create("hello-world-v0.4.0"));
+    when(compoundDigitalObjectStore.getChildren()).thenReturn(location);
     JsonNode v4Metadata =
         new ObjectMapper()
             .readTree("{  \"identifier\" : \"ark:/hello/world\",\n\"version\":\"v0.4.0\"}");
     when(compoundDigitalObjectStore.getMetadata(hellov4Location))
         .thenReturn((ObjectNode) v4Metadata);
     assertEquals(hellov4Location, repository.getObjectLocation(hellov4));
+  }
+
+  @Test
+  public void getObjectLocation_withVersionedIdentifier() {
+    assertEquals(versionedArkLocation, repository.getObjectLocation(versionedArk));
   }
 }

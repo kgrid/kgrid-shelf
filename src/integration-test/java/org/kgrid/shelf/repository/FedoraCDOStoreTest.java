@@ -49,64 +49,57 @@ public class FedoraCDOStoreTest {
   }
 
   @Test
-  public void getChildren() throws Exception {
+  public void getChildren() {
 
-    List<String> koList = compoundDigitalObjectStore.getChildren("");
+    List<URI> koList = compoundDigitalObjectStore.getChildren();
     assertEquals(2, koList.size());
   }
 
   @Test
-  public void getVersion() throws Exception {
-    List<String> impList = compoundDigitalObjectStore.getChildren("hello-world");
-    assertEquals(3, impList.size());
-  }
+  public void findKO() {
 
-  @Test
-  public void findKO() throws Exception {
-
-    ObjectNode koNode = compoundDigitalObjectStore.getMetadata("hello-world");
+    ObjectNode koNode = compoundDigitalObjectStore.getMetadata(URI.create("hello-world"));
 
     assertEquals("Hello World Title", koNode.findValue("title").asText());
   }
 
   @Test(expected = ShelfResourceNotFound.class)
-  public void findKONotInThisShelf() throws Exception {
-
-    ObjectNode koNode =
-        compoundDigitalObjectStore.getMetadata(
-            "http://library.kgrig.org/fcrepo/rest/hello-world/v0.0.2");
+  public void findKONotInThisShelf() {
+    compoundDigitalObjectStore.getMetadata(
+        URI.create("http://library.kgrig.org/fcrepo/rest/hello-world/v0.0.2"));
   }
 
   @Test(expected = ShelfResourceNotFound.class)
-  public void delete() throws Exception {
+  public void delete() {
 
-    compoundDigitalObjectStore.delete("hello-world");
+    compoundDigitalObjectStore.delete(URI.create("hello-world"));
 
-    ObjectNode koNode = compoundDigitalObjectStore.getMetadata("hello-world");
+    ObjectNode koNode = compoundDigitalObjectStore.getMetadata(URI.create("hello-world"));
   }
 
   @Test(expected = ShelfException.class)
-  public void findKONotFound() throws Exception {
+  public void findKONotFound() {
 
-    ObjectNode koNode = compoundDigitalObjectStore.getMetadata("not-found");
+    ObjectNode koNode = compoundDigitalObjectStore.getMetadata(URI.create("not-found"));
   }
 
   @Test
   public void findBinary() {
 
-    assertNotNull(compoundDigitalObjectStore.getBinary("hello-world/v0.1.0/src/index.js"));
+    assertNotNull(
+        compoundDigitalObjectStore.getBinary(URI.create("hello-world/v0.1.0/src/index.js")));
   }
 
   @Test(expected = ShelfException.class)
   public void findBinaryNotFound() {
 
-    compoundDigitalObjectStore.getBinary("hello-world/xxxxx/welcome.js");
+    compoundDigitalObjectStore.getBinary(URI.create("hello-world/xxxxx/welcome.js"));
   }
 
   @After
-  public void teardown() throws Exception {
+  public void teardown() {
 
-    compoundDigitalObjectStore.delete("hello-world");
-    compoundDigitalObjectStore.delete("ri-bmicalc");
+    compoundDigitalObjectStore.delete(URI.create("hello-world"));
+    compoundDigitalObjectStore.delete(URI.create("ri-bmicalc"));
   }
 }

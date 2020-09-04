@@ -15,24 +15,23 @@ import org.springframework.context.annotation.Profile;
 @SpringBootApplication
 public class ShelfGateway {
 
-  @Autowired
-  CompoundDigitalObjectStoreFactory factory;
+  @Autowired CompoundDigitalObjectStoreFactory factory;
 
   Logger log = LoggerFactory.getLogger(ShelfGateway.class);
 
   public static void main(String[] args) {
     SpringApplication.run(ShelfGateway.class, args);
-
   }
 
   @Configuration
-  @Profile("Gateway") // `--spring.profiles.active=Gateway` must be set in Run Config or command line
+  @Profile(
+      "Gateway") // `--spring.profiles.active=Gateway` must be set in Run Config or command line
   class Config {
     @Bean
     public CompoundDigitalObjectStore getCDOStore(
         @Value("${kgrid.shelf.cdostore.url:filesystem:file://shelf}") String cdoStoreURI) {
       final CompoundDigitalObjectStore cdoStore = factory.create(cdoStoreURI);
-      log.info("kgrid.shelf.cdostor.url: {}", cdoStore.getAbsoluteLocation(""));
+      log.info("kgrid.shelf.cdostor.url: {}", cdoStore.getAbsoluteLocation(null));
       return cdoStore;
     }
   }
