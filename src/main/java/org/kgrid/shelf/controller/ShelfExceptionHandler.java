@@ -22,14 +22,14 @@ import java.util.Optional;
 @RestController
 public abstract class ShelfExceptionHandler {
 
-  protected Logger log = LoggerFactory.getLogger(this.getClass().getName());
+  protected Logger log = LoggerFactory.getLogger(getClass().getName());
   protected Optional<KnowledgeObjectDecorator> kod;
-  protected KnowledgeObjectRepository shelf;
+  protected KnowledgeObjectRepository koRepo;
 
   @Autowired
   public ShelfExceptionHandler(
-      KnowledgeObjectRepository shelf, Optional<KnowledgeObjectDecorator> kod) {
-    this.shelf = shelf;
+      KnowledgeObjectRepository koRepo, Optional<KnowledgeObjectDecorator> kod) {
+    this.koRepo = koRepo;
     this.kod = kod;
   }
 

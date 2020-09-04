@@ -26,22 +26,18 @@ import java.util.TreeMap;
 public class KnowledgeObjectRepository {
 
   private final org.slf4j.Logger log = LoggerFactory.getLogger(KnowledgeObjectRepository.class);
-  private CompoundDigitalObjectStore dataStore;
-  // Map of Ark -> Version -> File Location for rapid object lookup
+  private final CompoundDigitalObjectStore cdoStore;
   private static final Map<String, Map<String, URI>> objectLocations = new HashMap<>();
-  // Map of Ark -> Metadata location for displaying to end user
   private static final Map<ArkId, JsonNode> knowledgeObjects = new HashMap<>();
 
   @Autowired
   KnowledgeObjectRepository(CompoundDigitalObjectStore compoundDigitalObjectStore) {
-    dataStore = compoundDigitalObjectStore;
-    // Initialize the map of folder names -> ark ids
+    cdoStore = compoundDigitalObjectStore;
     refreshObjectMap();
   }
 
   public void delete(ArkId arkId) {
-
-    dataStore.delete(resolveArkIdToLocation(arkId));
+    cdoStore.delete(resolveArkIdToLocation(arkId));
     log.info("Deleted ko with ark id " + arkId);
   }
 
@@ -50,7 +46,7 @@ public class KnowledgeObjectRepository {
    *
    * @param arkId arkId
    * @param metadata metadata
-   * @return metadata
+   * @return
    */
   public ObjectNode editMetadata(ArkId arkId, String metadata) {
     URI metadataLocation =
@@ -62,9 +58,9 @@ public class KnowledgeObjectRepository {
       throw new ShelfException("Cannot parse new metadata", e);
     }
 
-    dataStore.saveMetadata(jsonMetadata, metadataLocation);
+    cdoStore.saveMetadata(jsonMetadata, metadataLocation);
 
-    return dataStore.getMetadata(metadataLocation);
+    return cdoStore.getMetadata(metadataLocation);
   }
 
   public Map<ArkId, JsonNode> findAll() {
@@ -121,15 +117,15 @@ public class KnowledgeObjectRepository {
 
     if (!arkId.hasVersion()) {
       ArrayNode node = new ObjectMapper().createArrayNode();
-      versionMap.forEach((version, location) -> node.add(dataStore.getMetadata(location)));
+      versionMap.forEach((version, location) -> node.add(cdoStore.getMetadata(location)));
       return node;
     }
-    URI nodeLoc = versionMap.get(arkId.getVersion());
-    if (nodeLoc == null) {
+    URI koLocation = versionMap.get(arkId.getVersion());
+    if (koLocation == null) {
       throw new ShelfResourceNotFound(
           "Cannot load metadata, " + arkId.getFullArk() + " not found on shelf");
     }
-    return dataStore.getMetadata(nodeLoc);
+    return cdoStore.getMetadata(koLocation);
   }
 
   public KnowledgeObjectWrapper getKow(ArkId arkId) {
@@ -184,28 +180,29 @@ public class KnowledgeObjectRepository {
   }
 
   public byte[] getBinary(ArkId arkId, String childPath) {
-    return dataStore.getBinary(resolveArkIdToLocation(arkId).resolve(childPath));
+    return cdoStore.getBinary(resolveArkIdToLocation(arkId).resolve(childPath));
   }
 
   private URI resolveArkIdToLocation(ArkId arkId) {
-    if (objectLocations.get(arkId.getSlashArk()) == null
-        || objectLocations.get(arkId.getSlashArk()).get(arkId.getVersion()) == null) {
+    if (isKoMissingFromMap(arkId)) {
       throw new ShelfResourceNotFound(
           "Cannot resolve " + arkId + " to a location in the KO repository");
     }
     return objectLocations.get(arkId.getSlashArk()).get(arkId.getVersion());
   }
 
-  public URI getKoRepoLocation() {
+  private boolean isKoMissingFromMap(ArkId arkId) {
+    Map<String, URI> versionMapForArk = objectLocations.get(arkId.getSlashArk());
+    return versionMapForArk == null || versionMapForArk.get(arkId.getVersion()) == null;
+  }
 
-    return dataStore.getAbsoluteLocation(null);
+  public URI getKoRepoLocation() {
+    return cdoStore.getAbsoluteLocation(null);
   }
 
   // Used by activator
   public URI getObjectLocation(ArkId arkId) {
-    // Reload for activation use cases
-    if (objectLocations.get(arkId.getSlashArk()) == null
-        || objectLocations.get(arkId.getSlashArk()).get(arkId.getVersion()) == null) {
+    if (isKoMissingFromMap(arkId)) {
       refreshObjectMap();
     }
     return resolveArkIdToLocation(arkId);
@@ -222,7 +219,7 @@ public class KnowledgeObjectRepository {
     try {
 
       YAMLMapper yamlMapper = new YAMLMapper();
-      return yamlMapper.readTree(dataStore.getBinary(uriPath));
+      return yamlMapper.readTree(cdoStore.getBinary(uriPath));
 
     } catch (IOException exception) {
       throw new ShelfException(
@@ -235,10 +232,10 @@ public class KnowledgeObjectRepository {
     knowledgeObjects.clear();
 
     // Load KO objects and skip any KOs with exceptions like missing metadata
-    for (URI path : dataStore.getChildren()) {
+    for (URI path : cdoStore.getChildren()) {
       try {
         ArkId arkId;
-        JsonNode metadata = dataStore.getMetadata(path);
+        JsonNode metadata = cdoStore.getMetadata(path);
         if (!metadata.has(KoFields.IDENTIFIER.asStr())) {
           log.warn(
               "Folder with metadata " + path + " is missing an identifier field, cannot load.");

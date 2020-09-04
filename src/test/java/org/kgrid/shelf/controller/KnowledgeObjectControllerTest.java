@@ -3,6 +3,7 @@ package org.kgrid.shelf.controller;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -19,10 +20,8 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 import java.nio.file.NoSuchFileException;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Objects;
 
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertThrows;
 import static org.kgrid.shelf.TestHelper.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -38,12 +37,13 @@ public class KnowledgeObjectControllerTest {
   private MockHttpServletRequest mockServletRequest;
   private final String childpath = "childpath";
   private final String metadataString = "{\"key\":\"a different value\"}";
+  private JsonNode koNode;
 
   @Before
   public void setup() throws JsonProcessingException {
     koRepo = Mockito.mock(KnowledgeObjectRepository.class);
     koController = new KnowledgeObjectController(koRepo, null);
-    JsonNode koNode = objectMapper.readTree("{\"key\":\"value\"}");
+    koNode = objectMapper.readTree("{\"key\":\"value\"}");
     koMap.put(ARK_ID, koNode);
     mockServletRequest = new MockHttpServletRequest();
     String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + childpath;
@@ -53,7 +53,12 @@ public class KnowledgeObjectControllerTest {
     when(koRepo.findKnowledgeObjectMetadata(ARK_ID)).thenReturn(koNode);
     when(koRepo.findKnowledgeObjectMetadata(arkNoVersion)).thenReturn(koNode);
     when(koRepo.findServiceSpecification(ARK_ID)).thenReturn(koNode);
+    when(koRepo.findDeploymentSpecification(ARK_ID)).thenReturn(koNode);
     when(koRepo.getBinary(ARK_ID, childpath)).thenReturn("byteArray".getBytes());
+    when(koRepo.editMetadata(ARK_ID, metadataString))
+        .thenReturn((ObjectNode) objectMapper.readTree(metadataString));
+    when(koRepo.editMetadata(arkNoVersion, metadataString))
+        .thenReturn((ObjectNode) objectMapper.readTree(metadataString));
   }
 
   @Test
@@ -81,18 +86,6 @@ public class KnowledgeObjectControllerTest {
   }
 
   @Test
-  public void findKnowledgeObject_ChecksForFcRepoNaan() {
-    IllegalArgumentException exception =
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> koController.findKnowledgeObject("fcrepo", "rest", null));
-    assertEquals(
-        "Cannot connect to fcrepo at the same address as the shelf. "
-            + "Make sure shelf and fcrepo configuration is correct.",
-        exception.getMessage());
-  }
-
-  @Test
   public void findKnowledgeObjectOldVersion_CallsFindMetadataOnKoRepo_WhenVersionIsSupplied() {
     koController.getKnowledgeObjectOldVersion(NAAN, NAME, VERSION);
     verify(koRepo).findKnowledgeObjectMetadata(ARK_ID);
@@ -102,18 +95,6 @@ public class KnowledgeObjectControllerTest {
   public void findKnowledgeObjectOldVersion_CallsFindMetadataOnKoRepo_WhenVersionIsMissing() {
     koController.getKnowledgeObjectOldVersion(NAAN, NAME, null);
     verify(koRepo).findKnowledgeObjectMetadata(arkNoVersion);
-  }
-
-  @Test
-  public void findKnowledgeObjectOldVersion_ChecksForFcRepoNaan() {
-    IllegalArgumentException exception =
-        assertThrows(
-            IllegalArgumentException.class,
-            () -> koController.getKnowledgeObjectOldVersion("fcrepo", "rest", null));
-    assertEquals(
-        "Cannot connect to fcrepo at the same address as the shelf. "
-            + "Make sure shelf and fcrepo configuration is correct.",
-        exception.getMessage());
   }
 
   @Test
@@ -169,18 +150,10 @@ public class KnowledgeObjectControllerTest {
   }
 
   @Test
-  public void editKnowledgeObjectMetadata_GetsNewMetadataFromKoRepo() {
-    koController.editKnowledgeObjectMetadata(NAAN, NAME, metadataString);
-    verify(koRepo).findKnowledgeObjectMetadata(arkNoVersion);
-  }
-
-  @Test
-  public void editKnowledgeObjectMetadata_ReturnsNewMetadata() throws JsonProcessingException {
-    when(koRepo.findKnowledgeObjectMetadata(arkNoVersion))
-        .thenReturn(objectMapper.readTree(metadataString));
+  public void editKnowledgeObjectMetadata_ReturnsNewMetadata() {
     ResponseEntity<JsonNode> newMetaData =
         koController.editKnowledgeObjectMetadata(NAAN, NAME, metadataString);
-    assertEquals(metadataString, Objects.requireNonNull(newMetaData.getBody()).toString());
+    assertEquals(metadataString, newMetaData.getBody().toString());
   }
 
   @Test
@@ -190,19 +163,11 @@ public class KnowledgeObjectControllerTest {
   }
 
   @Test
-  public void editVersionMetadata_GetsNewMetadataFromKoRepo() {
-    koController.editVersionMetadata(NAAN, NAME, VERSION, metadataString);
-    verify(koRepo).findKnowledgeObjectMetadata(ARK_ID);
-  }
-
-  @Test
   public void editVersionMetadata_ReturnsNewMetadata() throws JsonProcessingException {
-    when(koRepo.findKnowledgeObjectMetadata(ARK_ID))
-        .thenReturn(objectMapper.readTree(metadataString));
     ResponseEntity<JsonNode> newMetaData =
         koController.editVersionMetadata(NAAN, NAME, VERSION, metadataString);
 
-    assertEquals(metadataString, Objects.requireNonNull(newMetaData.getBody()).toString());
+    assertEquals(metadataString, newMetaData.getBody().toString());
   }
 
   @Test
@@ -227,5 +192,18 @@ public class KnowledgeObjectControllerTest {
   public void deleteKnowledgeObject_ReturnsNoContent_WithVersion() {
     ResponseEntity<String> response = koController.deleteKnowledgeObject(NAAN, NAME, VERSION);
     assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
+  }
+
+  @Test
+  public void getDeploymentDescriptionJson_callsFindDeploymentSpecOnKoRepo() {
+    koController.getDeploymentDescriptionJson(NAAN, NAME, VERSION);
+    verify(koRepo).findDeploymentSpecification(ARK_ID);
+  }
+
+  @Test
+  public void getDeploymentDescriptionJson_returnsDeploymentSpecFromKoRepo() {
+    ResponseEntity<JsonNode> deploymentDescriptionJson =
+        koController.getDeploymentDescriptionJson(NAAN, NAME, VERSION);
+    assertEquals(koNode, deploymentDescriptionJson.getBody());
   }
 }
