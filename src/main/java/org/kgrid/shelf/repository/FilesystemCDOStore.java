@@ -73,6 +73,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
             childPath
                     .toString()
                     .substring(localStorageDir.toString().length() + 1)
+                    .replaceAll("\\\\", "/")
                     .replaceAll(" ", "%20")
                 + "/");
     return uri;
