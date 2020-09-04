@@ -15,7 +15,7 @@
 
     <groupId>org.kgrid</groupId>
     <artifactId>shelf-api</artifactId>
-    <version>3.1-SNAPSHOT</version>
+    <version>3.1</version>
 
     <name>kgrid-shelf-api</name>
     <description>KGrid Shelf API</description>
@@ -40,7 +40,7 @@
         <url>https://github.com/kgrid/kgrid-shelf</url>
         <connection>scm:git:https://github.com/kgrid/kgrid-shelf.git</connection>
         <developerConnection>scm:git:https://github.com/kgrid/kgrid-shelf.git</developerConnection>
-        <tag>shelf-api-2.1.4</tag>
+        <tag>shelf-api-3.1</tag>
     </scm>
     <distributionManagement>
         <snapshotRepository>
