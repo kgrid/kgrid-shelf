@@ -7,13 +7,16 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.kgrid.shelf.ShelfResourceForbidden;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
@@ -22,6 +25,7 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertThrows;
 import static org.kgrid.shelf.TestHelper.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -49,6 +53,7 @@ public class KnowledgeObjectControllerTest {
     String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + childpath;
     mockServletRequest.setRequestURI(requestUri);
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
+    ReflectionTestUtils.setField(koController, "binariesExposed", Boolean.valueOf("true"));
     when(koRepo.findAll()).thenReturn(koMap);
     when(koRepo.findKnowledgeObjectMetadata(ARK_ID)).thenReturn(koNode);
     when(koRepo.findKnowledgeObjectMetadata(arkNoVersion)).thenReturn(koNode);
@@ -141,6 +146,72 @@ public class KnowledgeObjectControllerTest {
   public void getBinary_CallsGetBinaryOnKoRepo() throws NoSuchFileException {
     koController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
     verify(koRepo).getBinary(ARK_ID, childpath);
+  }
+
+  @Test
+  public void getBinary_ThrowsErrorWhenTryingToEscapeKO() {
+    String badChildpath = "../ko2/metadata.json";
+    mockServletRequest = new MockHttpServletRequest();
+    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + badChildpath;
+    mockServletRequest.setRequestURI(requestUri);
+    RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
+
+    assertThrows(
+        ShelfResourceForbidden.class,
+        () -> koController.getBinary(NAAN, NAME, VERSION, mockServletRequest));
+  }
+
+  @Test
+  public void getBinary_ThrowsErrorWhenTryingAccessFileOnRestrictedShelf() {
+    ReflectionTestUtils.setField(koController, "binariesExposed", Boolean.valueOf("false"));
+    assertThrows(
+        ShelfResourceForbidden.class,
+        () -> koController.getBinary(NAAN, NAME, VERSION, mockServletRequest));
+  }
+
+  @Test
+  public void getBinary_hasJsonContentTypeForJsonFileExt() {
+
+    String jsonChildpath = "metadata.json";
+    mockServletRequest = new MockHttpServletRequest();
+    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + jsonChildpath;
+    mockServletRequest.setRequestURI(requestUri);
+    ResponseEntity<Object> jsonResp =
+        koController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
+    assertEquals(
+        "Returns a json header for a path ending in '.json'",
+        jsonResp.getHeaders().get("Content-Type").get(0),
+        MediaType.APPLICATION_JSON_VALUE);
+  }
+
+  @Test
+  public void getBinary_hasYamlContentTypeForYamlFileExt() {
+
+    String jsonChildpath = "deployment.yaml";
+    mockServletRequest = new MockHttpServletRequest();
+    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + jsonChildpath;
+    mockServletRequest.setRequestURI(requestUri);
+    ResponseEntity<Object> yamlResp =
+        koController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
+    assertEquals(
+        "Returns a yaml header for a path ending in '.yaml'",
+        yamlResp.getHeaders().get("Content-Type").get(0),
+        "application/yaml");
+  }
+
+  @Test
+  public void getBinary_hasOctetContentTypeForUnknownFileExt() {
+
+    String pdfChildpath = "file.pdf";
+    mockServletRequest = new MockHttpServletRequest();
+    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + pdfChildpath;
+    mockServletRequest.setRequestURI(requestUri);
+    ResponseEntity<Object> yamlResp =
+        koController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
+    assertEquals(
+        "Returns an octet header for an unknown filetype",
+        yamlResp.getHeaders().get("Content-Type").get(0),
+        MediaType.APPLICATION_OCTET_STREAM_VALUE);
   }
 
   @Test

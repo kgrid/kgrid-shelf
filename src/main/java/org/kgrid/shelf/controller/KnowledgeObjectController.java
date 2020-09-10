@@ -4,8 +4,11 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
 import org.apache.commons.lang3.StringUtils;
+import org.kgrid.shelf.ShelfResourceForbidden;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -20,6 +23,9 @@ import java.util.Optional;
 @RequestMapping("${kgrid.shelf.endpoint:kos}")
 @CrossOrigin(origins = "${cors.url:}")
 public class KnowledgeObjectController extends ShelfExceptionHandler {
+
+  @Value("${kgrid.shelf.expose.artifacts:false}")
+  private Boolean binariesExposed;
 
   public KnowledgeObjectController(
       KnowledgeObjectRepository shelf, Optional<KnowledgeObjectDecorator> kod) {
@@ -99,16 +105,21 @@ public class KnowledgeObjectController extends ShelfExceptionHandler {
     return getServiceDescriptionYaml(naan, name, version);
   }
 
-  @GetMapping(path = "/{naan}/{name}/{version}/**", produces = MediaType.ALL_VALUE)
+  @GetMapping(path = "/{naan}/{name}/{version}/**")
   public ResponseEntity<Object> getBinary(
       @PathVariable String naan,
       @PathVariable String name,
       @PathVariable String version,
       HttpServletRequest request) {
-    String childPath = getChildPath(naan, name, version, request.getRequestURI());
-    log.info("getting ko resource " + naan + "/" + name + "/" + version + childPath);
-    return new ResponseEntity<>(
-        koRepo.getBinary(new ArkId(naan, name, version), childPath), HttpStatus.OK);
+    if (binariesExposed) {
+      String childPath = getChildPath(naan, name, version, request.getRequestURI());
+      log.info("getting ko resource " + naan + "/" + name + "/" + version + childPath);
+      HttpHeaders headers = getHeadersFromFileExt(childPath);
+      return new ResponseEntity<>(
+          koRepo.getBinary(new ArkId(naan, name, version), childPath), headers, HttpStatus.OK);
+    } else {
+      throw new ShelfResourceForbidden("Cannot access artifacts on this shelf.");
+    }
   }
 
   @PutMapping(
@@ -144,8 +155,32 @@ public class KnowledgeObjectController extends ShelfExceptionHandler {
     return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
+  private HttpHeaders getHeadersFromFileExt(String childPath) {
+    HttpHeaders headers = new HttpHeaders();
+    if (childPath.endsWith(".json")) {
+      headers.add("Content-Type", "application/json");
+    } else if (childPath.endsWith(".yaml")) {
+      headers.add("Content-Type", "application/yaml");
+    } else {
+      headers.add("Content-Type", "application/octet-stream");
+    }
+    return headers;
+  }
+
   private String getChildPath(String naan, String name, String version, String requestURI) {
-    return StringUtils.substringAfterLast(
-        requestURI, StringUtils.join(naan, "/", name, "/", version, "/"));
+    final String filepath =
+        StringUtils.substringAfterLast(
+            requestURI, StringUtils.join(naan, "/", name, "/", version, "/"));
+    if (filepath.contains("../")) {
+      throw new ShelfResourceForbidden(
+          "Cannot navigate up a directory to get a resource outside of the ark:/"
+              + naan
+              + "/"
+              + name
+              + "/"
+              + version
+              + " knowledge object.");
+    }
+    return filepath;
   }
 }

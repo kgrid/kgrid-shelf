@@ -1,6 +1,6 @@
 package org.kgrid.shelf;
 
-public class ShelfResourceNotFound extends ShelfException{
+public class ShelfResourceNotFound extends ShelfException {
 
   public ShelfResourceNotFound() {
     super();
