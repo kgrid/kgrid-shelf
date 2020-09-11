@@ -62,6 +62,18 @@ public class ResolutionServiceTest {
   }
 
   @Test
+  public void resolveArtifactsForArkReturnsListOfUrisForArtifactString() {
+    ObjectNode deploymentSpec = new ObjectMapper().createObjectNode();
+    ObjectNode endpoints = deploymentSpec.putObject("endpoints");
+    endpoints.putObject(EP_1_NAME).put("artifact", EP_1_ARTIFACT);
+
+    artifactUris = Arrays.asList(URI.create(EP_1_ARTIFACT));
+    when(koRepo.findDeploymentSpecification(arkId)).thenReturn(deploymentSpec);
+    List<URI> uris = resolutionService.resolveArtifactsForArk(arkId);
+    assertEquals(artifactUris, uris);
+  }
+
+  @Test
   public void resolveArtifactsThrowsErrorFromKoRepo_WhenNoDeploymentSpec() {
     when(koRepo.findDeploymentSpecification(arkId))
         .thenThrow(new ShelfResourceNotFound("not found"));
