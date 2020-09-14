@@ -1,5 +1,7 @@
 endpoints:
   /welcome:
-    artifact: src/index.js
+    artifact:
+      - src/index.js
+      - src/index3.js
     adapter: V8
     function: welcome

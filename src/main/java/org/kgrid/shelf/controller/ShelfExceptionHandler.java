@@ -1,6 +1,7 @@
 package org.kgrid.shelf.controller;
 
 import org.kgrid.shelf.ShelfException;
+import org.kgrid.shelf.ShelfResourceForbidden;
 import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.slf4j.Logger;
@@ -88,6 +89,14 @@ public abstract class ShelfExceptionHandler {
 
     return new ResponseEntity<>(
         getErrorMap(request, e.getMessage(), HttpStatus.BAD_REQUEST), HttpStatus.BAD_REQUEST);
+  }
+
+  @ExceptionHandler(ShelfResourceForbidden.class)
+  public ResponseEntity<Map<String, String>> handleForbiddenAccessExceptions(
+      ShelfException e, WebRequest request) {
+
+    return new ResponseEntity<>(
+        getErrorMap(request, e.getMessage(), HttpStatus.FORBIDDEN), HttpStatus.FORBIDDEN);
   }
 
   @ExceptionHandler(Exception.class)
