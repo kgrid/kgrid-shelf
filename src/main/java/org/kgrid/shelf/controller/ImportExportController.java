@@ -42,6 +42,8 @@ public class ImportExportController extends ShelfExceptionHandler {
 
   ManifestReader manifestReader;
 
+  KnowledgeObjectRepository shelf;
+
   public ImportExportController(
       ImportService importService,
       ExportService exportService,
@@ -49,6 +51,7 @@ public class ImportExportController extends ShelfExceptionHandler {
       KnowledgeObjectRepository shelf,
       Optional<KnowledgeObjectDecorator> kod) {
     super(shelf, kod);
+    this.shelf = shelf;
     this.importService = importService;
     this.exportService = exportService;
     this.manifestReader = manifestReader;

@@ -82,17 +82,17 @@ public class KnowledgeObjectWrapper {
 
   public List<URI> getArtifactLocations() {
     List<URI> artifacts = new ArrayList<>(metadataLocations.values());
-    this.deployment
-        .at("/" + KoFields.ENDPOINTS.asStr())
-        .forEach(
-            endpoint -> {
-              final JsonNode artifactNode = endpoint.get(KoFields.ARTIFACT.asStr());
-              if (artifactNode.isArray()) {
-                artifactNode.forEach(node -> artifacts.add(URI.create(node.asText())));
-              } else {
-                artifacts.add(URI.create(artifactNode.asText()));
-              }
-            });
+    this.deployment.forEach(
+        endpoint ->
+            endpoint.forEach(
+                method -> {
+                  final JsonNode artifactNode = method.get(KoFields.ARTIFACT.asStr());
+                  if (artifactNode.isArray()) {
+                    artifactNode.forEach(node -> artifacts.add(URI.create(node.asText())));
+                  } else {
+                    artifacts.add(URI.create(artifactNode.asText()));
+                  }
+                }));
     return artifacts;
   }
 }
