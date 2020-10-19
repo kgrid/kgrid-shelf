@@ -38,6 +38,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   public FilesystemCDOStore(
       @Value("${kgrid.shelf.cdostore.url:filesystem:file://shelf}") String connectionURI) {
+    connectionURI = connectionURI.replace(" ", "%20");
     URI uri = URI.create(connectionURI.substring(connectionURI.indexOf(':') + 1));
     if (uri.getHost() == null) {
       localStorageDir = Paths.get(uri);

@@ -197,6 +197,12 @@ public class FilesystemCDOStoreTest {
     assertFalse(Files.exists(idPath.resolve("file.txt")));
   }
 
+  @Test
+  public void cdoStoreReplacesSpacesInConnectionUri() {
+    String connectionURL = "filesystem:file:///src/test/resources/shelf with spaces";
+    koStore = new FilesystemCDOStore(connectionURL);
+  }
+
   private void nukeTestShelf(Path shelf) throws IOException {
     Files.walk(shelf)
         .sorted(
