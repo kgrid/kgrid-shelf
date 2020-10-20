@@ -29,7 +29,11 @@ cd kgrid-shelf
 
 ### Quick start
 This quick start will run the activator and load two example knowledge objects for testing.  
-This example can loads a sample KO shelf (_where to look for the KOs_) via the _kgrid.shelf.cdostore.filesystem.location_ property. By default application will start up and PORT 8080. 
+This example can loads a sample KO shelf (_where to look for the KOs_) via the _kgrid.shelf.cdostore.filesystem.location_ property. 
+
+Note: this property must be a [valid URI](https://tools.ietf.org/html/rfc3986).
+
+By default application will start up and PORT 8080. 
 ```
 mvn clean package
 java -jar target/kgrid-shelf*.jar --kgrid.shelf.cdostore.url=filesystem:file://shelf
