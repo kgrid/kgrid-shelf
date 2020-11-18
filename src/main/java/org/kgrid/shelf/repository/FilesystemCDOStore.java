@@ -111,7 +111,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
   @Override
   public byte[] getBinary(URI relativePath) {
-    Path binaryPath = localStorageDir.resolve(relativePath.toString());
+    Path binaryPath = localStorageDir.resolve(relativePath.toString().replaceAll("%20", " "));
     byte[] bytes;
     try {
       bytes = Files.readAllBytes(binaryPath);
