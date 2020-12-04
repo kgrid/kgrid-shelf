@@ -58,6 +58,9 @@ public class ImportExportControllerTest {
         servletResponse = mock(HttpServletResponse.class);
         multiPartFile = mock(MultipartFile.class);
         when(servletResponse.getOutputStream()).thenReturn(mockServletOutputStream);
+        when(mockManifestReader.loadManifest(any()))
+                .thenReturn(new ObjectMapper().createArrayNode()
+                        .add(validArkId.getSlashArkVersion()));
         importExportController =
                 new ImportExportController(
                         mockImportService,
@@ -225,9 +228,6 @@ public class ImportExportControllerTest {
     @Test
     public void depositManifest_returns201InSuccessfulCase() {
         ObjectNode manifest = getManifestNode();
-        when(mockManifestReader.loadManifest(manifest))
-                .thenReturn(new ObjectMapper().createArrayNode()
-                        .add(validArkId.getSlashArkVersion()));
         ResponseEntity<ArrayNode> response = importExportController.depositManifest(manifest);
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
     }
