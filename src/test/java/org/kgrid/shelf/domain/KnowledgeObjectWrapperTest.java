@@ -47,4 +47,14 @@ public class KnowledgeObjectWrapperTest {
     List<URI> artifacts = kow.getArtifactLocations();
     assertEquals(3, artifacts.size());
   }
+
+  @Test
+  public void artifactArrayLocationsShouldNotHaveDuplicateEntries() throws IOException {
+    kow.addDeployment(
+        new YAMLMapper()
+            .readTree(
+                "/welcome:\n    post: \n        artifact: \n        - payload.js\n        - payload2.js\n        function: welcome\n/welcome-plain:\n    post: \n        artifact: \n        - payload.js\n        - payload2.js\n        function: welcome\n"));
+    List<URI> artifacts = kow.getArtifactLocations();
+    assertEquals(5, artifacts.size());
+  }
 }

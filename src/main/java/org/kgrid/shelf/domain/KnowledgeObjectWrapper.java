@@ -88,11 +88,20 @@ public class KnowledgeObjectWrapper {
                 method -> {
                   final JsonNode artifactNode = method.get(KoFields.ARTIFACT.asStr());
                   if (artifactNode.isArray()) {
-                    artifactNode.forEach(node -> artifacts.add(URI.create(node.asText())));
+                    artifactNode.forEach(
+                        node -> {
+                          addNodeToArtifactList(artifacts, node);
+                        });
                   } else {
-                    artifacts.add(URI.create(artifactNode.asText()));
+                    addNodeToArtifactList(artifacts, artifactNode);
                   }
                 }));
     return artifacts;
+  }
+
+  private void addNodeToArtifactList(List<URI> artifacts, JsonNode node) {
+    if (!artifacts.contains(URI.create(node.asText()))) {
+      artifacts.add(URI.create(node.asText()));
+    }
   }
 }
