@@ -46,7 +46,7 @@ public class KnowledgeObjectRepository {
    *
    * @param arkId arkId
    * @param metadata metadata
-   * @return
+   * @return metadata metadata
    */
   public ObjectNode editMetadata(ArkId arkId, String metadata) {
     URI metadataLocation =

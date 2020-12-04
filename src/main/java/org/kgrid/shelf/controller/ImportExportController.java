@@ -116,7 +116,8 @@ public class ImportExportController extends ShelfExceptionHandler {
 
     log.info("Add kos from manifest {}", manifest.asText());
 
-    return new ResponseEntity<>(manifestReader.loadManifest(manifest), HttpStatus.CREATED);
+    ArrayNode createdKos = manifestReader.loadManifest(manifest);
+    return new ResponseEntity<>(createdKos, createdKos.size() > 0 ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST);
   }
 
   @PostMapping(path = "/manifest-list", consumes = MediaType.APPLICATION_JSON_VALUE)
