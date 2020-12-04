@@ -31,7 +31,7 @@ public class BinaryController extends ShelfExceptionHandler {
       @PathVariable String version,
       HttpServletRequest request) {
     String childPath = getChildPath(naan, name, version, request.getRequestURI());
-    log.info("getting ko resource " + naan + "/" + name + "/" + version + childPath);
+    log.info("getting ko resource " + naan + "/" + name + "/" + version + "/" + childPath);
     HttpHeaders headers = getHeadersFromFileExt(childPath);
     return new ResponseEntity<>(
         koRepo.getBinary(new ArkId(naan, name, version), childPath), headers, HttpStatus.OK);
