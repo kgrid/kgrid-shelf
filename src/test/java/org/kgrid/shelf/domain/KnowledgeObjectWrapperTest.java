@@ -9,6 +9,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.IOException;
 import java.net.URI;
+import java.util.HashSet;
 import java.util.List;
 
 import static org.junit.Assert.assertEquals;
@@ -28,7 +29,7 @@ public class KnowledgeObjectWrapperTest {
   @Test
   public void artifactLocationsCanBeExtracted() throws IOException {
     kow.addDeployment(new YAMLMapper().readTree(DEPLOYMENT_BYTES));
-    List<URI> artifacts = kow.getArtifactLocations();
+    HashSet<URI> artifacts = kow.getArtifactLocations();
     assertEquals(4, artifacts.size());
   }
 
@@ -38,13 +39,13 @@ public class KnowledgeObjectWrapperTest {
         new YAMLMapper()
             .readTree(
                 "endpoints:\n  /welcome:\n    artifact: \n    - payload.js\n    - payload2.js\n    function: welcome\n"));
-    List<URI> artifacts = kow.getArtifactLocations();
+    HashSet<URI> artifacts = kow.getArtifactLocations();
     assertEquals(5, artifacts.size());
   }
 
   @Test
   public void noDeploymentSpecWarns() {
-    List<URI> artifacts = kow.getArtifactLocations();
+    HashSet<URI> artifacts = kow.getArtifactLocations();
     assertEquals(3, artifacts.size());
   }
 
@@ -54,7 +55,7 @@ public class KnowledgeObjectWrapperTest {
         new YAMLMapper()
             .readTree(
                 "/welcome:\n    post: \n        artifact: \n        - payload.js\n        - payload2.js\n        function: welcome\n/welcome-plain:\n    post: \n        artifact: \n        - payload.js\n        - payload2.js\n        function: welcome\n"));
-    List<URI> artifacts = kow.getArtifactLocations();
+    HashSet<URI> artifacts = kow.getArtifactLocations();
     assertEquals(5, artifacts.size());
   }
 }
