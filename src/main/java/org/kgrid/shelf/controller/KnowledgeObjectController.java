@@ -46,15 +46,6 @@ public class KnowledgeObjectController extends ShelfExceptionHandler {
     return findKnowledgeObject(naan, name, version);
   }
 
-  @PutMapping(
-      path = "/{naan}/{name}",
-      consumes = MediaType.APPLICATION_JSON_VALUE,
-      produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<JsonNode> editKnowledgeObjectMetadata(
-      @PathVariable String naan, @PathVariable String name, @RequestBody String data) {
-    return new ResponseEntity<>(koRepo.editMetadata(new ArkId(naan, name), data), HttpStatus.OK);
-  }
-
   @PutMapping(path = "/{naan}/{name}/{version}", consumes = MediaType.APPLICATION_JSON_VALUE)
   public ResponseEntity<JsonNode> editVersionMetadata(
       @PathVariable String naan,
@@ -63,13 +54,6 @@ public class KnowledgeObjectController extends ShelfExceptionHandler {
       @RequestBody String data) {
     return new ResponseEntity<>(
         koRepo.editMetadata(new ArkId(naan, name, version), data), HttpStatus.OK);
-  }
-
-  @DeleteMapping(path = "/{naan}/{name}")
-  public ResponseEntity<String> deleteKnowledgeObject(
-      @PathVariable String naan, @PathVariable String name) {
-    koRepo.delete(new ArkId(naan, name));
-    return new ResponseEntity<>(HttpStatus.NO_CONTENT);
   }
 
   @DeleteMapping(path = "/{naan}/{name}/{version}")

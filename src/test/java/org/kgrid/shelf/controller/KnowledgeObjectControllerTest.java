@@ -52,7 +52,7 @@ public class KnowledgeObjectControllerTest {
     when(koRepo.findKnowledgeObjectMetadata(arkNoVersion)).thenReturn(koNode);
     when(koRepo.editMetadata(ARK_ID, metadataString))
         .thenReturn((ObjectNode) objectMapper.readTree(metadataString));
-    when(koRepo.editMetadata(arkNoVersion, metadataString))
+    when(koRepo.editMetadata(ARK_ID, metadataString))
         .thenReturn((ObjectNode) objectMapper.readTree(metadataString));
   }
 
@@ -94,14 +94,14 @@ public class KnowledgeObjectControllerTest {
 
   @Test
   public void editKnowledgeObjectMetadata_CallsEditMetadataOnKoRepo() {
-    koController.editKnowledgeObjectMetadata(NAAN, NAME, metadataString);
-    verify(koRepo).editMetadata(arkNoVersion, metadataString);
+    koController.editVersionMetadata(NAAN, NAME, VERSION, metadataString);
+    verify(koRepo).editMetadata(ARK_ID, metadataString);
   }
 
   @Test
   public void editKnowledgeObjectMetadata_ReturnsNewMetadata() {
     ResponseEntity<JsonNode> newMetaData =
-        koController.editKnowledgeObjectMetadata(NAAN, NAME, metadataString);
+        koController.editVersionMetadata(NAAN, NAME, VERSION, metadataString);
     assertEquals(metadataString, Objects.requireNonNull(newMetaData.getBody()).toString());
   }
 
@@ -121,13 +121,13 @@ public class KnowledgeObjectControllerTest {
 
   @Test
   public void deleteKnowledgeObject_callsDeleteOnKoRepo() {
-    koController.deleteKnowledgeObject(NAAN, NAME);
-    verify(koRepo).delete(arkNoVersion);
+    koController.deleteKnowledgeObject(NAAN, NAME, VERSION);
+    verify(koRepo).delete(ARK_ID);
   }
 
   @Test
   public void deleteKnowledgeObject_ReturnsNoContent() {
-    ResponseEntity<String> response = koController.deleteKnowledgeObject(NAAN, NAME);
+    ResponseEntity<String> response = koController.deleteKnowledgeObject(NAAN, NAME, VERSION);
     assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
   }
 
