@@ -5,6 +5,7 @@ import org.kgrid.shelf.ShelfResourceForbidden;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,7 +35,9 @@ public class BinaryController extends ShelfExceptionHandler {
     log.info("getting ko resource " + naan + "/" + name + "/" + version + "/" + childPath);
     HttpHeaders headers = getHeadersFromFileExt(childPath);
     return new ResponseEntity<>(
-        koRepo.getBinary(new ArkId(naan, name, version), childPath), headers, HttpStatus.OK);
+        new InputStreamResource(koRepo.getBinaryStream(new ArkId(naan, name, version), childPath)),
+        headers,
+        HttpStatus.OK);
   }
 
   private HttpHeaders getHeadersFromFileExt(String childPath) {

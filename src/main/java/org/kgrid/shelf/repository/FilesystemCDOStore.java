@@ -18,6 +18,7 @@ import org.springframework.beans.factory.annotation.Value;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -119,6 +120,16 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       throw new ShelfResourceNotFound("Binary resource not found " + binaryPath, ioEx);
     }
     return bytes;
+  }
+
+  @Override
+  public InputStream getBinaryStream(URI relativePath) {
+    Path binaryPath = localStorageDir.resolve(relativePath.toString().replaceAll("%20", " "));
+    try {
+      return Files.newInputStream(binaryPath);
+    } catch (IOException ioEx) {
+      throw new ShelfResourceNotFound("Binary resource not found " + binaryPath, ioEx);
+    }
   }
 
   @Override

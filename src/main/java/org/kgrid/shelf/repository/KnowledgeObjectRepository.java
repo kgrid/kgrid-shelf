@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
@@ -181,6 +182,10 @@ public class KnowledgeObjectRepository {
 
   public byte[] getBinary(ArkId arkId, String childPath) {
     return cdoStore.getBinary(resolveArkIdToLocation(arkId).resolve(childPath));
+  }
+
+  public InputStream getBinaryStream(ArkId arkId, String childPath) {
+    return cdoStore.getBinaryStream(resolveArkIdToLocation(arkId).resolve(childPath));
   }
 
   private URI resolveArkIdToLocation(ArkId arkId) {
