@@ -13,9 +13,6 @@ workflows:
               ignore: main
       - deploy:
           context: kgrid
-          filters:
-            branches:
-              only: main
       - trigger_integration_builds:
           context: kgrid
           filters:
