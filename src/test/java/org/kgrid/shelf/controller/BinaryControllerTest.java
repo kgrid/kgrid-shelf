@@ -97,7 +97,7 @@ public class BinaryControllerTest {
 
   @Test
   public void getBinary_hasOctetContentTypeForUnknownFileExt() {
-    String pdfChildpath = "file.pdf";
+    String pdfChildpath = "file.xyz";
     when(koRepo.getBinaryStream(ARK_ID, pdfChildpath))
         .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
     mockServletRequest = new MockHttpServletRequest();

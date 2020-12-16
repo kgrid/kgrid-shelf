@@ -33,4 +33,6 @@ public interface CompoundDigitalObjectStore {
   void commitTransaction(String transactionID);
 
   void rollbackTransaction(String transactionID);
+
+  long getBinarySize(URI relativeLocation);
 }
