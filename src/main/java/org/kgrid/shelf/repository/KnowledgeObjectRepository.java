@@ -188,6 +188,10 @@ public class KnowledgeObjectRepository {
     return cdoStore.getBinaryStream(resolveArkIdToLocation(arkId).resolve(childPath));
   }
 
+  public long getBinarySize(ArkId arkId, String childPath) {
+    return cdoStore.getBinarySize(resolveArkIdToLocation(arkId).resolve(childPath));
+  }
+
   private URI resolveArkIdToLocation(ArkId arkId) {
     if (isKoMissingFromMap(arkId)) {
       throw new ShelfResourceNotFound(

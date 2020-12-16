@@ -172,6 +172,29 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
     }
   }
 
+  // Replace this with something that just looks at the metadata
+  @Override
+  public long getBinarySize(URI relativePath) {
+    RestTemplate restTemplate = builder.build();
+    try {
+
+      if (relativePath.getHost().contains(getAbsoluteLocation(null).toString())) {
+        throw new ShelfResourceNotFound(
+            "Binary resource not located on this CDO shelf "
+                + getAbsoluteLocation(null)
+                + " requested path "
+                + relativePath);
+      }
+
+      ResponseEntity<byte[]> response =
+          restTemplate.exchange(relativePath, HttpMethod.GET, authenticationHeader(), byte[].class);
+      return response.getBody().length;
+
+    } catch (HttpClientErrorException ex) {
+      throw new ShelfResourceNotFound("Binary resource not found " + relativePath, ex);
+    }
+  }
+
   @Override
   public void saveMetadata(JsonNode node, URI relativePath) {
     String path = relativePath.toString();

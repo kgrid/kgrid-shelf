@@ -159,6 +159,16 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
+  public long getBinarySize(URI relativePath) {
+    Path dataPath = localStorageDir.resolve(relativePath.toString());
+    try {
+      return Files.size(dataPath);
+    } catch (IOException e) {
+      throw new ShelfException("Cannot get file size for " + relativePath);
+    }
+  }
+
+  @Override
   public void createContainer(URI relativePath) {
     Path containerPath = localStorageDir.resolve(relativePath.toString());
     if (!containerPath.toFile().exists()) {

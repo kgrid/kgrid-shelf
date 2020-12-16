@@ -11,7 +11,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
+import java.io.InputStream;
 import java.util.Optional;
 
 @RestController
@@ -33,22 +35,33 @@ public class BinaryController extends ShelfExceptionHandler {
       HttpServletRequest request) {
     String childPath = getChildPath(naan, name, version, request.getRequestURI());
     log.info("getting ko resource " + naan + "/" + name + "/" + version + "/" + childPath);
-    HttpHeaders headers = getHeadersFromFileExt(childPath);
-    return new ResponseEntity<>(
-        new InputStreamResource(koRepo.getBinaryStream(new ArkId(naan, name, version), childPath)),
-        headers,
-        HttpStatus.OK);
+
+    final ArkId arkId = new ArkId(naan, name, version);
+    InputStream fileStream = koRepo.getBinaryStream(arkId, childPath);
+    HttpHeaders headers = getContentHeaders(childPath, arkId);
+
+    return new ResponseEntity<>(new InputStreamResource(fileStream), headers, HttpStatus.OK);
   }
 
-  private HttpHeaders getHeadersFromFileExt(String childPath) {
+  private HttpHeaders getContentHeaders(String childPath, ArkId arkId) {
     HttpHeaders headers = new HttpHeaders();
-    if (childPath.endsWith(".json")) {
-      headers.add("Content-Type", "application/json");
-    } else if (childPath.endsWith(".yaml")) {
-      headers.add("Content-Type", "application/yaml");
-    } else {
-      headers.add("Content-Type", "application/octet-stream");
-    }
+    MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
+    fileTypeMap.addMimeTypes(
+        "application/yaml yaml YAML\n"
+            + "application/json json JSON\n"
+            + "text/javascript js JS\n"
+            + "application/pdf pdf PDF\n"
+            + "text/plain csv CSV\n"
+            + "application/zip zip ZIP");
+    String contentType = fileTypeMap.getContentType(childPath);
+    headers.add("Content-Type", contentType);
+
+    String filename =
+        childPath.contains("/") ? StringUtils.substringAfterLast(childPath, "/") : childPath;
+    String contentDisposition = "inline; filename=\"" + filename + "\"";
+
+    headers.add("Content-Disposition", contentDisposition);
+    headers.add("Content-Length", String.valueOf(koRepo.getBinarySize(arkId, childPath)));
     return headers;
   }
 
