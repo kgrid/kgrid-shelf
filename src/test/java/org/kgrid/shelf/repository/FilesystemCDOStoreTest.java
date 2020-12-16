@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Rule;
@@ -14,9 +15,9 @@ import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
+import java.nio.charset.Charset;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -102,7 +103,7 @@ public class FilesystemCDOStoreTest {
   }
 
   @Test
-  public void getBinaryReturnsCorrectBinary() {
+  public void getBinaryReturnsCorrectBinary() throws Exception {
     String code =
         String.format(
             "function welcome(inputs) {%n"
@@ -111,6 +112,20 @@ public class FilesystemCDOStoreTest {
                 + "}");
     assertEquals(
         code, new String(koStore.getBinary(helloDirName.resolve("src/").resolve("index.js"))));
+  }
+
+  @Test
+  public void getBinaryStreamReturnsCorrectBinary() throws IOException {
+    String code =
+        String.format(
+            "function welcome(inputs) {%n"
+                + "    var name = inputs.name;%n"
+                + "    return \"Welcome to Knowledge Grid, \" + name;%n"
+                + "}");
+    Writer writer = new StringWriter();
+    InputStream stream = koStore.getBinaryStream(helloDirName.resolve("src/").resolve("index.js"));
+    IOUtils.copy(stream, writer, Charset.defaultCharset());
+    assertEquals(code, writer.toString());
   }
 
   @Test(expected = ShelfResourceNotFound.class)

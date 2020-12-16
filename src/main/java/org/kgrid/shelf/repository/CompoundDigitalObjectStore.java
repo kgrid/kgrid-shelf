@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.kgrid.shelf.ShelfException;
 
+import java.io.InputStream;
 import java.net.URI;
 import java.util.List;
 
@@ -16,6 +17,8 @@ public interface CompoundDigitalObjectStore {
   ObjectNode getMetadata(URI relativeLocation);
 
   byte[] getBinary(URI relativeLocation);
+
+  InputStream getBinaryStream(URI relativeLocation);
 
   void createContainer(URI relativeLocation);
 

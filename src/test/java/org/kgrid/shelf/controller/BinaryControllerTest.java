@@ -1,5 +1,6 @@
 package org.kgrid.shelf.controller;
 
+import org.apache.commons.io.IOUtils;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -13,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
+
+import java.nio.charset.Charset;
 
 import static org.junit.Assert.assertThrows;
 import static org.kgrid.shelf.TestHelper.*;
@@ -35,13 +38,14 @@ public class BinaryControllerTest {
     String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + childPath;
     mockServletRequest.setRequestURI(requestUri);
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
-    when(koRepo.getBinary(ARK_ID, childPath)).thenReturn("byteArray".getBytes());
+    when(koRepo.getBinaryStream(ARK_ID, childPath))
+        .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
   }
 
   @Test
   public void getBinary_CallsGetBinaryOnKoRepo() {
     binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
-    verify(koRepo).getBinary(ARK_ID, childPath);
+    verify(koRepo).getBinaryStream(ARK_ID, childPath);
   }
 
   @Test
@@ -61,6 +65,8 @@ public class BinaryControllerTest {
   public void getBinary_hasJsonContentTypeForJsonFileExt() {
 
     String jsonChildpath = "metadata.json";
+    when(koRepo.getBinaryStream(ARK_ID, jsonChildpath))
+        .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
     mockServletRequest = new MockHttpServletRequest();
     String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + jsonChildpath;
     mockServletRequest.setRequestURI(requestUri);
@@ -75,9 +81,11 @@ public class BinaryControllerTest {
   @Test
   public void getBinary_hasYamlContentTypeForYamlFileExt() {
 
-    String jsonChildpath = "deployment.yaml";
+    String yamlChildpath = "deployment.yaml";
+    when(koRepo.getBinaryStream(ARK_ID, yamlChildpath))
+        .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
     mockServletRequest = new MockHttpServletRequest();
-    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + jsonChildpath;
+    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + yamlChildpath;
     mockServletRequest.setRequestURI(requestUri);
     ResponseEntity<Object> yamlResp =
         binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
@@ -90,6 +98,8 @@ public class BinaryControllerTest {
   @Test
   public void getBinary_hasOctetContentTypeForUnknownFileExt() {
     String pdfChildpath = "file.pdf";
+    when(koRepo.getBinaryStream(ARK_ID, pdfChildpath))
+        .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
     mockServletRequest = new MockHttpServletRequest();
     String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + pdfChildpath;
     mockServletRequest.setRequestURI(requestUri);
