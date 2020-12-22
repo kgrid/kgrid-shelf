@@ -113,15 +113,4 @@ public class ImportServiceTest {
     verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/metadata.json")));
   }
 
-  @Test
-  public void importZip_givenZipFile_throwsImportExportException_WhenGetBytesFails()
-      throws IOException {
-    MultipartFile mockFile = Mockito.mock(MultipartFile.class);
-    when(mockFile.getBytes()).thenThrow(new IOException("boom"));
-    Throwable cause =
-        assertThrows(ImportExportException.class, () -> importService.importZip(mockFile))
-            .getCause();
-
-    assertEquals(IOException.class, cause.getClass());
-  }
 }
