@@ -5,6 +5,7 @@ import org.apache.jena.ext.com.google.common.io.Files;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
+import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
@@ -33,6 +34,8 @@ public class ImportServiceTest {
 
   @Spy ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
   @Mock CompoundDigitalObjectStore cdoStore;
+  @Mock
+  KnowledgeObjectRepository koRepo;
   @InjectMocks ImportService importService;
   URI resourceUri;
 

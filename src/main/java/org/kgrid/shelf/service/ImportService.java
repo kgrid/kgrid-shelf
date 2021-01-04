@@ -3,6 +3,7 @@ package org.kgrid.shelf.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.kgrid.shelf.domain.KnowledgeObjectWrapper;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
+import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,6 +25,8 @@ import static org.kgrid.shelf.domain.KoFields.METADATA_FILENAME;
 public class ImportService {
 
   @Autowired CompoundDigitalObjectStore cdoStore;
+  @Autowired
+  KnowledgeObjectRepository koRepo;
   @Autowired ApplicationContext applicationContext;
 
   Logger log = LoggerFactory.getLogger(ImportService.class);
@@ -80,5 +83,6 @@ public class ImportService {
                 "Cannot read in file " + artifact + " to copy onto shelf", e);
           }
         });
+    koRepo.refreshObjectMap();
   }
 }
