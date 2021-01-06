@@ -18,8 +18,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 import java.net.URI;
 import java.util.*;
 
-import static org.junit.Assert.assertArrayEquals;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 import static org.kgrid.shelf.TestHelper.PAYLOAD_PATH;
 import static org.kgrid.shelf.TestHelper.SERVICE_YAML_PATH;
 import static org.mockito.Mockito.*;
@@ -259,6 +258,19 @@ public class KnowledgeObjectRepositoryTest {
     URI good = URI.create("good");
     when(compoundDigitalObjectStore.getAbsoluteLocation(null)).thenReturn(good);
     assertEquals(good, repository.getKoRepoLocation());
+  }
+
+  @Test
+  public void addKnowledgeObjectToLocationMap_addsObjectToMap() {
+    ArkId newArk = new ArkId("new", "ark", "v1.0");
+    assertThrows(
+        ShelfResourceNotFound.class,
+        () -> {
+          repository.getObjectLocation(newArk);
+        });
+    final URI id = URI.create("new/ark/v1.0/");
+    repository.addKnowledgeObjectToLocatioMap(id, helloWorld1Metadata);
+    assertEquals(id, repository.getObjectLocation(newArk));
   }
 
   @Test

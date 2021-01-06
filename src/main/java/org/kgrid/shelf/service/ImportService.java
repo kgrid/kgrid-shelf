@@ -8,8 +8,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,7 +15,6 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.IOException;
 import java.net.URI;
 import java.util.HashSet;
-import java.util.List;
 
 import static org.kgrid.shelf.domain.KoFields.METADATA_FILENAME;
 
@@ -25,8 +22,7 @@ import static org.kgrid.shelf.domain.KoFields.METADATA_FILENAME;
 public class ImportService {
 
   @Autowired CompoundDigitalObjectStore cdoStore;
-  @Autowired
-  KnowledgeObjectRepository koRepo;
+  @Autowired KnowledgeObjectRepository koRepo;
   @Autowired ApplicationContext applicationContext;
 
   Logger log = LoggerFactory.getLogger(ImportService.class);
@@ -60,6 +56,7 @@ public class ImportService {
       kow.addService(serviceSpec);
 
       copyArtifactsToShelf(reader, kow);
+      koRepo.addKnowledgeObjectToLocatioMap(id, metadata);
 
     } catch (Exception e) {
       final String errorMsg = "Error importing: " + zipResource.getDescription();
@@ -83,6 +80,5 @@ public class ImportService {
                 "Cannot read in file " + artifact + " to copy onto shelf", e);
           }
         });
-    koRepo.refreshObjectMap();
   }
 }

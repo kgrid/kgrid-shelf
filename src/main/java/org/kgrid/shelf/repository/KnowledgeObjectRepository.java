@@ -292,4 +292,17 @@ public class KnowledgeObjectRepository {
       }
     }
   }
+
+  public void addKnowledgeObjectToLocatioMap(URI id, JsonNode metadata) {
+    String[] arkParts = id.toString().split("/");
+    ArkId arkId = new ArkId(arkParts[0], arkParts[1], arkParts[2]);
+    if (objectLocations.get(arkId.getSlashArk()) != null) {
+      objectLocations.get(arkId.getSlashArk()).put(arkId.getVersion(), id);
+    } else {
+      Map<String, URI> versionMap = new HashMap<>();
+      versionMap.put(arkId.getVersion(), id);
+      objectLocations.put(arkId.getSlashArk(), versionMap);
+    }
+    knowledgeObjects.put(arkId, metadata);
+  }
 }
