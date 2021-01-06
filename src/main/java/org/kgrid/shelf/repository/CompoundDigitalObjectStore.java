@@ -24,7 +24,10 @@ public interface CompoundDigitalObjectStore {
 
   void saveMetadata(JsonNode metadata, URI relativeLocation);
 
+  @Deprecated
   void saveBinary(byte[] data, URI relativeLocation);
+
+  void saveBinary(InputStream stream, URI relativeLocation);
 
   void delete(URI relativeLocation) throws ShelfException;
 

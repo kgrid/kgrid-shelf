@@ -14,6 +14,7 @@ import org.zeroturnaround.zip.ZipException;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 
 import static org.junit.Assert.*;
@@ -66,12 +67,14 @@ public class ZipImportReaderTest {
   }
 
   @Test
-  public void canGetBinary() throws IOException {
+  public void canGetFileStream() throws IOException {
     importReader = new ZipImportReader(zippedKo);
-    byte[] artifact = importReader.getBinary(URI.create("dist/main.js"));
-    assertFalse("Ko reader gets artifact", artifact.length < 1);
+    InputStream inputStream = importReader.getFileStream(URI.create("dist/main.js"));
+    assertNotNull("Ko reader gets artifact", inputStream);
     assertEquals(
-        "Artifact in temp folder is js code", "var welcome", new String(artifact).substring(0, 11));
+        "Artifact in temp folder is js code",
+        "var welcome",
+        new String(inputStream.readAllBytes()).substring(0, 11));
   }
 
   @Test

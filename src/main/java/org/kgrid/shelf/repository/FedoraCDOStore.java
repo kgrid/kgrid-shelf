@@ -223,6 +223,7 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
+  @Deprecated
   public void saveBinary(byte[] data, URI relativePath) {
     HttpClient instance =
         HttpClientBuilder.create().setRedirectStrategy(new DefaultRedirectStrategy()).build();
@@ -231,6 +232,23 @@ public class FedoraCDOStore implements CompoundDigitalObjectStore {
         new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
 
     RequestEntity<byte[]> request =
+        RequestEntity.put(relativePath)
+            .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
+            .body(data);
+
+    ResponseEntity<String> response = restTemplate.exchange(request, String.class);
+    log.info(response.toString());
+  }
+
+  @Override
+  public void saveBinary(InputStream data, URI relativePath) {
+    HttpClient instance =
+        HttpClientBuilder.create().setRedirectStrategy(new DefaultRedirectStrategy()).build();
+
+    RestTemplate restTemplate =
+        new RestTemplate(new HttpComponentsClientHttpRequestFactory(instance));
+
+    RequestEntity<InputStream> request =
         RequestEntity.put(relativePath)
             .header("Authorization", authenticationHeader().getHeaders().getFirst("Authorization"))
             .body(data);
