@@ -8,26 +8,23 @@ import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.MockitoJUnitRunner;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.io.FileSystemResource;
-import org.springframework.web.multipart.MultipartFile;
 
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
+import java.io.*;
 import java.net.URI;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.kgrid.shelf.TestHelper.DEPLOYMENT_BYTES;
 import static org.kgrid.shelf.TestHelper.packZipForImport;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 @RunWith(MockitoJUnitRunner.class)
 public class ImportServiceTest {
@@ -45,10 +42,12 @@ public class ImportServiceTest {
 
     importService.importZip(resourceUri);
 
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/metadata.json")));
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/service.yaml")));
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/deployment.yaml")));
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/dist/main.js")));
+    verify(cdoStore)
+        .saveBinary(any(InputStream.class), eq(URI.create("hello-world/metadata.json")));
+    verify(cdoStore).saveBinary(any(InputStream.class), eq(URI.create("hello-world/service.yaml")));
+    verify(cdoStore)
+        .saveBinary(any(InputStream.class), eq(URI.create("hello-world/deployment.yaml")));
+    verify(cdoStore).saveBinary(any(InputStream.class), eq(URI.create("hello-world/dist/main.js")));
   }
 
   @Test
@@ -57,11 +56,13 @@ public class ImportServiceTest {
 
     importService.importZip(resourceUri);
 
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/metadata.json")));
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/service.yaml")));
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/deployment.yaml")));
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/dist/main.js")));
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/src/index.js")));
+    verify(cdoStore)
+        .saveBinary(any(InputStream.class), eq(URI.create("hello-world/metadata.json")));
+    verify(cdoStore).saveBinary(any(InputStream.class), eq(URI.create("hello-world/service.yaml")));
+    verify(cdoStore)
+        .saveBinary(any(InputStream.class), eq(URI.create("hello-world/deployment.yaml")));
+    verify(cdoStore).saveBinary(any(InputStream.class), eq(URI.create("hello-world/dist/main.js")));
+    verify(cdoStore).saveBinary(any(InputStream.class), eq(URI.create("hello-world/src/index.js")));
   }
 
   @Test
@@ -112,8 +113,8 @@ public class ImportServiceTest {
 
     importService.importZip(resourceUri);
 
-    verify(cdoStore, times(4)).saveBinary(any(), any());
-    verify(cdoStore).saveBinary(isNotNull(), eq(URI.create("hello-world/metadata.json")));
+    verify(cdoStore, times(4)).saveBinary(any(InputStream.class), any());
+    verify(cdoStore)
+        .saveBinary(any(InputStream.class), eq(URI.create("hello-world/metadata.json")));
   }
-
 }

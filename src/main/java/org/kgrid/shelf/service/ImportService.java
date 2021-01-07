@@ -8,16 +8,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
-import org.springframework.core.io.ByteArrayResource;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.HashSet;
-import java.util.List;
 
 import static org.kgrid.shelf.domain.KoFields.METADATA_FILENAME;
 
@@ -75,7 +73,7 @@ public class ImportService {
     artifacts.forEach(
         artifact -> {
           try {
-            byte[] data = reader.getBinary(artifact);
+            InputStream data = reader.getFileStream(artifact);
             cdoStore.saveBinary(data, identifier.resolve(artifact));
           } catch (IOException e) {
             cdoStore.delete(identifier);
