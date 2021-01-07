@@ -117,7 +117,8 @@ public class ImportExportController extends ShelfExceptionHandler {
     log.info("Add kos from manifest {}", manifest.asText());
 
     ArrayNode createdKos = manifestReader.loadManifest(manifest);
-    return new ResponseEntity<>(createdKos, createdKos.size() > 0 ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST);
+    return new ResponseEntity<>(
+        createdKos, createdKos.size() > 0 ? HttpStatus.CREATED : HttpStatus.BAD_REQUEST);
   }
 
   @PostMapping(path = "/manifest-list", consumes = MediaType.APPLICATION_JSON_VALUE)
@@ -132,8 +133,11 @@ public class ImportExportController extends ShelfExceptionHandler {
     URI loc = ServletUriComponentsBuilder.fromCurrentRequestUri().build().toUri();
 
     HttpHeaders headers = new HttpHeaders();
-
-    headers.setLocation(loc.resolve(id));
+    if (loc.toString().endsWith("/")) {
+      headers.setLocation(loc.resolve(id));
+    } else {
+      headers.setLocation(URI.create(loc + "/").resolve(id));
+    }
     return headers;
   }
 }
