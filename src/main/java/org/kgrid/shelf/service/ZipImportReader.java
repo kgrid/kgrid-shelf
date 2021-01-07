@@ -64,9 +64,9 @@ public class ZipImportReader {
     return jsonNode;
   }
 
-  public byte[] getBinary(URI artifact) throws IOException {
+  public InputStream getFileStream(URI artifact) throws IOException {
     File artifactFile = new File(koBase, artifact.toString());
-    final byte[] data = Files.readAllBytes(artifactFile.toPath());
+    final InputStream data = Files.newInputStream(artifactFile.toPath());
     return data;
   }
 

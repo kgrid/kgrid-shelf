@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URI;
 import java.util.HashSet;
 
@@ -72,7 +73,7 @@ public class ImportService {
     artifacts.forEach(
         artifact -> {
           try {
-            byte[] data = reader.getBinary(artifact);
+            InputStream data = reader.getFileStream(artifact);
             cdoStore.saveBinary(data, identifier.resolve(artifact));
           } catch (IOException e) {
             cdoStore.delete(identifier);

@@ -51,7 +51,7 @@ public class BinaryController extends ShelfExceptionHandler {
             + "application/json json JSON\n"
             + "text/javascript js JS\n"
             + "application/pdf pdf PDF\n"
-            + "text/plain csv CSV\n"
+            + "text/csv csv CSV\n"
             + "application/zip zip ZIP");
     String contentType = fileTypeMap.getContentType(childPath);
     headers.add("Content-Type", contentType);

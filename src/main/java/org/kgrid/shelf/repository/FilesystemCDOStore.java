@@ -148,11 +148,23 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   @Override
+  @Deprecated
   public void saveBinary(byte[] output, URI relativePath) {
     Path dataPath = localStorageDir.resolve(relativePath.toString());
     File dataFile = dataPath.toFile();
     try (FileOutputStream fos = FileUtils.openOutputStream(dataFile)) {
       fos.write(output);
+    } catch (IOException ioEx) {
+      throw new ShelfException("Could not write to file at " + dataPath, ioEx);
+    }
+  }
+
+  @Override
+  public void saveBinary(InputStream stream, URI relativePath) {
+    Path dataPath = localStorageDir.resolve(relativePath.toString());
+    File dataFile = dataPath.toFile();
+    try {
+      FileUtils.copyInputStreamToFile(stream, dataFile);
     } catch (IOException ioEx) {
       throw new ShelfException("Could not write to file at " + dataPath, ioEx);
     }
