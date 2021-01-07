@@ -1,5 +1,8 @@
 package org.kgrid.shelf.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.commons.io.FileUtils;
 import org.apache.jena.ext.com.google.common.io.Files;
 import org.junit.Test;
@@ -21,6 +24,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThrows;
 import static org.kgrid.shelf.TestHelper.DEPLOYMENT_BYTES;
 import static org.kgrid.shelf.TestHelper.packZipForImport;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.times;
@@ -31,16 +37,32 @@ public class ImportServiceTest {
 
   @Spy ApplicationContext applicationContext = new ClassPathXmlApplicationContext();
   @Mock CompoundDigitalObjectStore cdoStore;
-  @Mock
-  KnowledgeObjectRepository koRepo;
+  @Mock KnowledgeObjectRepository koRepo;
   @InjectMocks ImportService importService;
   URI resourceUri;
 
   @Test
-  public void importZip_givenUri_canExtractAndSaveArtifacts() {
+  public void importZip_givenUri_canExtractAndSaveArtifacts() throws JsonProcessingException {
     resourceUri = URI.create("file:src/test/resources/fixtures/import-export/mycoolko.zip");
 
     importService.importZip(resourceUri);
+    JsonNode metadata =
+        new ObjectMapper()
+            .readTree(
+                "{\n"
+                    + "  \"@id\" : \"hello-world\",\n"
+                    + "  \"@type\" : \"koio:KnowledgeObject\",\n"
+                    + "  \"identifier\" : \"ark:/hello/world\",\n"
+                    + "  \"title\" : \"Hello World Title\",\n"
+                    + "  \"contributors\" : \"Kgrid Team\",\n"
+                    + "  \"version\":\"v3\",\n"
+                    + "  \"description\" : \"Test Hello World \",\n"
+                    + "  \"keywords\" : \"test hello world\",\n"
+                    + "  \"hasServiceSpecification\" : \"service.yaml\",\n"
+                    + "  \"hasDeploymentSpecification\" : \"deployment.yaml\",\n"
+                    + "  \"hasPayload\" : \"dist/main.js\",\n"
+                    + "  \"@context\" : [ \"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
+                    + "}\n");
 
     verify(cdoStore)
         .saveBinary(any(InputStream.class), eq(URI.create("hello-world/metadata.json")));

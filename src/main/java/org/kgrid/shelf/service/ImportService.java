@@ -23,8 +23,7 @@ import static org.kgrid.shelf.domain.KoFields.METADATA_FILENAME;
 public class ImportService {
 
   @Autowired CompoundDigitalObjectStore cdoStore;
-  @Autowired
-  KnowledgeObjectRepository koRepo;
+  @Autowired KnowledgeObjectRepository koRepo;
   @Autowired ApplicationContext applicationContext;
 
   Logger log = LoggerFactory.getLogger(ImportService.class);
@@ -58,6 +57,7 @@ public class ImportService {
       kow.addService(serviceSpec);
 
       copyArtifactsToShelf(reader, kow);
+      koRepo.addKnowledgeObjectToLocatioMap(id, metadata);
 
     } catch (Exception e) {
       final String errorMsg = "Error importing: " + zipResource.getDescription();
@@ -81,6 +81,5 @@ public class ImportService {
                 "Cannot read in file " + artifact + " to copy onto shelf", e);
           }
         });
-    koRepo.refreshObjectMap();
   }
 }
