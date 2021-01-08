@@ -39,6 +39,13 @@ public class KnowledgeObjectRepository {
 
   public void delete(ArkId arkId) {
     cdoStore.delete(resolveArkIdToLocation(arkId));
+    knowledgeObjects.remove(arkId);
+    Map<String, URI> versionMap = objectLocations.get(arkId.getSlashArk());
+    if(versionMap.size()>1){
+      versionMap.remove(arkId.getVersion());
+    } else {
+      objectLocations.remove(arkId.getSlashArk());
+    }
     log.info("Deleted ko with ark id " + arkId);
   }
 
@@ -124,7 +131,7 @@ public class KnowledgeObjectRepository {
     URI koLocation = versionMap.get(arkId.getVersion());
     if (koLocation == null) {
       throw new ShelfResourceNotFound(
-          "Cannot load metadata, " + arkId.getFullArk() + " not found on shelf");
+              "Object location not found for ark id " + arkId.getFullArk());
     }
     return cdoStore.getMetadata(koLocation);
   }
@@ -195,7 +202,7 @@ public class KnowledgeObjectRepository {
   private URI resolveArkIdToLocation(ArkId arkId) {
     if (isKoMissingFromMap(arkId)) {
       throw new ShelfResourceNotFound(
-          "Cannot resolve " + arkId + " to a location in the KO repository");
+              "Object location not found for ark id " + arkId.getFullArk());
     }
     return objectLocations.get(arkId.getSlashArk()).get(arkId.getVersion());
   }
