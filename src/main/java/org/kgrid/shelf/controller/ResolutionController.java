@@ -1,39 +1,44 @@
 package org.kgrid.shelf.controller;
 
-import org.kgrid.shelf.domain.ArkId;
-import org.kgrid.shelf.repository.KnowledgeObjectRepository;
-import org.kgrid.shelf.service.ResolutionService;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.net.URI;
-import java.util.List;
+import java.io.IOException;
 import java.util.Optional;
+import javax.servlet.http.HttpServletRequest;
+import org.kgrid.shelf.repository.KnowledgeObjectRepository;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("${kgrid.shelf.endpoint:kos}")
+@RequestMapping("${kgrid.shelf.endpoint:kos}/ark:/")
 @CrossOrigin(origins = "${cors.url:}")
 public class ResolutionController extends ShelfExceptionHandler {
 
   public ResolutionController(
       KnowledgeObjectRepository koRepo,
-      Optional<KnowledgeObjectDecorator> kod,
-      ResolutionService resolutionService) {
+      Optional<KnowledgeObjectDecorator> kod) {
     super(koRepo, kod);
-    this.resolutionService = resolutionService;
   }
 
-  final ResolutionService resolutionService;
+  @GetMapping(path = "{naan}/{name}/**")
+//  @ResponseStatus(HttpStatus.FOUND)
+  public ResponseEntity<String> resolve(
+      @PathVariable String naan, @PathVariable String name,
+      HttpServletRequest request) {
 
-  @GetMapping(
-      path = "/{naan}/{name}/{version}/artifacts",
-      produces = MediaType.APPLICATION_JSON_VALUE)
-  public ResponseEntity<List<URI>> resolveArtifactsForArk(
-      @PathVariable String naan, @PathVariable String name, @PathVariable String version) {
-    log.info("Resolving list of artifacts for: " + naan + "/" + name + "/" + version);
-    return new ResponseEntity<>(
-        resolutionService.resolveArtifactsForArk(new ArkId(naan, name, version)), HttpStatus.OK);
+    log.info("Resolving list of artifacts for: " + naan + "/" + name + "/");
+    log.info("Resolving list of artifacts for: " + request.getRequestURI());
+
+
+    ResponseEntity<String> response = ResponseEntity
+            .status(HttpStatus.FOUND)
+            .header("Location", "http://google.com")
+            .body("Hi!");
+
+    return response;
+
   }
 }

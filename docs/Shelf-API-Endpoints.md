@@ -1,4 +1,4 @@
-# Library API Endpoints
+# Shelf API 
 
 ## Get:
 
@@ -32,9 +32,12 @@
 - 201 created on success
 
 #### /
+- Content-type: application/json
 - fetches zipped ko(s) and puts them on the shelf
-- requires a json body like {"ko":"url here"} or {"ko":["url1", "url2", ...]}
+- request body: `{"manifest": ["url1", "url2", ...]}`
 - 201 created on success 
+- Returns a manifest with relative or absolute URIs for KOs which were loaded (or possibly all KOs the shelf tried to load and their status... `"status": "loaded" | "failed to load" | "not found"`)
+
 
 ## Put:
 
