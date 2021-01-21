@@ -5,12 +5,14 @@ import org.kgrid.shelf.ShelfResourceForbidden;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.activation.FileTypeMap;
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
@@ -22,9 +24,27 @@ import java.util.Optional;
 @ConditionalOnProperty(name = "kgrid.shelf.expose.artifacts", matchIfMissing = true)
 public class BinaryController extends ShelfExceptionHandler {
 
+  @Bean
+  public static MimetypesFileTypeMap getFilemap() {
+    MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
+    fileTypeMap.addMimeTypes(
+        "application/yaml yaml YAML\n"
+            + "application/json json JSON\n"
+            + "text/javascript js JS\n"
+            + "application/pdf pdf PDF\n"
+            + "text/csv csv CSV\n"
+            + "application/zip zip ZIP");
+    return fileTypeMap;
+  }
+
+  FileTypeMap fileTypeMap;
+
   public BinaryController(
-      KnowledgeObjectRepository koRepo, Optional<KnowledgeObjectDecorator> kod) {
+      KnowledgeObjectRepository koRepo,
+      Optional<KnowledgeObjectDecorator> kod,
+      MimetypesFileTypeMap fileTypeMap) {
     super(koRepo, kod);
+    this.fileTypeMap = fileTypeMap;
   }
 
   @GetMapping(path = "/{naan}/{name}/{version}/**")
@@ -45,14 +65,6 @@ public class BinaryController extends ShelfExceptionHandler {
 
   private HttpHeaders getContentHeaders(String childPath, ArkId arkId) {
     HttpHeaders headers = new HttpHeaders();
-    MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
-    fileTypeMap.addMimeTypes(
-        "application/yaml yaml YAML\n"
-            + "application/json json JSON\n"
-            + "text/javascript js JS\n"
-            + "application/pdf pdf PDF\n"
-            + "text/csv csv CSV\n"
-            + "application/zip zip ZIP");
     String contentType = fileTypeMap.getContentType(childPath);
     headers.add("Content-Type", contentType);
 
