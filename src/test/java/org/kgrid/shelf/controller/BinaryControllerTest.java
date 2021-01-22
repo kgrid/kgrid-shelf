@@ -15,6 +15,7 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.web.context.request.RequestContextHolder;
 import org.springframework.web.context.request.ServletRequestAttributes;
 
+import javax.activation.MimetypesFileTypeMap;
 import java.nio.charset.Charset;
 
 import static org.junit.Assert.assertThrows;
@@ -29,17 +30,23 @@ public class BinaryControllerTest {
   private BinaryController binaryController;
   private MockHttpServletRequest mockServletRequest;
   private final String childPath = "childPath";
+  private MimetypesFileTypeMap fileTypeMap;
 
   @Before
   public void setup() {
     koRepo = Mockito.mock(KnowledgeObjectRepository.class);
-    binaryController = new BinaryController(koRepo, null);
+    fileTypeMap = Mockito.mock(MimetypesFileTypeMap.class);
+    binaryController = new BinaryController(koRepo, null, fileTypeMap);
     mockServletRequest = new MockHttpServletRequest();
     String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + childPath;
     mockServletRequest.setRequestURI(requestUri);
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
     when(koRepo.getBinaryStream(ARK_ID, childPath))
         .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
+    when(fileTypeMap.getContentType("metadata.json")).thenReturn(MediaType.APPLICATION_JSON_VALUE);
+    when(fileTypeMap.getContentType("deployment.yaml")).thenReturn("application/yaml");
+    when(fileTypeMap.getContentType("file.xyz"))
+        .thenReturn(MediaType.APPLICATION_OCTET_STREAM_VALUE);
   }
 
   @Test
