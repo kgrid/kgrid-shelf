@@ -1,14 +1,17 @@
 package org.kgrid.shelf.controller;
 
 import org.apache.commons.io.IOUtils;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.kgrid.shelf.ShelfResourceForbidden;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mock.web.MockHttpServletRequest;
@@ -17,104 +20,71 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 
 import javax.activation.MimetypesFileTypeMap;
 import java.nio.charset.Charset;
+import java.util.Objects;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.assertThrows;
+import static org.junit.jupiter.api.Assertions.*;
 import static org.kgrid.shelf.TestHelper.*;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class BinaryControllerTest {
 
   private KnowledgeObjectRepository koRepo;
   private BinaryController binaryController;
   private MockHttpServletRequest mockServletRequest;
-  private final String childPath = "childPath";
-  private MimetypesFileTypeMap fileTypeMap;
 
-  @Before
+  @BeforeEach
   public void setup() {
     koRepo = Mockito.mock(KnowledgeObjectRepository.class);
-    fileTypeMap = Mockito.mock(MimetypesFileTypeMap.class);
+    MimetypesFileTypeMap fileTypeMap = BinaryController.getFilemap();
     binaryController = new BinaryController(koRepo, null, fileTypeMap);
     mockServletRequest = new MockHttpServletRequest();
+    RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
+  }
+
+  private static Stream<Arguments> providePathsAndTypes() {
+    return Stream.of(
+        Arguments.of("metadata.json", MediaType.APPLICATION_JSON_VALUE),
+        Arguments.of("service.yaml", "application/yaml"),
+        Arguments.of("helloWorld.js", "text/javascript"),
+        Arguments.of("paper.pdf", MediaType.APPLICATION_PDF_VALUE),
+        Arguments.of("tpsReports.csv", "text/csv"),
+        Arguments.of("ko.zip", "application/zip"),
+        Arguments.of("file.xyz", MediaType.APPLICATION_OCTET_STREAM_VALUE));
+  }
+
+  @ParameterizedTest
+  @MethodSource("providePathsAndTypes")
+  @DisplayName("Get binary gets binary from repo")
+  public void getBinary_CallsGetBinaryOnKoRepo(String childPath, String expectedMediaType) {
     String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + childPath;
     mockServletRequest.setRequestURI(requestUri);
-    RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
     when(koRepo.getBinaryStream(ARK_ID, childPath))
         .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
-    when(fileTypeMap.getContentType("metadata.json")).thenReturn(MediaType.APPLICATION_JSON_VALUE);
-    when(fileTypeMap.getContentType("deployment.yaml")).thenReturn("application/yaml");
-    when(fileTypeMap.getContentType("file.xyz"))
-        .thenReturn(MediaType.APPLICATION_OCTET_STREAM_VALUE);
+
+    ResponseEntity<Object> jsonResp =
+        binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
+    assertAll(
+        () -> verify(koRepo).getBinaryStream(ARK_ID, childPath),
+        () ->
+            assertEquals(
+                expectedMediaType,
+                Objects.requireNonNull(jsonResp.getHeaders().getContentType()).toString()));
   }
 
   @Test
-  public void getBinary_CallsGetBinaryOnKoRepo() {
-    binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
-    verify(koRepo).getBinaryStream(ARK_ID, childPath);
-  }
-
-  @Test
+  @DisplayName("Throws forbidden when trying to go outside shelf")
   public void getBinary_ThrowsErrorWhenTryingToEscapeKO() {
-    String badChildpath = "../ko2/metadata.json";
+    String badChildPath = "../ko2/metadata.json";
     mockServletRequest = new MockHttpServletRequest();
-    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + badChildpath;
+    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + badChildPath;
     mockServletRequest.setRequestURI(requestUri);
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
 
     assertThrows(
         ShelfResourceForbidden.class,
         () -> binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest));
-  }
-
-  @Test
-  public void getBinary_hasJsonContentTypeForJsonFileExt() {
-
-    String jsonChildpath = "metadata.json";
-    when(koRepo.getBinaryStream(ARK_ID, jsonChildpath))
-        .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
-    mockServletRequest = new MockHttpServletRequest();
-    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + jsonChildpath;
-    mockServletRequest.setRequestURI(requestUri);
-    ResponseEntity<Object> jsonResp =
-        binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
-    Assert.assertEquals(
-        "Returns a json header for a path ending in '.json'",
-        jsonResp.getHeaders().get("Content-Type").get(0),
-        MediaType.APPLICATION_JSON_VALUE);
-  }
-
-  @Test
-  public void getBinary_hasYamlContentTypeForYamlFileExt() {
-
-    String yamlChildpath = "deployment.yaml";
-    when(koRepo.getBinaryStream(ARK_ID, yamlChildpath))
-        .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
-    mockServletRequest = new MockHttpServletRequest();
-    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + yamlChildpath;
-    mockServletRequest.setRequestURI(requestUri);
-    ResponseEntity<Object> yamlResp =
-        binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
-    Assert.assertEquals(
-        "Returns a yaml header for a path ending in '.yaml'",
-        yamlResp.getHeaders().get("Content-Type").get(0),
-        "application/yaml");
-  }
-
-  @Test
-  public void getBinary_hasOctetContentTypeForUnknownFileExt() {
-    String pdfChildpath = "file.xyz";
-    when(koRepo.getBinaryStream(ARK_ID, pdfChildpath))
-        .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
-    mockServletRequest = new MockHttpServletRequest();
-    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + pdfChildpath;
-    mockServletRequest.setRequestURI(requestUri);
-    ResponseEntity<Object> yamlResp =
-        binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
-    Assert.assertEquals(
-        "Returns an octet header for an unknown filetype",
-        yamlResp.getHeaders().get("Content-Type").get(0),
-        MediaType.APPLICATION_OCTET_STREAM_VALUE);
   }
 }
