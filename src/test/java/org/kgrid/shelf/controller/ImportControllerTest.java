@@ -47,8 +47,7 @@ public class ImportControllerTest {
     validArkId = new ArkId(NAAN, NAME, VERSION);
     multiPartFile = mock(MultipartFile.class);
     importController =
-        new ImportController(
-            mockKnowledgeObjectRepository, null, mockImportService, mockManifestReader);
+        new ImportController(mockKnowledgeObjectRepository, mockImportService, mockManifestReader);
   }
 
   @Test

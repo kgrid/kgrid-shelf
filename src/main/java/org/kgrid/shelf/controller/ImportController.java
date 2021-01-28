@@ -16,7 +16,6 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("${kgrid.shelf.endpoint:kos}")
@@ -28,10 +27,9 @@ public class ImportController extends ShelfExceptionHandler {
 
   public ImportController(
       KnowledgeObjectRepository koRepo,
-      Optional<KnowledgeObjectDecorator> kod,
       ImportService importService,
       ManifestReader manifestReader) {
-    super(koRepo, kod);
+    super(koRepo);
     this.importService = importService;
     this.manifestReader = manifestReader;
   }

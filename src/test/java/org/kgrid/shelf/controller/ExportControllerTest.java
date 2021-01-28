@@ -37,7 +37,7 @@ public class ExportControllerTest {
     mockServletOutputStream = Mockito.mock(ServletOutputStream.class);
     validArkId = new ArkId(NAAN, NAME, VERSION);
     servletResponse = mock(HttpServletResponse.class);
-    exportController = new ExportController(mockKnowledgeObjectRepository, null, mockExportService);
+    exportController = new ExportController(mockKnowledgeObjectRepository, mockExportService);
   }
 
   @Test

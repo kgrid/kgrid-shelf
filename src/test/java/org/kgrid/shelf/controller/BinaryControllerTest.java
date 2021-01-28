@@ -39,7 +39,7 @@ public class BinaryControllerTest {
   public void setup() {
     koRepo = Mockito.mock(KnowledgeObjectRepository.class);
     MimetypesFileTypeMap fileTypeMap = BinaryController.getFilemap();
-    binaryController = new BinaryController(koRepo, null, fileTypeMap);
+    binaryController = new BinaryController(koRepo, fileTypeMap);
     mockServletRequest = new MockHttpServletRequest();
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
   }

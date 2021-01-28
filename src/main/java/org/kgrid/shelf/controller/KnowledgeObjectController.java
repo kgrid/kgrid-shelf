@@ -10,16 +10,14 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Collection;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("${kgrid.shelf.endpoint:kos}")
 @CrossOrigin(origins = "${cors.url:}")
 public class KnowledgeObjectController extends ShelfExceptionHandler {
 
-  public KnowledgeObjectController(
-      KnowledgeObjectRepository shelf, Optional<KnowledgeObjectDecorator> kod) {
-    super(shelf, kod);
+  public KnowledgeObjectController(KnowledgeObjectRepository shelf) {
+    super(shelf);
   }
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)

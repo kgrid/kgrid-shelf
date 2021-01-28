@@ -9,7 +9,6 @@ import org.springframework.web.bind.annotation.*;
 import javax.servlet.ServletOutputStream;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("${kgrid.shelf.endpoint:kos}")
@@ -18,11 +17,8 @@ public class ExportController extends ShelfExceptionHandler {
 
   private final ExportService exportService;
 
-  public ExportController(
-      KnowledgeObjectRepository koRepo,
-      Optional<KnowledgeObjectDecorator> kod,
-      ExportService exportService) {
-    super(koRepo, kod);
+  public ExportController(KnowledgeObjectRepository koRepo, ExportService exportService) {
+    super(koRepo);
     this.exportService = exportService;
   }
 
