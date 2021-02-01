@@ -18,20 +18,16 @@ import java.nio.file.NoSuchFileException;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 
 @RestController
 public abstract class ShelfExceptionHandler {
 
   protected Logger log = LoggerFactory.getLogger(getClass().getName());
-  protected Optional<KnowledgeObjectDecorator> kod;
   protected KnowledgeObjectRepository koRepo;
 
   @Autowired
-  public ShelfExceptionHandler(
-      KnowledgeObjectRepository koRepo, Optional<KnowledgeObjectDecorator> kod) {
+  public ShelfExceptionHandler(KnowledgeObjectRepository koRepo) {
     this.koRepo = koRepo;
-    this.kod = kod;
   }
 
   // Exception handling:

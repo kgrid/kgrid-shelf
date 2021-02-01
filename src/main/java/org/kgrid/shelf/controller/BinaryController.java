@@ -16,7 +16,6 @@ import javax.activation.FileTypeMap;
 import javax.activation.MimetypesFileTypeMap;
 import javax.servlet.http.HttpServletRequest;
 import java.io.InputStream;
-import java.util.Optional;
 
 @RestController
 @RequestMapping("${kgrid.shelf.endpoint:kos}")
@@ -39,11 +38,8 @@ public class BinaryController extends ShelfExceptionHandler {
 
   FileTypeMap fileTypeMap;
 
-  public BinaryController(
-      KnowledgeObjectRepository koRepo,
-      Optional<KnowledgeObjectDecorator> kod,
-      MimetypesFileTypeMap fileTypeMap) {
-    super(koRepo, kod);
+  public BinaryController(KnowledgeObjectRepository koRepo, MimetypesFileTypeMap fileTypeMap) {
+    super(koRepo);
     this.fileTypeMap = fileTypeMap;
   }
 

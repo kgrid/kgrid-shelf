@@ -39,7 +39,7 @@ public class KnowledgeObjectControllerTest {
   @Before
   public void setup() throws JsonProcessingException {
     koRepo = Mockito.mock(KnowledgeObjectRepository.class);
-    koController = new KnowledgeObjectController(koRepo, null);
+    koController = new KnowledgeObjectController(koRepo);
     JsonNode koNode = objectMapper.readTree("{\"key\":\"value\"}");
     koMap.put(ARK_ID, koNode);
     MockHttpServletRequest mockServletRequest = new MockHttpServletRequest();
