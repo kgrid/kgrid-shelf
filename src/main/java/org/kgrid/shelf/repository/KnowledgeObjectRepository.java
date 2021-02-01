@@ -262,7 +262,7 @@ public class KnowledgeObjectRepository {
           log.warn("Folder with metadata " + path + " is missing a version field.");
           arkId = new ArkId(metadata.get(KoFields.IDENTIFIER.asStr()).asText());
         } else {
-          if (metadata.get(KoFields.IDENTIFIER.asStr()).asText().matches(ArkId.arkIdRegex())) {
+          if (ArkId.isArkId(metadata.get(KoFields.IDENTIFIER.asStr()).asText())) {
             arkId =
                 new ArkId(
                     metadata.get(KoFields.IDENTIFIER.asStr()).asText()

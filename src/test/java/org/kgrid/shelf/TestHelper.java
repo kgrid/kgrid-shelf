@@ -27,6 +27,7 @@ public class TestHelper {
   public static final String VERSION = "version";
   public static final String KO_PATH = NAAN + "-" + NAME + "-" + VERSION;
   public static final ArkId ARK_ID = new ArkId(NAAN, NAME, VERSION);
+  public static final ArkId ARK_ID_NO_VERSION = new ArkId(NAAN, NAME);
   public static final String GOOD_MANIFEST_PATH = "http://example.com/folder/manifest.json";
   public static final String BAD_MANIFEST_PATH = "asdfkujnhdsfa";
   public static final String RELATIVE_RESOURCE_URI = "resource_1_uri.zip";
