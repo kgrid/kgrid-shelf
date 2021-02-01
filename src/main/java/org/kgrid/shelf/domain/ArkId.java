@@ -2,7 +2,6 @@ package org.kgrid.shelf.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.commons.lang3.builder.EqualsBuilder;
 import org.apache.commons.lang3.builder.HashCodeBuilder;
 
 import javax.validation.constraints.NotNull;
@@ -19,7 +18,6 @@ public final class ArkId implements Comparable {
     private final String version;
     private static final String arkIdRegex = "ark:/(\\w+)/(\\w+)";
     private static final String arkIdVersionRegex = arkIdRegex + "/([a-zA-Z0-9._\\-]+)";
-
 
     public ArkId(String arkString) {
         Matcher arkIdMatcher = Pattern.compile(arkIdRegex).matcher(arkString);
@@ -77,17 +75,34 @@ public final class ArkId implements Comparable {
 
     @JsonIgnore
     public static boolean isArkId(String maybeArk) {
-        return maybeArk.matches(arkIdRegex);
+        return maybeArk.matches(arkIdRegex)
+                || maybeArk.matches(arkIdVersionRegex);
     }
 
     @JsonIgnore
     public String getSlashArk() {
-        return naan + "/" + name;
+        return StringUtils.join(new String[]{naan, name}, "/");
     }
 
     @JsonIgnore
     public String getSlashArkVersion() {
         return StringUtils.join(new String[]{naan, name, version}, "/");
+    }
+
+    public String getNaan() {
+        return naan;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public String getVersion() {
+        return StringUtils.isEmpty(version) ? "" : version;
+    }
+
+    public boolean hasVersion() {
+        return version != null;
     }
 
     @Override
@@ -108,29 +123,17 @@ public final class ArkId implements Comparable {
     }
 
     @Override
-    public int hashCode() {
-        return new HashCodeBuilder(17, 37).append(naan).append(name).append(version).toHashCode();
-    }
-
-    @Override
     public String toString() {
         return getFullArk();
     }
 
-    public String getNaan() {
-        return naan;
-    }
-
-    public String getName() {
-        return name;
-    }
-
-    public String getVersion() {
-        return StringUtils.isEmpty(version) ? "" : version;
-    }
-
-    public boolean hasVersion() {
-        return version != null;
+    @Override
+    public int hashCode() {
+        return new HashCodeBuilder(17, 37)
+                .append(naan)
+                .append(name)
+                .append(version)
+                .toHashCode();
     }
 
     @Override
