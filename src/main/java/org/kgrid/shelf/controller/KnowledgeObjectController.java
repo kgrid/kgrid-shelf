@@ -21,9 +21,9 @@ public class KnowledgeObjectController extends ShelfExceptionHandler {
   }
 
   @GetMapping(produces = MediaType.APPLICATION_JSON_VALUE)
-  public Collection getAllObjects() {
+  public Collection<JsonNode> getAllObjects() {
     log.info("getting all kos");
-    Map koMap = koRepo.findAll();
+    Map<ArkId, JsonNode> koMap = koRepo.findAll();
     log.info("found " + koMap.size() + " kos");
     return koMap.values();
   }
