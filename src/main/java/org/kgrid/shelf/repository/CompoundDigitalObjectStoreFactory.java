@@ -13,7 +13,7 @@ public class CompoundDigitalObjectStoreFactory {
     if ("filesystem".equals(shelfClass)) {
       return new FilesystemCDOStore(cdoStoreURI);
     } else {
-      throw new IllegalArgumentException("Cannot find specified CDO store version " + shelfClass);
+      throw new IllegalArgumentException("Cannot find specified CDO store type " + shelfClass);
     }
   }
 }
