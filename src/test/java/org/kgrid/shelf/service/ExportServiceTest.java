@@ -2,6 +2,7 @@ package org.kgrid.shelf.service;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kgrid.shelf.TestHelper;
 import org.kgrid.shelf.domain.ArkId;
@@ -23,6 +24,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
+@DisplayName("Export Service Tests")
 public class ExportServiceTest {
 
   @Mock KnowledgeObjectRepository knowledgeObjectRepository;
