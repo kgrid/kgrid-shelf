@@ -159,15 +159,15 @@ public class KnowledgeObjectRepositoryTest {
     verify(compoundDigitalObjectStore, times(2)).getChildren();
   }
 
-  @Test
-  public void findAll_returnsObjectMap() {
-    Map<ArkId, JsonNode> map = new HashMap<>();
-    map.put(helloWorld1ArkId, helloWorld1Metadata);
-    map.put(helloWorld2ArkId, helloWorld2Metadata);
-    map.put(versionedArk, versionedArkMetadata);
-    map.put(noSpecArkId, noSpecMetadata);
-    assertEquals(repository.findAll(), map);
-  }
+//  @Test
+//  public void findAll_returnsObjectMap() {
+//    Map<ArkId, JsonNode> map = new HashMap<>();
+//    map.put(helloWorld1ArkId, helloWorld1Metadata);
+//    map.put(helloWorld2ArkId, helloWorld2Metadata);
+//    map.put(versionedArk, versionedArkMetadata);
+//    map.put(noSpecArkId, noSpecMetadata);
+//    assertEquals(repository.findAll(), map);
+//  }
 
   @Test
   public void findDeploymentSpec_fetchesDeployment() {
