@@ -148,12 +148,11 @@ public class KnowledgeObjectRepository {
      * Find the Service Specification for the version
      *
      * @param arkId       Ark ID for the version
-     * @param versionNode version
+     * @param metadataNode metadata node
      * @return JsonNode service specification
      */
-    public JsonNode findServiceSpecification(ArkId arkId, JsonNode versionNode) {
-
-        JsonNode serviceSpecNode = versionNode.findValue(KoFields.SERVICE_SPEC_TERM.asStr());
+    public JsonNode findServiceSpecification(ArkId arkId, JsonNode metadataNode) {
+        JsonNode serviceSpecNode = metadataNode.findValue(KoFields.SERVICE_SPEC_TERM.asStr());
         if (serviceSpecNode == null) {
             throw new ShelfException(
                     "Metadata for "
@@ -183,7 +182,6 @@ public class KnowledgeObjectRepository {
      * @return JsonNode service specification
      */
     public JsonNode findServiceSpecification(ArkId arkId) {
-
         return findServiceSpecification(arkId, findKnowledgeObjectMetadata(arkId));
     }
 
@@ -233,10 +231,8 @@ public class KnowledgeObjectRepository {
      */
     protected JsonNode loadSpecificationNode(ArkId arkId, URI uriPath) {
         try {
-
             YAMLMapper yamlMapper = new YAMLMapper();
             return yamlMapper.readTree(cdoStore.getBinary(uriPath));
-
         } catch (IOException exception) {
             throw new ShelfException(
                     "Could not parse service specification for " + arkId.getFullArk(), exception);
@@ -247,7 +243,6 @@ public class KnowledgeObjectRepository {
         objectLocations.clear();
         knowledgeObjects.clear();
 
-        // Load KO objects and skip any KOs with exceptions like missing metadata
         for (URI path : cdoStore.getChildren()) {
             try {
                 ArkId arkId;

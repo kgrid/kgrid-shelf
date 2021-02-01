@@ -27,7 +27,6 @@ public class TestHelper {
   public static final String VERSION = "version";
   public static final String KO_PATH = NAAN + "-" + NAME + "-" + VERSION;
   public static final ArkId ARK_ID = new ArkId(NAAN, NAME, VERSION);
-  public static final ArkId ARK_ID_NO_VERSION = new ArkId(NAAN, NAME);
   public static final String GOOD_MANIFEST_PATH = "http://example.com/folder/manifest.json";
   public static final String BAD_MANIFEST_PATH = "asdfkujnhdsfa";
   public static final String RELATIVE_RESOURCE_URI = "resource_1_uri.zip";
@@ -43,7 +42,6 @@ public class TestHelper {
               + PAYLOAD_PATH
               + "\n")
           .getBytes();
-  public static final byte[] PAYLOAD_BYTES = "function(input){return \"hi\";}".getBytes();
 
   public static ByteArrayInputStream packZipForImport(
       byte[] metadata, byte[] deploymentSpec, byte[] serviceSpec, byte[] payload) {
@@ -102,7 +100,16 @@ public class TestHelper {
     }
     return metadata;
   }
-
+  public static JsonNode generateMetadata(String id, String identifier, String version) {
+    ObjectNode metadata = new ObjectMapper().createObjectNode();
+      metadata.put("@id", id);
+      metadata.put("@type", "koio:KnowledgeObject");
+      metadata.put("identifier", identifier);
+      metadata.put(KoFields.VERSION.asStr(), version);
+      metadata.put(KoFields.DEPLOYMENT_SPEC_TERM.asStr(), DEPLOYMENT_YAML_PATH);
+      metadata.put(KoFields.SERVICE_SPEC_TERM.asStr(), SERVICE_YAML_PATH);
+    return metadata;
+  }
   public static JsonNode generateMetadata() {
     return generateMetadata(SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, true, true);
   }
