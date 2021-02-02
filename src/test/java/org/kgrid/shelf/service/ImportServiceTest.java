@@ -5,6 +5,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.jena.ext.com.google.common.io.Files;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
@@ -27,6 +28,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
+@TestInstance(TestInstance.Lifecycle.PER_CLASS)
 @DisplayName("Import service tests")
 public class ImportServiceTest {
 
