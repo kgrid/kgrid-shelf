@@ -37,7 +37,7 @@ public class TestHelper {
   public static final String RESOLVED_RELATIVE_RESOURCE_URI =
       "http://example.com/folder/resource_1_uri.zip";
   public static final byte[] DEPLOYMENT_BYTES =
-      ("/welcome:\n    artifact: " + PAYLOAD_PATH + "\n    function: welcome\n")
+      ("/welcome:\n    post:\n        artifact: " + PAYLOAD_PATH + "\n        function: welcome\n")
           .getBytes();
   public static final byte[] SERVICE_BYTES =
       ("/welcome:\n    post:\n      x-kgrid-activation:\n        artifact:\n            - "
@@ -68,7 +68,8 @@ public class TestHelper {
     }
     if (metadata != null && metadata.length != 0) {
       filesToBeZipped.add(
-          new ByteSource(KO_PATH_V1 + File.separator + KoFields.METADATA_FILENAME.asStr(), metadata));
+          new ByteSource(
+              KO_PATH_V1 + File.separator + KoFields.METADATA_FILENAME.asStr(), metadata));
     }
     pack(filesToBeZipped.toArray(new ZipEntrySource[0]), outputStream);
     return outputStream;
@@ -102,16 +103,18 @@ public class TestHelper {
     }
     return metadata;
   }
+
   public static JsonNode generateMetadata(String id, String identifier, String version) {
     ObjectNode metadata = new ObjectMapper().createObjectNode();
-      metadata.put("@id", id);
-      metadata.put("@type", "koio:KnowledgeObject");
-      metadata.put("identifier", identifier);
-      metadata.put(KoFields.VERSION.asStr(), version);
-      metadata.put(KoFields.DEPLOYMENT_SPEC_TERM.asStr(), DEPLOYMENT_YAML_PATH);
-      metadata.put(KoFields.SERVICE_SPEC_TERM.asStr(), SERVICE_YAML_PATH);
+    metadata.put("@id", id);
+    metadata.put("@type", "koio:KnowledgeObject");
+    metadata.put("identifier", identifier);
+    metadata.put(KoFields.VERSION.asStr(), version);
+    metadata.put(KoFields.DEPLOYMENT_SPEC_TERM.asStr(), DEPLOYMENT_YAML_PATH);
+    metadata.put(KoFields.SERVICE_SPEC_TERM.asStr(), SERVICE_YAML_PATH);
     return metadata;
   }
+
   public static JsonNode generateMetadata() {
     return generateMetadata(SERVICE_YAML_PATH, DEPLOYMENT_YAML_PATH, true, true, true, true);
   }
