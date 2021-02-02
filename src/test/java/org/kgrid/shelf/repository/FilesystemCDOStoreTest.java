@@ -220,7 +220,8 @@ public class FilesystemCDOStoreTest {
   public void cdoStoreReplacesSpacesInConnectionUri() {
     String connectionURL = "filesystem:file:///src/test/resources/shelf with spaces";
     koStore = new FilesystemCDOStore(connectionURL);
-    assertTrue(koStore.getAbsoluteLocation(null).toString().endsWith("shelf%20with%20spaces/"));
+    String location = koStore.getAbsoluteLocation(null).toString();
+    assertTrue(location.endsWith("shelf%20with%20spaces"));
   }
 
   private void nukeTestShelf(Path shelf) throws IOException {
