@@ -147,7 +147,7 @@ public class KnowledgeObjectRepository {
     /**
      * Find the Service Specification for the version
      *
-     * @param arkId       Ark ID for the version
+     * @param arkId        Ark ID for the version
      * @param metadataNode metadata node
      * @return JsonNode service specification
      */
@@ -155,11 +155,8 @@ public class KnowledgeObjectRepository {
         JsonNode serviceSpecNode = metadataNode.findValue(KoFields.SERVICE_SPEC_TERM.asStr());
         if (serviceSpecNode == null) {
             throw new ShelfException(
-                    "Metadata for "
-                            + arkId
-                            + " is missing a \""
-                            + KoFields.SERVICE_SPEC_TERM.asStr()
-                            + "\" field.");
+                    String.format("Metadata for %s is missing a %s field.",
+                            arkId, KoFields.SERVICE_SPEC_TERM.asStr()));
         }
         String serviceSpecPath = serviceSpecNode.asText();
 
@@ -280,32 +277,26 @@ public class KnowledgeObjectRepository {
         if (objectLocations.get(arkId.getSlashArk()) != null
                 && objectLocations.get(arkId.getSlashArk()).get(arkId.getVersion()) != null) {
             log.warn(
-                    "Two objects on the shelf have the same ark id: "
-                            + arkId
-                            + " Check folders "
-                            + path
-                            + " and "
-                            + resolveArkIdToLocation(arkId));
+                    String.format("Two objects on the shelf have the same ark id: %s. Check folders %s and %s",
+                            arkId, path, resolveArkIdToLocation(arkId))
+            );
         }
     }
 
     private ArkId determineArkId(URI path, JsonNode metadata, String identifier) {
-        ArkId arkId;
         if (!metadata.has(KoFields.VERSION.asStr())) {
-            log.warn("Folder with metadata " + path + " is missing a version field.");
-            arkId = new ArkId(identifier);
+            log.warn(String.format("Folder with metadata %s is missing a version field.",
+                    path));
         } else {
             String version = metadata.get(KoFields.VERSION.asStr()).asText();
-            if (identifier.contains(version)) {
-                arkId = new ArkId(identifier);
-            } else {
-                arkId = new ArkId(identifier + "/" + version);
+            if (!identifier.contains(version)) {
+                return new ArkId(identifier + "/" + version);
             }
         }
-        return arkId;
+        return new ArkId(identifier);
     }
 
-    public void addKnowledgeObjectToLocatioMap(URI id, JsonNode metadata) {
+    public void addKnowledgeObjectToLocationMap(URI id, JsonNode metadata) {
         String[] arkParts = id.toString().split("/");
         ArkId arkId = new ArkId(arkParts[0], arkParts[1], arkParts[2]);
         if (objectLocations.get(arkId.getSlashArk()) != null) {

@@ -14,16 +14,16 @@ import static org.kgrid.shelf.TestHelper.*;
 @DisplayName("Ark Id Tests")
 public class ArkIdTest {
 
-    private final String arkStringNaanNameVersion = String.format("ark:/%s/%s/%s", NAAN, NAME, VERSION);
+    private final String arkStringNaanNameVersion = String.format("ark:/%s/%s/%s", NAAN, NAME, VERSION_1);
     private final String arkStringNaanNameOnly = String.format("ark:/%s/%s", NAAN, NAME);
-    private final ArkId arkIdFromNaanNameVersion = new ArkId(NAAN, NAME, VERSION);
+    private final ArkId arkIdFromNaanNameVersion = new ArkId(NAAN, NAME, VERSION_1);
     private final ArkId arkIdFromNaanNameOnly = new ArkId(NAAN, NAME);
 
     @Test
     @DisplayName("Ark Id can be constructed from Ark string with a version")
     public void testArkConstructorFromArkString() {
         ArkId arkIdFromArkString = new ArkId(arkStringNaanNameVersion);
-        assertEquals(new ArkId(NAAN, NAME, VERSION), arkIdFromArkString);
+        assertEquals(new ArkId(NAAN, NAME, VERSION_1), arkIdFromArkString);
     }
 
     @Test
@@ -57,7 +57,7 @@ public class ArkIdTest {
         assertAll(
                 () -> assertEquals(arkIdFromNaanNameVersion.getNaan(), NAAN),
                 () -> assertEquals(arkIdFromNaanNameVersion.getName(), NAME),
-                () -> assertEquals(arkIdFromNaanNameVersion.getVersion(), VERSION)
+                () -> assertEquals(arkIdFromNaanNameVersion.getVersion(), VERSION_1)
         );
     }
 
@@ -83,7 +83,7 @@ public class ArkIdTest {
     @Test
     @DisplayName("Get Full Dash Ark with version returns correct string")
     public void testGetFullDashArkWithVersion() {
-        assertEquals(String.format("%s-%s-%s", NAAN, NAME, VERSION), arkIdFromNaanNameVersion.getFullDashArk());
+        assertEquals(String.format("%s-%s-%s", NAAN, NAME, VERSION_1), arkIdFromNaanNameVersion.getFullDashArk());
     }
 
     @Test
@@ -120,7 +120,7 @@ public class ArkIdTest {
     @Test
     @DisplayName("getSlashArkVersion returns proper string")
     public void testGetSlashArkVersion() {
-        assertEquals(String.format("%s/%s/%s", NAAN, NAME, VERSION),
+        assertEquals(String.format("%s/%s/%s", NAAN, NAME, VERSION_1),
                 arkIdFromNaanNameVersion.getSlashArkVersion());
     }
 
@@ -160,13 +160,13 @@ public class ArkIdTest {
                                 arkIdFromNaanNameVersion)),
                 () -> assertEquals(0,
                         arkIdFromNaanNameVersion.compareTo(
-                                new ArkId(NAAN, NAME, VERSION))),
+                                new ArkId(NAAN, NAME, VERSION_1))),
                 () -> assertEquals(12,
                         arkIdFromNaanNameVersion.compareTo(
-                                new ArkId("banana", NAME, VERSION))),
+                                new ArkId("banana", NAME, VERSION_1))),
                 () -> assertEquals(13,
                         arkIdFromNaanNameVersion.compareTo(
-                                new ArkId(NAAN, "apple", VERSION))),
+                                new ArkId(NAAN, "apple", VERSION_1))),
                 () -> assertEquals(15,
                         arkIdFromNaanNameVersion.compareTo(
                                 new ArkId(NAAN, NAME, "grape"))),

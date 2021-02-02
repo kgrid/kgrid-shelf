@@ -46,10 +46,10 @@ public class KnowledgeObjectControllerTest {
     koRepo = Mockito.mock(KnowledgeObjectRepository.class);
     koController = new KnowledgeObjectController(koRepo);
     JsonNode koNode = objectMapper.readTree("{\"key\":\"value\"}");
-    koMap.put(ARK_ID, koNode);
+    koMap.put(ARK_ID_V1, koNode);
     MockHttpServletRequest mockServletRequest = new MockHttpServletRequest();
     String childPath = "childPath";
-    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + childPath;
+    String requestUri = NAAN + "/" + NAME + "/" + VERSION_1 + "/" + childPath;
     mockServletRequest.setRequestURI(requestUri);
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
   }
@@ -65,8 +65,8 @@ public class KnowledgeObjectControllerTest {
   @Test
   @DisplayName("Find knowledge object gets ko from repo")
   public void findKnowledgeObject_CallsFindMetadataOnKoRepo_WhenVersionIsSupplied() {
-    koController.findKnowledgeObject(NAAN, NAME, VERSION);
-    verify(koRepo).findKnowledgeObjectMetadata(ARK_ID);
+    koController.findKnowledgeObject(NAAN, NAME, VERSION_1);
+    verify(koRepo).findKnowledgeObjectMetadata(ARK_ID_V1);
   }
 
   @Test
@@ -79,8 +79,8 @@ public class KnowledgeObjectControllerTest {
   @Test
   @DisplayName("Old version find knowledge object gets ko from repo")
   public void findKnowledgeObjectOldVersion_CallsFindMetadataOnKoRepo_WhenVersionIsSupplied() {
-    koController.getKnowledgeObjectOldVersion(NAAN, NAME, VERSION);
-    verify(koRepo).findKnowledgeObjectMetadata(ARK_ID);
+    koController.getKnowledgeObjectOldVersion(NAAN, NAME, VERSION_1);
+    verify(koRepo).findKnowledgeObjectMetadata(ARK_ID_V1);
   }
 
   @Test
@@ -94,12 +94,12 @@ public class KnowledgeObjectControllerTest {
   @DisplayName("Edit metadata calls edit in ko repo and returns new metadata")
   public void editKnowledgeObjectMetadata_CallsEditMetadataOnKoRepo()
       throws JsonProcessingException {
-    when(koRepo.editMetadata(ARK_ID, metadataString))
+    when(koRepo.editMetadata(ARK_ID_V1, metadataString))
         .thenReturn((ObjectNode) objectMapper.readTree(metadataString));
     ResponseEntity<JsonNode> newMetaData =
-        koController.editVersionMetadata(NAAN, NAME, VERSION, metadataString);
+        koController.editVersionMetadata(NAAN, NAME, VERSION_1, metadataString);
     assertAll(
-        () -> verify(koRepo).editMetadata(ARK_ID, metadataString),
+        () -> verify(koRepo).editMetadata(ARK_ID_V1, metadataString),
         () ->
             assertEquals(metadataString, Objects.requireNonNull(newMetaData.getBody()).toString()));
   }
@@ -107,9 +107,9 @@ public class KnowledgeObjectControllerTest {
   @Test
   @DisplayName("Delete ko calls delete in repo and returns no content")
   public void deleteKnowledgeObject_callsDeleteOnKoRepoAndReturnsNoContent() {
-    ResponseEntity<String> response = koController.deleteKnowledgeObject(NAAN, NAME, VERSION);
+    ResponseEntity<String> response = koController.deleteKnowledgeObject(NAAN, NAME, VERSION_1);
     assertAll(
-        () -> verify(koRepo).delete(ARK_ID),
+        () -> verify(koRepo).delete(ARK_ID_V1),
         () -> assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode()));
   }
 }

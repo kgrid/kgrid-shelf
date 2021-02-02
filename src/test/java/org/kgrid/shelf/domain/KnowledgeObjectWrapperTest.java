@@ -38,7 +38,7 @@ public class KnowledgeObjectWrapperTest {
     kow.addDeployment(deployment);
     kow.addService(service);
     assertAll(
-        () -> assertEquals(URI.create(KO_PATH + "/"), kow.getId()),
+        () -> assertEquals(URI.create(KO_PATH_V1 + "/"), kow.getId()),
         () -> assertEquals(metadata, kow.getMetadata()),
         () -> assertEquals(deployment, kow.getDeployment()),
         () -> assertEquals(service, kow.getService()),

@@ -24,21 +24,23 @@ public class TestHelper {
   public static final String PAYLOAD_PATH = "src/index.js";
   public static final String NAAN = "naan";
   public static final String NAME = "name";
-  public static final String VERSION = "version";
-  public static final String KO_PATH = NAAN + "-" + NAME + "-" + VERSION;
-  public static final ArkId ARK_ID = new ArkId(NAAN, NAME, VERSION);
+  public static final String VERSION_1 = "1";
+  public static final String KO_PATH_V1 = NAAN + "-" + NAME + "-" + VERSION_1;
+  public static final ArkId ARK_ID_V1 = new ArkId(NAAN, NAME, VERSION_1);
+  public static final String VERSION_2 = "2";
+  public static final String KO_PATH_V2 = NAAN + "-" + NAME + "-" + VERSION_2;
+  public static final ArkId ARK_ID_V2 = new ArkId(NAAN, NAME, VERSION_2);
   public static final String GOOD_MANIFEST_PATH = "http://example.com/folder/manifest.json";
   public static final String BAD_MANIFEST_PATH = "asdfkujnhdsfa";
   public static final String RELATIVE_RESOURCE_URI = "resource_1_uri.zip";
   public static final String ABSOLUTE_RESOURCE_URI = "http://example.com/folder/resource_2_uri.zip";
   public static final String RESOLVED_RELATIVE_RESOURCE_URI =
       "http://example.com/folder/resource_1_uri.zip";
-
   public static final byte[] DEPLOYMENT_BYTES =
-      ("endpoints:\n  /welcome:\n    artifact: " + PAYLOAD_PATH + "\n    function: welcome\n")
+      ("/welcome:\n    artifact: " + PAYLOAD_PATH + "\n    function: welcome\n")
           .getBytes();
   public static final byte[] SERVICE_BYTES =
-      ("paths:\n  /welcome:\n    post:\n      x-kgrid-activation:\n        artifact:\n            - "
+      ("/welcome:\n    post:\n      x-kgrid-activation:\n        artifact:\n            - "
               + PAYLOAD_PATH
               + "\n")
           .getBytes();
@@ -55,18 +57,18 @@ public class TestHelper {
     List<ZipEntrySource> filesToBeZipped = new ArrayList<>();
     if (deploymentSpec != null && deploymentSpec.length != 0) {
       filesToBeZipped.add(
-          new ByteSource(KO_PATH + File.separator + DEPLOYMENT_YAML_PATH, deploymentSpec));
+          new ByteSource(KO_PATH_V1 + File.separator + DEPLOYMENT_YAML_PATH, deploymentSpec));
     }
     if (serviceSpec != null && serviceSpec.length != 0) {
       filesToBeZipped.add(
-          new ByteSource(KO_PATH + File.separator + SERVICE_YAML_PATH, serviceSpec));
+          new ByteSource(KO_PATH_V1 + File.separator + SERVICE_YAML_PATH, serviceSpec));
     }
     if (payload != null && payload.length != 0) {
-      filesToBeZipped.add(new ByteSource(KO_PATH + File.separator + PAYLOAD_PATH, payload));
+      filesToBeZipped.add(new ByteSource(KO_PATH_V1 + File.separator + PAYLOAD_PATH, payload));
     }
     if (metadata != null && metadata.length != 0) {
       filesToBeZipped.add(
-          new ByteSource(KO_PATH + File.separator + KoFields.METADATA_FILENAME.asStr(), metadata));
+          new ByteSource(KO_PATH_V1 + File.separator + KoFields.METADATA_FILENAME.asStr(), metadata));
     }
     pack(filesToBeZipped.toArray(new ZipEntrySource[0]), outputStream);
     return outputStream;
@@ -81,16 +83,16 @@ public class TestHelper {
       boolean hasType) {
     ObjectNode metadata = new ObjectMapper().createObjectNode();
     if (hasAtId) {
-      metadata.put("@id", KO_PATH);
+      metadata.put("@id", KO_PATH_V1);
     }
     if (hasType) {
       metadata.put("@type", "koio:KnowledgeObject");
     }
     if (hasIdentifier) {
-      metadata.put("identifier", ARK_ID.toString());
+      metadata.put("identifier", ARK_ID_V1.toString());
     }
     if (hasVersion) {
-      metadata.put(KoFields.VERSION.asStr(), VERSION);
+      metadata.put(KoFields.VERSION.asStr(), VERSION_1);
     }
     if (deploymentYamlPath != null) {
       metadata.put(KoFields.DEPLOYMENT_SPEC_TERM.asStr(), deploymentYamlPath);

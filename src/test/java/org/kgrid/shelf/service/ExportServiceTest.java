@@ -37,12 +37,12 @@ public class ExportServiceTest {
 
   @Before
   public void setUp() throws IOException {
-    arkId = TestHelper.ARK_ID;
+    arkId = TestHelper.ARK_ID_V1;
 
     kow = new KnowledgeObjectWrapper(TestHelper.generateMetadata());
     when(knowledgeObjectRepository.getKoRepoLocation()).thenReturn(URI.create("file:/root/"));
     when(knowledgeObjectRepository.getObjectLocation(arkId))
-        .thenReturn(URI.create(TestHelper.KO_PATH));
+        .thenReturn(URI.create(TestHelper.KO_PATH_V1));
     when(knowledgeObjectRepository.getKow(arkId)).thenReturn(kow);
   }
 

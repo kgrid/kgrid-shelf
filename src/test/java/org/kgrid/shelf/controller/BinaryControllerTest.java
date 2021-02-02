@@ -59,15 +59,15 @@ public class BinaryControllerTest {
   @MethodSource("providePathsAndTypes")
   @DisplayName("Get binary gets binary from repo")
   public void getBinary_CallsGetBinaryOnKoRepo(String childPath, String expectedMediaType) {
-    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + childPath;
+    String requestUri = NAAN + "/" + NAME + "/" + VERSION_1 + "/" + childPath;
     mockServletRequest.setRequestURI(requestUri);
-    when(koRepo.getBinaryStream(ARK_ID, childPath))
+    when(koRepo.getBinaryStream(ARK_ID_V1, childPath))
         .thenReturn(IOUtils.toInputStream("inputStream", Charset.defaultCharset()));
 
     ResponseEntity<Object> jsonResp =
-        binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest);
+        binaryController.getBinary(NAAN, NAME, VERSION_1, mockServletRequest);
     assertAll(
-        () -> verify(koRepo).getBinaryStream(ARK_ID, childPath),
+        () -> verify(koRepo).getBinaryStream(ARK_ID_V1, childPath),
         () ->
             assertEquals(
                 expectedMediaType,
@@ -79,12 +79,12 @@ public class BinaryControllerTest {
   public void getBinary_ThrowsErrorWhenTryingToEscapeKO() {
     String badChildPath = "../ko2/metadata.json";
     mockServletRequest = new MockHttpServletRequest();
-    String requestUri = NAAN + "/" + NAME + "/" + VERSION + "/" + badChildPath;
+    String requestUri = NAAN + "/" + NAME + "/" + VERSION_1 + "/" + badChildPath;
     mockServletRequest.setRequestURI(requestUri);
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
 
     assertThrows(
         ShelfResourceForbidden.class,
-        () -> binaryController.getBinary(NAAN, NAME, VERSION, mockServletRequest));
+        () -> binaryController.getBinary(NAAN, NAME, VERSION_1, mockServletRequest));
   }
 }
