@@ -40,14 +40,6 @@ public class FilesystemCDOStoreTest {
     koStore = new FilesystemCDOStore(connectionURL);
   }
 
-  @AfterEach
-  public void cleanUp() throws IOException {
-    Path shelf = Paths.get(koStore.getAbsoluteLocation(null));
-    if (Files.isDirectory(shelf)) {
-      nukeTestShelf(shelf);
-    }
-  }
-
   @Test
   @DisplayName("Can create new shelf with full url")
   public void createShelfInRelativeLocation() {
@@ -116,6 +108,7 @@ public class FilesystemCDOStoreTest {
     Writer writer = new StringWriter();
     InputStream stream = koStore.getBinaryStream(helloDirName.resolve("src/").resolve("index.js"));
     IOUtils.copy(stream, writer, Charset.defaultCharset());
+    stream.close();
     assertEquals(code, writer.toString());
   }
 
@@ -224,19 +217,4 @@ public class FilesystemCDOStoreTest {
     assertTrue(location.contains("shelf%20with%20spaces"));
   }
 
-  private void nukeTestShelf(Path shelf) throws IOException {
-    Files.walk(shelf)
-        .sorted(
-            Comparator
-                .reverseOrder()) // Need to reverse the order to delete files before the directory
-        // they're in
-        .forEach(
-            path -> {
-              try {
-                Files.delete(path);
-              } catch (IOException e) {
-                System.out.println("COULD NOT REMOVE TEST SHELF: " + e.getMessage());
-              }
-            });
-  }
 }
