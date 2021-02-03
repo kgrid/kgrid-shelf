@@ -57,7 +57,7 @@ public class ImportService {
       kow.addService(serviceSpec);
 
       copyArtifactsToShelf(reader, kow);
-      koRepo.addKnowledgeObjectToLocatioMap(id, metadata);
+      koRepo.addKnowledgeObjectToLocationMap(id, metadata);
 
     } catch (Exception e) {
       final String errorMsg = "Error importing: " + zipResource.getDescription();

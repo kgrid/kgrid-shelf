@@ -3,297 +3,381 @@ package org.kgrid.shelf.repository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import com.fasterxml.jackson.dataformat.yaml.YAMLMapper;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.kgrid.shelf.ShelfException;
 import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.domain.KoFields;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URI;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Map;
 
-import static org.junit.Assert.*;
-import static org.kgrid.shelf.TestHelper.PAYLOAD_PATH;
-import static org.kgrid.shelf.TestHelper.SERVICE_YAML_PATH;
+import static org.junit.jupiter.api.Assertions.*;
+import static org.kgrid.shelf.TestHelper.*;
+import static org.kgrid.shelf.domain.KoFields.*;
 import static org.mockito.Mockito.*;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
+@DisplayName("Knowledge Object Repository Tests")
 public class KnowledgeObjectRepositoryTest {
 
-  KnowledgeObjectRepository repository;
+    @Mock
+    CompoundDigitalObjectStore cdoStore;
 
-  @Mock CompoundDigitalObjectStore compoundDigitalObjectStore;
+    KnowledgeObjectRepository koRepo;
 
-  private final ArkId helloWorld1ArkId = new ArkId("hello", "world", "v0.1.0");
-  private final ArkId helloWorld2ArkId = new ArkId("hello", "world", "v0.2.0");
-  private final ArkId versionedArk = new ArkId("versioned", "ark", "v0.1.0");
-  private final ArkId noSpecArkId = new ArkId("bad", "bad", "bad");
-  private final URI helloWorld1Location = URI.create(helloWorld1ArkId.getFullDashArk() + "/");
-  private final URI helloWorld2Location = URI.create(helloWorld2ArkId.getFullDashArk() + "/");
-  private final URI versionedArkLocation = URI.create(versionedArk.getFullDashArk() + "/");
-  private final URI badLocation = URI.create(noSpecArkId.getFullDashArk());
-  private JsonNode helloWorld1Metadata;
-  private JsonNode helloWorld2Metadata;
-  private JsonNode versionedArkMetadata;
-  private JsonNode noSpecMetadata;
+    private final ArkId arkNoVersion = new ArkId(NAAN, NAME);
+    private final URI koV1Uri = URI.create(String.format("%s/%s/%s/", NAAN, NAME, VERSION_1));
+    private final ObjectNode koV1MetadataNode = (ObjectNode) generateMetadata(koV1Uri.toString(), ARK_ID_V1.getFullArk(), VERSION_1);
+    private final URI v1ServiceUri = getFileUri(VERSION_1, SERVICE_YAML_PATH);
+    private final URI v1DeploymentUri = getFileUri(VERSION_1, DEPLOYMENT_YAML_PATH);
+    private final URI koV2Uri = URI.create(String.format("%s/%s/%s/", NAAN, NAME, VERSION_2));
+    private final ObjectNode koV2MetadataNode = (ObjectNode) generateMetadata(koV2Uri.toString(), ARK_ID_V2.getFullArk(), VERSION_2);
+    private final URI v2ServiceUri = getFileUri(VERSION_2, SERVICE_YAML_PATH);
+    private final URI v2DeploymentUri = getFileUri(VERSION_2, DEPLOYMENT_YAML_PATH);
+    private final ArrayList<URI> cdoStoreChildren = new ArrayList<>();
+    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final YAMLMapper yamlMapper = new YAMLMapper();
+    private final ArkId missingKoArk = new ArkId("not", "there");
 
-  @Before
-  public void setUp() throws Exception {
+    @BeforeEach
+    public void setUp() throws Exception {
+        cdoStoreChildren.add(koV1Uri);
+        cdoStoreChildren.add(koV2Uri);
+        when(cdoStore.getChildren()).thenReturn(cdoStoreChildren);
+        when(cdoStore.getMetadata(koV1Uri))
+                .thenReturn(koV1MetadataNode);
+        lenient().when(cdoStore.getMetadata(koV2Uri))
+                .thenReturn(koV2MetadataNode);
+        lenient().when(cdoStore.getBinary(v1ServiceUri))
+                .thenReturn(SERVICE_BYTES);
+        lenient().when(cdoStore.getBinary(v2ServiceUri))
+                .thenReturn(SERVICE_BYTES);
+        lenient().when(cdoStore.getBinary(v1DeploymentUri))
+                .thenReturn(DEPLOYMENT_BYTES);
+        lenient().when(cdoStore.getBinary(v2DeploymentUri))
+                .thenReturn(DEPLOYMENT_BYTES);
+        koRepo = new KnowledgeObjectRepository(cdoStore);
+    }
 
-    List<URI> koLocations =
-        Arrays.asList(helloWorld1Location, helloWorld2Location, versionedArkLocation, badLocation);
-    helloWorld1Metadata =
-        new ObjectMapper()
-            .readTree(
-                "{\n"
-                    + "  \"@id\" : \"hello-world\",\n"
-                    + "  \"@type\" : \"koio:KnowledgeObject\",\n"
-                    + "  \"identifier\" : \"ark:/hello/world\",\n"
-                    + "  \"version\":\"v0.1.0\",\n"
-                    + "  \"title\" : \"Hello World Title\",\n"
-                    + "  \"contributors\" : \"Kgrid Team\",\n"
-                    + "  \"keywords\":[\"Hello\",\"example\"],\n"
-                    + "  \"hasServiceSpecification\": \"service.yaml\",\n"
-                    + "  \"hasDeploymentSpecification\": \"deployment.yaml\",\n"
-                    + "  \"hasPayload\": \"src/index.js\",\n"
-                    + "  \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
-                    + "}");
-    helloWorld2Metadata =
-        new ObjectMapper()
-            .readTree(
-                "{\n"
-                    + "  \"@id\" : \"hello-world\",\n"
-                    + "  \"@type\" : \"koio:KnowledgeObject\",\n"
-                    + "  \"identifier\" : \"ark:/hello/world\",\n"
-                    + "  \"version\":\"v0.2.0\",\n"
-                    + "  \"title\" : \"Hello World Title\",\n"
-                    + "  \"contributors\" : \"Kgrid Team\",\n"
-                    + "  \"keywords\":[\"Hello\",\"example\"],\n"
-                    + "  \"hasServiceSpecification\": \"service2.yaml\",\n"
-                    + "  \"hasDeploymentSpecification\": \"deployment.yaml\",\n"
-                    + "  \"hasPayload\": \"src/index.js\",\n"
-                    + "  \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
-                    + "}");
+    @Test
+    @DisplayName("Delete Calls CdoStore Delete When Ko has only one version")
+    public void testDeleteCallsCdoStoreWhenKoHasOnlyOneVersion() {
+        cdoStoreChildren.remove(koV2Uri);
+        when(cdoStore.getChildren()).thenReturn(cdoStoreChildren);
 
-    versionedArkMetadata =
-        new ObjectMapper()
-            .readTree(
-                "{\n"
-                    + "  \"@id\" : \"versioned/ark/v0.1.0\",\n"
-                    + "  \"@type\" : \"koio:KnowledgeObject\",\n"
-                    + "  \"identifier\" : \"ark:/versioned/ark/v0.1.0\",\n"
-                    + "  \"version\":\"v0.1.0\",\n"
-                    + "  \"title\" : \"Hello World Title\",\n"
-                    + "  \"contributors\" : \"Kgrid Team\",\n"
-                    + "  \"keywords\":[\"Hello\",\"example\"],\n"
-                    + "  \"hasServiceSpecification\": \"service2.yaml\",\n"
-                    + "  \"hasDeploymentSpecification\": \"deployment.yaml\",\n"
-                    + "  \"hasPayload\": \"src/index.js\",\n"
-                    + "  \"@context\" : [\"http://kgrid.org/koio/contexts/knowledgeobject.jsonld\" ]\n"
-                    + "}");
+        koRepo = new KnowledgeObjectRepository(cdoStore);
 
-    noSpecMetadata =
-        new ObjectMapper().readTree("{  \"identifier\" : \"ark:/bad/bad\",\n\"version\":\"bad\"}");
-    when(compoundDigitalObjectStore.getChildren()).thenReturn(koLocations);
-    when(compoundDigitalObjectStore.getMetadata(helloWorld1Location))
-        .thenReturn((ObjectNode) helloWorld1Metadata);
-    when(compoundDigitalObjectStore.getMetadata(helloWorld2Location))
-        .thenReturn((ObjectNode) helloWorld2Metadata);
-    when(compoundDigitalObjectStore.getMetadata(badLocation))
-        .thenReturn((ObjectNode) noSpecMetadata);
-    when(compoundDigitalObjectStore.getMetadata(versionedArkLocation))
-        .thenReturn((ObjectNode) versionedArkMetadata);
-    repository = new KnowledgeObjectRepository(compoundDigitalObjectStore);
-  }
+        koRepo.delete(ARK_ID_V1);
 
-  @Test
-  public void inspectsMetadataDuringLoading() {
-    verify(compoundDigitalObjectStore, times(1)).getMetadata(helloWorld1Location);
-  }
+        verify(cdoStore).delete(koV1Uri);
+    }
 
-  @Test
-  public void getCorrectMetadata() {
-    repository.findKnowledgeObjectMetadata(helloWorld1ArkId);
-    verify(compoundDigitalObjectStore, times(2)).getMetadata(helloWorld1Location);
-  }
+    @Test
+    @DisplayName("Delete removes correct version of KO")
+    public void testDeleteRemovesCorrectVersion() {
+        koRepo.delete(ARK_ID_V1);
+        koRepo.getKow(ARK_ID_V2);
+    }
 
-  @Test
-  public void deleteVersion() {
-    repository.delete(helloWorld1ArkId);
-    verify(compoundDigitalObjectStore).delete(helloWorld1Location);
-  }
+    @Test
+    @DisplayName("Edit Metadata uses CdoStore to save and get new metadata")
+    public void testEditMetadata() throws JsonProcessingException {
+        String newMetadata = "{\"metadata\":\"yes, metadata\"}";
+        JsonNode newMetadataJson = new ObjectMapper().readTree(newMetadata);
+        URI metadataUri = getFileUri(VERSION_1, METADATA_FILENAME.asStr());
+        when(cdoStore.getMetadata(metadataUri))
+                .thenReturn((ObjectNode) newMetadataJson);
 
-  @Test
-  public void editMetadataResolvesToCorrectLocation() throws JsonProcessingException {
-    String newMetadataStr = "{\"@id\" : \"goodbye-world\"}";
-    JsonNode metadata = new ObjectMapper().readTree(newMetadataStr);
-    repository.editMetadata(helloWorld1ArkId, newMetadataStr);
-    verify(compoundDigitalObjectStore)
-        .saveMetadata(metadata, helloWorld1Location.resolve(KoFields.METADATA_FILENAME.asStr()));
-  }
+        ObjectNode savedMetadata = koRepo.editMetadata(ARK_ID_V1, newMetadata);
 
-  @Test
-  public void editMetadataReturnsSavedData() {
-    String newMetadataStr = "{\"@id\" : \"goodbye-world\"}";
-    repository.editMetadata(helloWorld1ArkId, newMetadataStr);
-    verify(compoundDigitalObjectStore, times(1))
-        .getMetadata(helloWorld1Location.resolve(KoFields.METADATA_FILENAME.asStr()));
-  }
+        assertAll(
+                () -> verify(cdoStore).saveMetadata(newMetadataJson, metadataUri),
+                () -> verify(cdoStore).getMetadata(metadataUri),
+                () -> assertEquals(newMetadataJson, savedMetadata)
+        );
+    }
 
-  @Test(expected = ShelfException.class)
-  public void editMetadataThrowsCorrectError() {
-    String badMetadata = "{\"@id\" : \"goodbye-world}";
-    repository.editMetadata(helloWorld1ArkId, badMetadata);
-  }
+    @Test
+    @DisplayName("Edit Metadata throws if given bad json")
+    public void testEditMetadataThrowsIfGivenBadJson() {
+        String badJson = "{oof}";
+        ShelfException exception = assertThrows(ShelfException.class,
+                () -> koRepo.editMetadata(ARK_ID_V1, badJson));
+        assertEquals(
+                "Cannot parse new metadata",
+                exception.getMessage());
+    }
 
-  @Test
-  public void findAll_refreshesMap() {
-    repository.findAll();
-    verify(compoundDigitalObjectStore, times(2)).getMetadata(helloWorld1Location);
-    verify(compoundDigitalObjectStore, times(2)).getChildren();
-  }
+    @Test
+    @DisplayName("Find All returns all KOs")
+    public void testFindAllFindsAll() {
+        Map<ArkId, JsonNode> all = koRepo.findAll();
+        assertAll(
+                () -> assertEquals(2, all.size()),
+                () -> assertTrue(all.containsKey(ARK_ID_V1)),
+                () -> assertTrue(all.containsKey(ARK_ID_V2))
+        );
+    }
 
-  @Test
-  public void findAll_returnsObjectMap() {
-    Map<ArkId, JsonNode> map = new HashMap<>();
-    map.put(helloWorld1ArkId, helloWorld1Metadata);
-    map.put(helloWorld2ArkId, helloWorld2Metadata);
-    map.put(versionedArk, versionedArkMetadata);
-    map.put(noSpecArkId, noSpecMetadata);
-    assertEquals(repository.findAll(), map);
-  }
+    @Test
+    @DisplayName("Find Deployment Specification returns deployment spec from cdo store")
+    public void testFindDeploymentSpec() {
+        JsonNode deploymentSpecification = koRepo.findDeploymentSpecification(ARK_ID_V1);
+        assertAll(
+                () -> verify(cdoStore).getBinary(v1DeploymentUri),
+                () -> assertEquals(new YAMLMapper().readTree(DEPLOYMENT_BYTES), deploymentSpecification)
+        );
+    }
 
-  @Test
-  public void findDeploymentSpec_fetchesDeployment() {
-    String deployment = "{\"This is a deployment spec\": \"yay\"}";
+    @Test
+    @DisplayName("Find Deployment Specification throws if no spec in metadata")
+    public void testFindDeploymentSpecThrowsIfNoSpecInMetadata() throws JsonProcessingException {
+        JsonNode metadataWithNoSpec = objectMapper.readTree("{}");
 
-    when(compoundDigitalObjectStore.getBinary(helloWorld1Location.resolve("deployment.yaml")))
-        .thenReturn(deployment.getBytes());
-    JsonNode deploymentSpec = repository.findDeploymentSpecification(helloWorld1ArkId);
-    assertEquals("yay", deploymentSpec.get("This is a deployment spec").asText());
-  }
+        ShelfException exception = assertThrows(ShelfException.class,
+                () -> koRepo.findDeploymentSpecification(ARK_ID_V1, metadataWithNoSpec));
+        assertEquals(String.format("Deployment specification not found in metadata for object %s", ARK_ID_V1),
+                exception.getMessage());
+    }
 
-  @Test(expected = ShelfException.class)
-  public void findDeploymentSpec_throwsErrorWithNoSpec() {
-    repository.findDeploymentSpecification(noSpecArkId);
-  }
+    @Test
+    @DisplayName("find knowledge object metadata calls cdo store and returns result")
+    public void testFindKoMetadataCallsCdoStoreAndReturnsMetadata() {
+        JsonNode returnedMetadata = koRepo.findKnowledgeObjectMetadata(ARK_ID_V1);
+        assertAll(
+                () -> verify(cdoStore, times(2)).getMetadata(koV1Uri),
+                () -> assertEquals(koV1MetadataNode, returnedMetadata)
+        );
+    }
 
-  @Test
-  public void findKOMetadata_getsMetadataWithGoodArk() {
-    assertEquals(helloWorld1Metadata, repository.findKnowledgeObjectMetadata(helloWorld1ArkId));
-  }
+    @Test
+    @DisplayName("find KO Metadata returns metadata for all versions when no version is given")
+    public void testFindKoMetadataWithNoVersion() {
+        ArrayList<JsonNode> nodes = new ArrayList<>();
+        JsonNode returnedMetadata = koRepo.findKnowledgeObjectMetadata(arkNoVersion);
+        nodes.add(returnedMetadata.get(0));
+        nodes.add(returnedMetadata.get(1));
+        assertAll(
+                () -> verify(cdoStore, times(2)).getMetadata(koV1Uri),
+                () -> verify(cdoStore, times(2)).getMetadata(koV2Uri),
+                () -> assertEquals(returnedMetadata.size(), 2),
+                () -> assertTrue(nodes.contains(koV1MetadataNode)),
+                () -> assertTrue(nodes.contains(koV2MetadataNode))
+        );
+    }
 
-  @Test
-  public void findKOMetadata_getsAllVersionsWithUnversionedArk() {
-    ArrayNode array = new ObjectMapper().createArrayNode();
-    array.add(helloWorld2Metadata);
-    array.add(helloWorld1Metadata);
-    assertEquals(array, repository.findKnowledgeObjectMetadata(new ArkId("hello", "world")));
-  }
+    @Test
+    @DisplayName("find Ko metadata throws if given null ark id")
+    public void testFindKoMetadataThrowsIfGivenNullArkId() {
+        ShelfResourceNotFound exception = assertThrows(ShelfResourceNotFound.class,
+                () -> koRepo.findKnowledgeObjectMetadata(null));
+        assertEquals("Cannot find metadata for null ark id", exception.getMessage());
+    }
 
-  @Test(expected = ShelfResourceNotFound.class)
-  public void findKOMetadata_nullArk() {
-    repository.findKnowledgeObjectMetadata(null);
-  }
+    @Test
+    @DisplayName("find Ko metadata throws if given ark id with no versions map")
+    public void testFindKoMetadataThrowsIfGivenArkIdWithNoVersionsInMap() {
+        ShelfResourceNotFound exception = assertThrows(ShelfResourceNotFound.class,
+                () -> koRepo.findKnowledgeObjectMetadata(missingKoArk));
+        assertEquals(String.format("Object location not found for ark id %s",
+                missingKoArk.getFullArk()), exception.getMessage());
+    }
 
-  @Test(expected = ShelfException.class)
-  public void findKOMetadata_unknownArk() {
-    ArkId notInMap = new ArkId("hello", "whirled", "wow");
-    repository.findKnowledgeObjectMetadata(notInMap);
-  }
+    @Test
+    @DisplayName("find Ko metadata throws if given ark id with version not in version map")
+    public void testFindKoMetadataThrowsIfGivenArkIdWithVersionNotInVersionMap() {
+        ArkId notInMapArk = new ArkId(NAAN, NAME, "3");
+        ShelfResourceNotFound exception = assertThrows(ShelfResourceNotFound.class,
+                () -> koRepo.findKnowledgeObjectMetadata(notInMapArk));
+        assertEquals(String.format("Object location not found for ark id %s",
+                notInMapArk.getFullArk()), exception.getMessage());
+    }
 
-  @Test(expected = ShelfException.class)
-  public void findKOMetadata_unknownVersion() {
-    ArkId notInMap = new ArkId("hello", "world", "wow");
-    repository.findKnowledgeObjectMetadata(notInMap);
-  }
+    @Test
+    @DisplayName("find Service Spec returns service spec from cdo store")
+    public void testFindServiceSpecReturnsSpecFromCdoStore() {
+        JsonNode serviceSpec = koRepo.findServiceSpecification(ARK_ID_V1, koV1MetadataNode);
 
-  @Test
-  public void findServiceSpec_getsCorrectSpec() {
-    String deployment = "{\"This is a service spec\": \"yay\"}";
-    when(compoundDigitalObjectStore.getBinary(helloWorld1Location.resolve(SERVICE_YAML_PATH)))
-        .thenReturn(deployment.getBytes());
-    JsonNode serviceSpec = repository.findServiceSpecification(helloWorld1ArkId);
-    assertEquals("yay", serviceSpec.get("This is a service spec").asText());
-  }
+        assertAll(
+                () -> verify(cdoStore).getBinary(v1ServiceUri),
+                () -> assertEquals(yamlMapper.readTree(SERVICE_BYTES), serviceSpec)
+        );
+    }
 
-  @Test(expected = ShelfException.class)
-  public void findServiceSpec_badArkIdThrowsError() {
-    repository.findServiceSpecification(noSpecArkId);
-  }
+    @Test
+    @DisplayName("find Service Spec returns service spec from cdo store when given no version")
+    public void testFindServiceSpecReturnsSpecFromCdoStoreWhenGivenNoVersion() {
+        JsonNode serviceSpec = koRepo.findServiceSpecification(arkNoVersion, koV1MetadataNode);
 
-  @Test
-  public void findServiceSpec_noSpecifiedVersion() {
-    ArkId versionless = new ArkId("hello", "world");
-    String service = "{\"This is a service spec\": \"yay\"}";
-    when(compoundDigitalObjectStore.getBinary(helloWorld2Location.resolve("service2.yaml")))
-        .thenReturn(service.getBytes());
-    JsonNode serviceSpec = repository.findServiceSpecification(versionless);
-    assertEquals("yay", serviceSpec.get("This is a service spec").asText());
-  }
+        assertAll(
+                () -> verify(cdoStore).getBinary(any()),
+                () -> assertEquals(yamlMapper.readTree(SERVICE_BYTES), serviceSpec)
+        );
+    }
 
-  @Test
-  public void getBinary_returnsBinary() {
-    byte[] binaryData = "I'm a binary!".getBytes();
-    when(compoundDigitalObjectStore.getBinary(helloWorld1Location.resolve(PAYLOAD_PATH)))
-        .thenReturn(binaryData);
-    byte[] binaryResult = repository.getBinary(helloWorld1ArkId, PAYLOAD_PATH);
-    assertArrayEquals(binaryData, binaryResult);
-  }
+    @Test
+    @DisplayName("find Service Spec throws if cdo store returns bad yaml")
+    public void testFindServiceSpecThrowsIfCdoStoreReturnsBadYaml() {
+        when(cdoStore.getBinary(v1ServiceUri))
+                .thenReturn("  {garbageYaml".getBytes());
 
-  @Test(expected = ShelfException.class)
-  public void getBinary_missingArkThrowsException() {
-    ArkId missingArk = new ArkId("missing", "help");
-    repository.getBinary(missingArk, PAYLOAD_PATH);
-  }
+        ShelfException exception = assertThrows(ShelfException.class,
+                () -> koRepo.findServiceSpecification(ARK_ID_V1, koV1MetadataNode));
+        assertEquals(String.format("Could not parse service specification for %s",
+                ARK_ID_V1.getFullArk()), exception.getMessage());
+    }
 
-  @Test
-  public void getKoRepoLocation_returnsDataStoreLocation() {
-    URI good = URI.create("good");
-    when(compoundDigitalObjectStore.getAbsoluteLocation(null)).thenReturn(good);
-    assertEquals(good, repository.getKoRepoLocation());
-  }
+    @Test
+    @DisplayName("find Service Spec throws if metadata is missing service spec node")
+    public void testFindServiceSpecThrowsIfMetadataIsMissingServiceSpecNode() {
+        koV1MetadataNode.remove(KoFields.SERVICE_SPEC_TERM.asStr());
+        ShelfException exception = assertThrows(ShelfException.class,
+                () -> koRepo.findServiceSpecification(ARK_ID_V1, koV1MetadataNode));
+        assertEquals(String.format("Metadata for %s is missing a %s field.",
+                ARK_ID_V1.getFullArk(), SERVICE_SPEC_TERM.asStr()), exception.getMessage());
+    }
 
-  @Test
-  public void addKnowledgeObjectToLocationMap_addsObjectToMap() {
-    ArkId newArk = new ArkId("new", "ark", "v1.0");
-    assertThrows(
-        ShelfResourceNotFound.class,
-        () -> {
-          repository.getObjectLocation(newArk);
-        });
-    final URI id = URI.create("new/ark/v1.0/");
-    repository.addKnowledgeObjectToLocatioMap(id, helloWorld1Metadata);
-    assertEquals(id, repository.getObjectLocation(newArk));
-  }
+    @Test
+    @DisplayName("find Service Spec finds metadata when given only an Ark")
+    public void testFindServiceSpecFindsMetadataWhenGivenOnlyAnArk() {
+        JsonNode serviceSpec = koRepo.findServiceSpecification(ARK_ID_V1);
 
-  @Test
-  public void getObjectLocation_returnsLocation() {
-    assertEquals(helloWorld1Location, repository.getObjectLocation(helloWorld1ArkId));
-  }
+        assertAll(
+                () -> verify(cdoStore, times(2)).getMetadata(koV1Uri),
+                () -> verify(cdoStore).getBinary(v1ServiceUri),
+                () -> assertEquals(yamlMapper.readTree(SERVICE_BYTES), serviceSpec)
+        );
+    }
 
-  @Test
-  public void getObjectLocation_missingObjectIsNull() throws JsonProcessingException {
-    ArkId hellov4 = new ArkId("hello", "world", "v0.4.0");
-    URI hellov4Location = URI.create(hellov4.getFullDashArk());
-    List<URI> location = Collections.singletonList(URI.create("hello-world-v0.4.0"));
-    when(compoundDigitalObjectStore.getChildren()).thenReturn(location);
-    JsonNode v4Metadata =
-        new ObjectMapper()
-            .readTree("{  \"identifier\" : \"ark:/hello/world\",\n\"version\":\"v0.4.0\"}");
-    when(compoundDigitalObjectStore.getMetadata(hellov4Location))
-        .thenReturn((ObjectNode) v4Metadata);
-    assertEquals(hellov4Location, repository.getObjectLocation(hellov4));
-  }
+    @Test
+    @DisplayName("Get Binary returns binary from cdo store")
+    public void testGetBinaryReturnsBinaryFromCdoStore() {
+        byte[] binary = koRepo.getBinary(ARK_ID_V1, SERVICE_YAML_PATH);
+        assertAll(
+                () -> verify(cdoStore).getBinary(v1ServiceUri),
+                () -> assertEquals(SERVICE_BYTES, binary)
+        );
+    }
 
-  @Test
-  public void getObjectLocation_withVersionedIdentifier() {
-    assertEquals(versionedArkLocation, repository.getObjectLocation(versionedArk));
-  }
+    @Test
+    @DisplayName("Get Binary Stream returns binary Input Stream from cdo store")
+    public void testGetBinaryStreamReturnsBinaryInputStreamFromCdoStore() {
+        when(cdoStore.getBinaryStream(v1ServiceUri))
+                .thenReturn(new ByteArrayInputStream(SERVICE_BYTES));
+        InputStream binaryStream = koRepo.getBinaryStream(ARK_ID_V1, SERVICE_YAML_PATH);
+        assertAll(
+                () -> verify(cdoStore).getBinaryStream(v1ServiceUri),
+                () -> assertEquals(Arrays.toString(SERVICE_BYTES),
+                        Arrays.toString(binaryStream.readAllBytes()))
+        );
+    }
+
+    @Test
+    @DisplayName("Get binary size returns binary size from cdo store")
+    public void testGetBinarySizeReturnsSizeFromCdoStore() {
+        long expectedSize = 1234L;
+        when(cdoStore.getBinarySize(v1ServiceUri)).thenReturn(expectedSize);
+
+        long returnedSize = koRepo.getBinarySize(ARK_ID_V1, SERVICE_YAML_PATH);
+
+        assertAll(
+                () -> verify(cdoStore).getBinarySize(v1ServiceUri),
+                () -> assertEquals(expectedSize, returnedSize)
+        );
+    }
+
+    @Test
+    @DisplayName("Get ko repo location returns absolute location from cdo store")
+    public void testGetKoRepoLocationReturnsAbsoluteLocationFromCdoStore() {
+        URI repoLocation = URI.create("shelfLand");
+        when(cdoStore.getAbsoluteLocation(null)).thenReturn(repoLocation);
+
+        URI returnedLocation = koRepo.getKoRepoLocation();
+
+        assertAll(
+                () -> verify(cdoStore).getAbsoluteLocation(null),
+                () -> assertEquals(repoLocation, returnedLocation)
+        );
+    }
+
+    @Test
+    @DisplayName("Get object location refreshes object map if ko is missing")
+    public void testGetObjectLocationRefreshesObjectMapIfKoIsMissing() {
+        try {
+            koRepo.getObjectLocation(missingKoArk);
+        } catch (ShelfResourceNotFound ignored) {
+        }
+        assertAll(
+                () -> verify(cdoStore, times(2)).getMetadata(koV1Uri),
+                () -> verify(cdoStore, times(2)).getMetadata(koV2Uri)
+        );
+    }
+
+    @Test
+    @DisplayName("Get object location throws if ko is missing after refresh")
+    public void testGetObjectLocationThrowsIfKoIsMissingAfterRefresh() {
+        ShelfResourceNotFound exception = assertThrows(ShelfResourceNotFound.class,
+                () -> koRepo.getObjectLocation(missingKoArk));
+        assertEquals(String.format("Object location not found for ark id %s", missingKoArk.getFullArk()),
+                exception.getMessage());
+    }
+
+    @Test
+    @DisplayName("Refresh Object Map does not throw if metadata is missing identifier")
+    public void testRefreshObjectMapDoesNotThrowIfMetadataIsMissingIdentifier() {
+        koV1MetadataNode.remove(IDENTIFIER.asStr());
+        when(cdoStore.getMetadata(koV1Uri))
+                .thenReturn(koV1MetadataNode);
+        koRepo = new KnowledgeObjectRepository(cdoStore);
+        Map<ArkId, JsonNode> all = koRepo.findAll();
+        assertAll(
+                () -> assertEquals(1, all.size()),
+                () -> assertTrue(all.containsKey(ARK_ID_V2))
+        );
+    }
+
+    @Test
+    @DisplayName("Refresh object map determines ark id if no version specified in metadata")
+    public void testRefreshObjectMapDeterminesArkIdIfNoVersionInMetadata() {
+        koV1MetadataNode.remove(VERSION.asStr());
+        when(cdoStore.getMetadata(koV1Uri))
+                .thenReturn(koV1MetadataNode);
+        koRepo = new KnowledgeObjectRepository(cdoStore);
+        Map<ArkId, JsonNode> all = koRepo.findAll();
+        assertAll(
+                () -> assertEquals(2, all.size()),
+                () -> assertTrue(all.containsKey(ARK_ID_V1)),
+                () -> assertTrue(all.containsKey(ARK_ID_V2))
+        );
+    }
+
+    @Test
+    @DisplayName("Refresh object map determines ark id if no version in identifier")
+    public void testRefreshObjectMapDeterminesArkIdIfNoVersionInIdentifier() {
+        koV1MetadataNode.put(IDENTIFIER.asStr(), String.format("ark:/%s/%s",NAAN,NAME));
+        when(cdoStore.getMetadata(koV1Uri))
+                .thenReturn(koV1MetadataNode);
+        koRepo = new KnowledgeObjectRepository(cdoStore);
+        Map<ArkId, JsonNode> all = koRepo.findAll();
+        assertAll(
+                () -> assertEquals(2, all.size()),
+                () -> assertTrue(all.containsKey(ARK_ID_V1)),
+                () -> assertTrue(all.containsKey(ARK_ID_V2))
+        );
+    }
+
+    private URI getFileUri(String version, String file) {
+        return URI.create(
+                String.format("%s/%s/%s/%s", NAAN, NAME, version, file));
+    }
 }

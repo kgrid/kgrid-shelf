@@ -35,7 +35,7 @@ public class ExportControllerTest {
     KnowledgeObjectRepository mockKnowledgeObjectRepository =
         Mockito.mock(KnowledgeObjectRepository.class);
     mockServletOutputStream = Mockito.mock(ServletOutputStream.class);
-    validArkId = new ArkId(NAAN, NAME, VERSION);
+    validArkId = new ArkId(NAAN, NAME, VERSION_1);
     servletResponse = mock(HttpServletResponse.class);
     exportController = new ExportController(mockKnowledgeObjectRepository, mockExportService);
   }
@@ -44,14 +44,14 @@ public class ExportControllerTest {
   @DisplayName("Export KO works correctly")
   public void exportKnowledgeObjectVersionHappyPath() throws IOException {
     when(servletResponse.getOutputStream()).thenReturn(mockServletOutputStream);
-    exportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION, servletResponse);
+    exportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION_1, servletResponse);
     assertAll(
         () -> verify(servletResponse).setHeader("Content-Type", "application/octet-stream"),
         () ->
             verify(servletResponse)
                 .addHeader(
                     "Content-Disposition",
-                    "attachment; filename=\"" + NAAN + "-" + NAME + "-" + VERSION + ".zip\""),
+                    "attachment; filename=\"" + NAAN + "-" + NAME + "-" + VERSION_1 + ".zip\""),
         () -> verify(mockExportService).zipKnowledgeObject(validArkId, mockServletOutputStream),
         () -> verify(mockServletOutputStream).close(),
         () -> verify(servletResponse).setHeader("Content-Type", "application/octet-stream"),
@@ -59,7 +59,7 @@ public class ExportControllerTest {
             verify(servletResponse)
                 .addHeader(
                     "Content-Disposition",
-                    "attachment; filename=\"" + NAAN + "-" + NAME + "-" + VERSION + ".zip\""),
+                    "attachment; filename=\"" + NAAN + "-" + NAME + "-" + VERSION_1 + ".zip\""),
         () -> verify(mockExportService).zipKnowledgeObject(validArkId, mockServletOutputStream),
         () -> verify(mockServletOutputStream).close());
   }
@@ -72,7 +72,7 @@ public class ExportControllerTest {
     doThrow(new ImportExportException("From Controller", new IOException("from ExportService")))
         .when(mockExportService)
         .zipKnowledgeObject(any(), any());
-    exportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION, servletResponse);
+    exportController.exportKnowledgeObjectVersion(NAAN, NAME, VERSION_1, servletResponse);
     verify(servletResponse).setStatus(HttpServletResponse.SC_NOT_FOUND);
   }
 
@@ -81,7 +81,7 @@ public class ExportControllerTest {
   public void exportKnowledgeObject_HandlesIOExceptionFromClosingOStream() throws IOException {
     when(servletResponse.getOutputStream()).thenReturn(mockServletOutputStream);
     doThrow(new IOException("OPE")).when(mockServletOutputStream).close();
-    exportController.exportKnowledgeObject(NAAN, NAME, VERSION, servletResponse);
+    exportController.exportKnowledgeObject(NAAN, NAME, VERSION_1, servletResponse);
     verify(servletResponse).setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);
   }
 

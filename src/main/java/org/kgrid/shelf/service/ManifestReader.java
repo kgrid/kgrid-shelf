@@ -11,11 +11,13 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 
+@Component
 public class ManifestReader implements InitializingBean {
 
   @Autowired ApplicationContext applicationContext;
@@ -25,7 +27,7 @@ public class ManifestReader implements InitializingBean {
   @Value("${kgrid.shelf.manifest:}")
   String[] startupManifestLocations;
 
-  private Logger log = LoggerFactory.getLogger(ManifestReader.class);
+  private final Logger log = LoggerFactory.getLogger(ManifestReader.class);
 
   @Override
   public void afterPropertiesSet() {

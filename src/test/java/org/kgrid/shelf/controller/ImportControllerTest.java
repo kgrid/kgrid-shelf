@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
@@ -44,7 +45,7 @@ public class ImportControllerTest {
     KnowledgeObjectRepository mockKnowledgeObjectRepository =
         Mockito.mock(KnowledgeObjectRepository.class);
     mockManifestReader = Mockito.mock(ManifestReader.class);
-    validArkId = new ArkId(NAAN, NAME, VERSION);
+    validArkId = new ArkId(NAAN, NAME, VERSION_1);
     multiPartFile = mock(MultipartFile.class);
     importController =
         new ImportController(mockKnowledgeObjectRepository, mockImportService, mockManifestReader);

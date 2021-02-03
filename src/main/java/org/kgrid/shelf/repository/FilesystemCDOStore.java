@@ -32,8 +32,7 @@ import static java.nio.file.FileVisitOption.FOLLOW_LINKS;
 @Qualifier("filesystem")
 public class FilesystemCDOStore implements CompoundDigitalObjectStore {
 
-  private Path localStorageDir;
-  private static int MAX_DEPTH = 3;
+  private final Path localStorageDir;
 
   private final Logger log = LoggerFactory.getLogger(FilesystemCDOStore.class);
 
@@ -47,10 +46,9 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       localStorageDir = Paths.get(uri.getHost(), uri.getPath());
     }
     try {
-      Path location = localStorageDir;
-      Files.createDirectories(location);
+      Files.createDirectories(localStorageDir);
     } catch (IOException e) {
-      log.error("Unable to find or create shelf at %s", localStorageDir);
+      log.error("Unable to find or create shelf at {}", localStorageDir);
     }
   }
 
@@ -58,10 +56,11 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   public List<URI> getChildren() {
     List<URI> children;
     try {
+      int MAX_DEPTH = 3;
       children =
           Files.walk(localStorageDir, MAX_DEPTH, FOLLOW_LINKS)
               .filter(this::pathContainsMetadata)
-              .map((childPath) -> getChildUri(childPath))
+              .map(this::getChildUri)
               .collect(Collectors.toList());
     } catch (IOException ioEx) {
       throw new ShelfResourceNotFound("Cannot read children at location " + localStorageDir, ioEx);
@@ -70,15 +69,13 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   }
 
   private URI getChildUri(Path childPath) {
-    URI uri =
-        URI.create(
-            childPath
-                    .toString()
-                    .substring(localStorageDir.toString().length() + 1)
-                    .replaceAll("\\\\", "/")
-                    .replaceAll(" ", "%20")
-                + "/");
-    return uri;
+    return URI.create(
+        childPath
+                .toString()
+                .substring(localStorageDir.toString().length() + 1)
+                .replaceAll("\\\\", "/")
+                .replaceAll(" ", "%20")
+            + "/");
   }
 
   @Override
@@ -184,7 +181,10 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
   public void createContainer(URI relativePath) {
     Path containerPath = localStorageDir.resolve(relativePath.toString());
     if (!containerPath.toFile().exists()) {
-      containerPath.toFile().mkdirs();
+      boolean created = containerPath.toFile().mkdirs();
+      if (!created) {
+        log.error("Could not create new ko at {}", containerPath);
+      }
     }
   }
 
