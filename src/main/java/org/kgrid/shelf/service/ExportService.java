@@ -13,6 +13,7 @@ import java.io.OutputStream;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import org.zeroturnaround.zip.ZipUtil;
 
 import static org.zeroturnaround.zip.ZipUtil.pack;
 
