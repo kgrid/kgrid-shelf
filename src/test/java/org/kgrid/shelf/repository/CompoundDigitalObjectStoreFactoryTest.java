@@ -24,8 +24,8 @@ public class CompoundDigitalObjectStoreFactoryTest {
   private static Stream<Arguments> provideConnectionUris() {
 
     return Stream.of(
-        Arguments.of("filesystem:file://gibberish" + uuid, FilesystemCDOStore.class),
-        Arguments.of("fedora:http://gibberish", FedoraCDOStore.class));
+        Arguments.of(new Object[]{"filesystem:file://gibberish" + uuid, FilesystemCDOStore.class})
+    );
   }
 
   @ParameterizedTest

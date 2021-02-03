@@ -73,12 +73,6 @@ public class ArkIdTest {
     }
 
     @Test
-    @DisplayName("Get Full Dash Ark returns correct string")
-    public void testGetDashArk() {
-        assertEquals(String.format("%s-%s", NAAN, NAME), arkIdFromNaanNameVersion.getDashArk());
-    }
-
-    @Test
     @DisplayName("Get Full Dash Ark with version returns correct string")
     public void testGetFullDashArkWithVersion() {
         assertEquals(
