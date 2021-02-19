@@ -57,7 +57,6 @@
 - 200 ok on success
 
 ## Delete:
-
 #### /{naan}/{name}
 - Deletes the specified knowledge object
 - returns a 204 no content on success 
