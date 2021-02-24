@@ -8,8 +8,6 @@ module.exports = {
       { text: 'Guide', link: '/' },
       { text: 'Configuration', link: '/configuration'},
       { text: 'API', link: '/api'},
-      { text: 'Containers', link: '/containers' }
-
     ],
     search: true,
     searchMaxSuggestions: 10,

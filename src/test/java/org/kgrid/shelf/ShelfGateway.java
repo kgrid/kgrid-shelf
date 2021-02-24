@@ -31,7 +31,7 @@ public class ShelfGateway {
     public CompoundDigitalObjectStore getCDOStore(
         @Value("${kgrid.shelf.cdostore.url:filesystem:file://shelf}") String cdoStoreURI) {
       final CompoundDigitalObjectStore cdoStore = factory.create(cdoStoreURI);
-      log.info("kgrid.shelf.cdostor.url: {}", cdoStore.getAbsoluteLocation(null));
+      log.info("kgrid.shelf.cdostore.url: {}", cdoStore.getAbsoluteLocation(null));
       return cdoStore;
     }
   }
