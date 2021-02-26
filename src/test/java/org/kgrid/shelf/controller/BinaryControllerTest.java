@@ -9,6 +9,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.kgrid.shelf.ShelfResourceForbidden;
+import org.kgrid.shelf.domain.FileTypeMap;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -38,7 +39,7 @@ public class BinaryControllerTest {
   @BeforeEach
   public void setup() {
     koRepo = Mockito.mock(KnowledgeObjectRepository.class);
-    MimetypesFileTypeMap fileTypeMap = BinaryController.getFilemap();
+    MimetypesFileTypeMap fileTypeMap = FileTypeMap.getFilemap();
     binaryController = new BinaryController(koRepo, fileTypeMap);
     mockServletRequest = new MockHttpServletRequest();
     RequestContextHolder.setRequestAttributes(new ServletRequestAttributes(mockServletRequest));
