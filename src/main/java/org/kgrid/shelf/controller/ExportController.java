@@ -1,5 +1,6 @@
 package org.kgrid.shelf.controller;
 
+import org.kgrid.shelf.ShelfResourceNotFound;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
 import org.kgrid.shelf.service.ExportService;
@@ -55,7 +56,7 @@ public class ExportController extends ShelfExceptionHandler {
       outputStream = response.getOutputStream();
       exportService.zipKnowledgeObject(arkId, outputStream);
       outputStream.close();
-    } catch (ImportExportException e) {
+    } catch (ImportExportException | ShelfResourceNotFound e) {
       response.setStatus(HttpServletResponse.SC_NOT_FOUND);
     } catch (IOException e) {
       response.setStatus(HttpServletResponse.SC_INTERNAL_SERVER_ERROR);

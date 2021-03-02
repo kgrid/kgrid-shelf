@@ -4,6 +4,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.kgrid.shelf.ShelfResourceForbidden;
 import org.kgrid.shelf.domain.ArkId;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.core.io.InputStreamResource;
@@ -23,20 +24,8 @@ import java.io.InputStream;
 @ConditionalOnProperty(name = "kgrid.shelf.expose.artifacts", matchIfMissing = true)
 public class BinaryController extends ShelfExceptionHandler {
 
-  @Bean
-  public static MimetypesFileTypeMap getFilemap() {
-    MimetypesFileTypeMap fileTypeMap = new MimetypesFileTypeMap();
-    fileTypeMap.addMimeTypes(
-        "application/yaml yaml YAML\n"
-            + "application/json json JSON\n"
-            + "text/javascript js JS\n"
-            + "application/pdf pdf PDF\n"
-            + "text/csv csv CSV\n"
-            + "application/zip zip ZIP");
-    return fileTypeMap;
-  }
-
-  FileTypeMap fileTypeMap;
+  @Autowired
+  public MimetypesFileTypeMap fileTypeMap;
 
   public BinaryController(KnowledgeObjectRepository koRepo, MimetypesFileTypeMap fileTypeMap) {
     super(koRepo);
