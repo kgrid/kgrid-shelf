@@ -132,7 +132,7 @@ The Kgrid's mechanism for exporting Knowledge Objects at runtime as zip files
 - Responses
   - 200: Will start a download of the zipped KO
 - Errors
-  - 500: will currently cause a server error if the KO is not found.
+  - 404: if the KO is not found.
 
 ### `GET /kos/{naan}/{name}?v={version}`
 - Get a particular version of a KO as a zip file
