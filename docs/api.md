@@ -2,6 +2,42 @@
 ## Import API
 The Kgrid's mechanism for importing Knowledge Objects at runtime
 
+### `GET /kos`
+- Will return an array of metadata files for all KOs on the shelf
+- Headers
+  ```
+  Accept: application/json
+  ```
+- Curl Command
+  ```bash
+  curl --location --request GET 'http://localhost:8080/kos/'
+  ```
+- Responses
+  200:
+  ```json
+  [
+	  {
+          "@id": "js/simple/v1.0",
+          "@type": "koio:KnowledgeObject",
+          "title": "the best hello world ever",
+          "identifier": "ark:/js/simple/v1.0",
+          "version": "v1.0",
+          "description": "An example of simple Knowledge Object"
+          "contributors": "Kgrid Team",
+          "keywords": [
+              "Hello",
+              "example"
+          ],
+          "hasServiceSpecification": "service.yaml",
+          "hasDeploymentSpecification": "deployment.yaml",
+          "hasPayload": "src/welcome.js",
+          "@context": [
+              "http://kgrid.org/koio/contexts/knowledgeobject.jsonld"
+          ]
+	  }
+  ]
+  ```
+  
 ### `POST /kos`
 - POST a single Zipped KO File for ingestion by the shelf
     - Body is multipart/form-data with the value being an absolute path to the zipped KO
