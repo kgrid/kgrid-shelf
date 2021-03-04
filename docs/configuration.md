@@ -1,7 +1,7 @@
 # Configuration
 There are a few environment variables that can be set to control different aspects of the shelf. Since the shelf is not a stand-alone application, they must be set as environment variables or passed as arguments to whichever application uses the kgrid shelf as a dependency (in this document, the kgrid activator).
-## Current Configuration
 
+## Startup Configuration
 ### `kgrid.shelf.cdostore.url`
 - Specify the path to a custom shelf directory, which can be preloaded with KOs. Can be an absolute or relative path.
   - Default value: `shelf` (in current working directory)
@@ -42,7 +42,7 @@ There are a few environment variables that can be set to control different aspec
     ```
 
 ### `kgrid.shelf.manifest` 
-- Specify the path to a json file that contains a list of references to KOs that will be loaded on startup. Existing KOs in the shelf directory will be overwritten if they are contained in the manifest. This can be set to a file path, or a URL.
+- Specify the path to a json file that contains a list of references to KOs that will be loaded on startup. Existing KOs in the shelf directory will be overwritten if they are contained in the manifest. This can be set to a file path, or a URL. Check out a properly formatted manifest in the [latest release of the Example Collection](https://github.com/kgrid-objects/example-collection/releases/latest).
   - Default Value: none
   - Command line (file path):
     ```bash
