@@ -1,42 +1,6 @@
 # Shelf API
-## Import API
+## Importing KOs (Import API)
 The Kgrid's mechanism for importing Knowledge Objects at runtime
-
-### `GET /kos`
-- Will return an array of metadata files for all KOs on the shelf
-- Headers
-  ```
-  Accept: application/json
-  ```
-- Curl Command
-  ```bash
-  curl --location --request GET 'http://localhost:8080/kos/'
-  ```
-- Responses
-  200:
-  ```json
-  [
-	  {
-          "@id": "js/simple/v1.0",
-          "@type": "koio:KnowledgeObject",
-          "title": "the best hello world ever",
-          "identifier": "ark:/js/simple/v1.0",
-          "version": "v1.0",
-          "description": "An example of simple Knowledge Object"
-          "contributors": "Kgrid Team",
-          "keywords": [
-              "Hello",
-              "example"
-          ],
-          "hasServiceSpecification": "service.yaml",
-          "hasDeploymentSpecification": "deployment.yaml",
-          "hasPayload": "src/welcome.js",
-          "@context": [
-              "http://kgrid.org/koio/contexts/knowledgeobject.jsonld"
-          ]
-	  }
-  ]
-  ```
   
 ### `POST /kos`
 - POST a single Zipped KO File for ingestion by the shelf
@@ -151,7 +115,7 @@ The Kgrid's mechanism for importing Knowledge Objects at runtime
     ```json
     []
     ```
-## Export API
+## Exporting KOs (Export API)
 The Kgrid's mechanism for exporting Knowledge Objects at runtime as zip files
 
 ### `GET /kos/{naan}/{name}/{version}`
@@ -186,7 +150,8 @@ The Kgrid's mechanism for exporting Knowledge Objects at runtime as zip files
   - 200: Will start a download of the zipped KO
 - Errors
   - 500: will currently cause a server error if the KO is not found.
-## KO Resolution API
+  
+## Resolving KO Locations (KO Resolution API)
 For finding the metadata of KOs using the ARK universal identifier.
 
 ### `GET /kos/ark:/{naan}/{name}/{version}`
@@ -273,9 +238,45 @@ For finding the metadata of KOs using the ARK universal identifier.
   }
   ```
 
-## KO Resource API
+## Finding Info About KOs (KO Resource API)
 Mainly used for retrieving metadata for particular KOs, but also for editing metadata, and deleting KOs from the shelf.
 
+### `GET /kos`
+- Will return an array of metadata files for all KOs on the shelf
+- Headers
+  ```
+  Accept: application/json
+  ```
+- Curl Command
+  ```bash
+  curl --location --request GET 'http://localhost:8080/kos/'
+  ```
+- Responses
+  200:
+  ```json
+  [
+	  {
+          "@id": "js/simple/v1.0",
+          "@type": "koio:KnowledgeObject",
+          "title": "the best hello world ever",
+          "identifier": "ark:/js/simple/v1.0",
+          "version": "v1.0",
+          "description": "An example of simple Knowledge Object"
+          "contributors": "Kgrid Team",
+          "keywords": [
+              "Hello",
+              "example"
+          ],
+          "hasServiceSpecification": "service.yaml",
+          "hasDeploymentSpecification": "deployment.yaml",
+          "hasPayload": "src/welcome.js",
+          "@context": [
+              "http://kgrid.org/koio/contexts/knowledgeobject.jsonld"
+          ]
+	  }
+  ]
+  ```
+  
 ### `GET /kos/{naan}/{name}?v={version}`
 - Find the metadata for a KO (of a particular version, or the default version if none supplied)
 - Headers
@@ -425,7 +426,7 @@ Mainly used for retrieving metadata for particular KOs, but also for editing met
   }
   ```
   
-## KO Binary API
+## Retrieving Parts Of KOs (KO Binary API)
 For retrieving artifacts out of particular KOs
 
 ### `GET /kos/{naan}/{name}/{version}/{path to file}`
