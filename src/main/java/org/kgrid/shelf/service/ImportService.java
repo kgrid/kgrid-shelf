@@ -60,7 +60,8 @@ public class ImportService {
       koRepo.addKnowledgeObjectToLocationMap(id, metadata);
 
     } catch (Exception e) {
-      final String errorMsg = "Error importing: " + zipResource.getDescription();
+      final String errorMsg =
+          "Error importing: " + zipResource.getDescription() + ", " + e.getMessage();
       log.warn(e.getMessage());
       throw new ImportExportException(errorMsg, e);
     }

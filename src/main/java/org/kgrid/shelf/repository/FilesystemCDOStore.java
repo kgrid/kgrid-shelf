@@ -60,6 +60,7 @@ public class FilesystemCDOStore implements CompoundDigitalObjectStore {
       children =
           Files.walk(localStorageDir, MAX_DEPTH, FOLLOW_LINKS)
               .filter(this::pathContainsMetadata)
+              .filter(path -> path.toString().length() > localStorageDir.toString().length())
               .map(this::getChildUri)
               .collect(Collectors.toList());
     } catch (IOException ioEx) {
