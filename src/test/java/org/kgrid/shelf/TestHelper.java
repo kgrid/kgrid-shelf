@@ -28,7 +28,6 @@ public class TestHelper {
   public static final String KO_PATH_V1 = NAAN + "-" + NAME + "-" + VERSION_1;
   public static final ArkId ARK_ID_V1 = new ArkId(NAAN, NAME, VERSION_1);
   public static final String VERSION_2 = "2";
-  public static final String KO_PATH_V2 = NAAN + "-" + NAME + "-" + VERSION_2;
   public static final ArkId ARK_ID_V2 = new ArkId(NAAN, NAME, VERSION_2);
   public static final String GOOD_MANIFEST_PATH = "http://example.com/folder/manifest.json";
   public static final String BAD_MANIFEST_PATH = "asdfkujnhdsfa";
@@ -120,11 +119,22 @@ public class TestHelper {
   }
 
   public static ObjectNode getManifestNode() {
-    ObjectNode node = JsonNodeFactory.instance.objectNode();
-    ArrayNode uris = node.putArray("manifest");
-    uris.add(RELATIVE_RESOURCE_URI);
-    uris.add(ABSOLUTE_RESOURCE_URI);
-    return node;
+    ObjectNode parentNode = JsonNodeFactory.instance.objectNode();
+    ArrayNode manifestArrayNode = parentNode.putArray("manifest");
+    manifestArrayNode.add(RELATIVE_RESOURCE_URI);
+    manifestArrayNode.add(ABSOLUTE_RESOURCE_URI);
+    return parentNode;
+  }
+
+  public static ArrayNode getJsonLdManifestNode() {
+    ArrayNode manifest = JsonNodeFactory.instance.arrayNode();
+    ObjectNode relativeResourceNode = JsonNodeFactory.instance.objectNode();
+    ObjectNode absoluteResourceNode = JsonNodeFactory.instance.objectNode();
+    relativeResourceNode.put("@id",RELATIVE_RESOURCE_URI);
+    absoluteResourceNode.put("@id",ABSOLUTE_RESOURCE_URI);
+    manifest.add(relativeResourceNode);
+    manifest.add(absoluteResourceNode);
+    return manifest;
   }
 
   public static ArrayNode getManifestListNode() {
