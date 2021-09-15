@@ -56,13 +56,24 @@ public class ManifestReaderTest {
     Mockito.lenient().when(mockResource.getInputStream()).thenReturn(mockResourceInputStream);
     Mockito.lenient()
         .when(mapper.createArrayNode())
-        .thenReturn(new ObjectMapper().createArrayNode());
+        .thenReturn(JsonNodeFactory.instance.arrayNode());
     Mockito.lenient()
         .when(importService.importZip(URI.create(RESOLVED_RELATIVE_RESOURCE_URI)))
         .thenReturn(URI.create(RELATIVE_RESOURCE_URI));
     Mockito.lenient()
         .when(importService.importZip(URI.create(ABSOLUTE_RESOURCE_URI)))
         .thenReturn(URI.create(ABSOLUTE_RESOURCE_URI));
+  }
+
+  @Test
+  @DisplayName("Loads JsonLd Manifest")
+  public void loadManifest_LoadsJsonLdManifests(){
+    when(importService.importZip(URI.create(RELATIVE_RESOURCE_URI)))
+            .thenReturn(URI.create(RELATIVE_RESOURCE_URI));
+    when(importService.importZip(URI.create(ABSOLUTE_RESOURCE_URI)))
+            .thenReturn(URI.create(ABSOLUTE_RESOURCE_URI));
+    ArrayNode jsonNodes = manifestReader.loadManifest(getJsonLdManifestNode());
+    assertEquals(2,jsonNodes.size());
   }
 
   @Test
@@ -74,20 +85,6 @@ public class ManifestReaderTest {
     manifestReader.afterPropertiesSet();
 
     verify(importService, times(4)).importZip(any(URI.class));
-  }
-
-  @Test
-  @DisplayName("Malformed manifest throws illegal argument exception")
-  public void afterPropertiesSet_malformedManifestThrowsIllegalArgumentException()
-      throws IOException {
-
-    ObjectNode badManifest = JsonNodeFactory.instance.objectNode().put("shmanifest", "bad");
-    when(mapper.readTree(mockResourceInputStream)).thenReturn(badManifest);
-
-    ReflectionTestUtils.setField(
-        manifestReader, "startupManifestLocations", new String[] {GOOD_MANIFEST_PATH});
-
-    assertThrows(IllegalArgumentException.class, () -> manifestReader.afterPropertiesSet());
   }
 
   @Test
