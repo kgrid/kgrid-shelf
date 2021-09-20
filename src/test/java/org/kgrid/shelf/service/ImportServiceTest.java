@@ -18,6 +18,7 @@ import org.springframework.context.support.ClassPathXmlApplicationContext;
 import org.springframework.core.io.FileSystemResource;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -40,7 +41,7 @@ public class ImportServiceTest {
 
   @Test
   @DisplayName("Import zip takes a uri and extracts and saves artifacts")
-  public void importZip_givenUri_canExtractAndSaveArtifacts() {
+  public void importZip_givenUri_canExtractAndSaveArtifacts() throws MalformedURLException {
     resourceUri = URI.create("file:src/test/resources/fixtures/import-export/mycoolko.zip");
 
     importService.importZip(resourceUri);
@@ -63,7 +64,7 @@ public class ImportServiceTest {
 
   @Test
   @DisplayName("Import zip takes a uri and extracts and saves artifacts from array")
-  public void importZip_givenUri_canExtractAndSaveMultipleArtifacts() {
+  public void importZip_givenUri_canExtractAndSaveMultipleArtifacts() throws MalformedURLException {
     resourceUri = URI.create("file:src/test/resources/fixtures/import-export/artifact-array.zip");
 
     importService.importZip(resourceUri);
@@ -132,7 +133,7 @@ public class ImportServiceTest {
 
   @Test
   @DisplayName("Import loads hello world object")
-  public void importZip_givenUri_canLoadHelloWorld() {
+  public void importZip_givenUri_canLoadHelloWorld() throws MalformedURLException {
     resourceUri = URI.create("file:src/test/resources/static/hello-world-v1.3.zip");
 
     importService.importZip(resourceUri);
