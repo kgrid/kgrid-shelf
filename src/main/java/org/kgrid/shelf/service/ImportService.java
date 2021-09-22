@@ -1,6 +1,12 @@
 package org.kgrid.shelf.service;
 
+import static org.kgrid.shelf.domain.KoFields.METADATA_FILENAME;
+
 import com.fasterxml.jackson.databind.JsonNode;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URI;
+import java.util.HashSet;
 import org.kgrid.shelf.domain.KnowledgeObjectWrapper;
 import org.kgrid.shelf.repository.CompoundDigitalObjectStore;
 import org.kgrid.shelf.repository.KnowledgeObjectRepository;
@@ -9,19 +15,10 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationContext;
 import org.springframework.core.io.Resource;
-import org.springframework.http.*;
+import org.springframework.http.RequestEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URL;
-import java.util.HashSet;
-
-import static org.kgrid.shelf.domain.KoFields.METADATA_FILENAME;
 
 @Service
 public class ImportService {
@@ -33,22 +30,25 @@ public class ImportService {
     @Autowired
     ApplicationContext applicationContext;
 
+    @Autowired
+    RestTemplate restTemplate;
+
     Logger log = LoggerFactory.getLogger(ImportService.class);
 
-    public URI importZip(URI zipUri) throws MalformedURLException {
-        URL url = new URL(zipUri.toString());
-        if (url.getProtocol().contains("http")) {
-            HttpHeaders httpHeaders = new HttpHeaders();
-            httpHeaders.add("Accept", "application/zip");
-            httpHeaders.add("Accept",MediaType.APPLICATION_OCTET_STREAM_VALUE);
-            HttpEntity<HttpHeaders> httpEntity = new HttpEntity<>(httpHeaders);
-            ResponseEntity<Resource> zipResource =
-                    new RestTemplate().exchange(url.toString(), HttpMethod.GET, httpEntity, Resource.class);
-            return importZip(zipResource.getBody());
+    public URI importZip(URI zipUri) {
+        Resource resource;
+
+        if (zipUri.getScheme().contains("http")) {
+            RequestEntity<Void> request = RequestEntity
+                .get(zipUri)
+                .header("Accept", "application/zip", "application/octet-stream")
+                .build();
+            resource =  restTemplate.exchange(request, Resource.class).getBody();
         } else {
-            Resource zipResource = applicationContext.getResource(zipUri.toString());
-            return importZip(zipResource);
+            resource = applicationContext.getResource(zipUri.toString());
         }
+
+        return importZip(resource);
     }
 
     public URI importZip(MultipartFile zippedKo) {
