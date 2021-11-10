@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en-US">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Shelf API | KGrid Shelf API</title>
+    <meta name="description" content="">
+    
+    
+    <link rel="preload" href="/kgrid-shelf/assets/css/0.styles.422046ab.css" as="style"><link rel="preload" href="/kgrid-shelf/assets/js/app.c614ad44.js" as="script"><link rel="preload" href="/kgrid-shelf/assets/js/3.dd021b86.js" as="script"><link rel="prefetch" href="/kgrid-shelf/assets/js/2.854dcf62.js"><link rel="prefetch" href="/kgrid-shelf/assets/js/4.f31630f9.js"><link rel="prefetch" href="/kgrid-shelf/assets/js/5.58f78a0e.js"><link rel="prefetch" href="/kgrid-shelf/assets/js/6.2c0db21b.js">
+    <link rel="stylesheet" href="/kgrid-shelf/assets/css/0.styles.422046ab.css">
+  </head>
+  <body>
+    <div id="app" data-server-rendered="true"><div class="theme-container"><header class="navbar"><div class="sidebar-button"><svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" role="img" viewBox="0 0 448 512" class="icon"><path fill="currentColor" d="M436 124H12c-6.627 0-12-5.373-12-12V80c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12zm0 160H12c-6.627 0-12-5.373-12-12v-32c0-6.627 5.373-12 12-12h424c6.627 0 12 5.373 12 12v32c0 6.627-5.373 12-12 12z"></path></svg></div> <a href="/kgrid-shelf/" class="home-link router-link-active"><!----> <span class="site-name">KGrid Shelf API</span></a> <div class="links" style="max-width:nullpx;"><div class="search-box"><input aria-label="Search" autocomplete="off" spellcheck="false" value=""> <!----></div> <nav class="nav-links can-hide"><div class="nav-item"><a href="/kgrid-shelf/" class="nav-link">Guide</a></div><div class="nav-item"><a href="/kgrid-shelf/configuration.html" class="nav-link">Configuration</a></div><div class="nav-item"><a href="/kgrid-shelf/api.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">API</a></div> <a href="https://github.com/kgrid/kgrid-shelf" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav></div></header> <div class="sidebar-mask"></div> <div class="sidebar"><nav class="nav-links"><div class="nav-item"><a href="/kgrid-shelf/" class="nav-link">Guide</a></div><div class="nav-item"><a href="/kgrid-shelf/configuration.html" class="nav-link">Configuration</a></div><div class="nav-item"><a href="/kgrid-shelf/api.html" aria-current="page" class="nav-link router-link-exact-active router-link-active">API</a></div> <a href="https://github.com/kgrid/kgrid-shelf" target="_blank" rel="noopener noreferrer" class="repo-link">
+    GitHub
+    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" x="0px" y="0px" viewBox="0 0 100 100" width="15" height="15" class="icon outbound"><path fill="currentColor" d="M18.8,85.1h56l0,0c2.2,0,4-1.8,4-4v-32h-8v28h-48v-48h28v-8h-32l0,0c-2.2,0-4,1.8-4,4v56C14.8,83.3,16.6,85.1,18.8,85.1z"></path> <polygon fill="currentColor" points="45.7,48.7 51.3,54.3 77.2,28.5 77.2,37.2 85.2,37.2 85.2,14.9 62.8,14.9 62.8,22.9 71.5,22.9"></polygon></svg></a></nav>  <ul class="sidebar-links"><li><div class="sidebar-group first"><p class="sidebar-heading open"><span>Shelf API</span> <!----></p> <ul class="sidebar-group-items"><li><a href="/kgrid-shelf/api.html#importing-kos-import-api" class="sidebar-link">Importing KOs (Import API)</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#post-kos" class="sidebar-link">POST /kos</a></li><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#post-kos-manifest" class="sidebar-link">POST /kos/manifest</a></li><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#post-kos-manifest-list" class="sidebar-link">POST /kos/manifest-list</a></li></ul></li><li><a href="/kgrid-shelf/api.html#exporting-kos-export-api" class="sidebar-link">Exporting KOs (Export API)</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#get-kos-naan-name-version" class="sidebar-link">GET /kos/{naan}/{name}/{version}</a></li><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#get-kos-naan-name-v-version" class="sidebar-link">GET /kos/{naan}/{name}?v={version}</a></li></ul></li><li><a href="/kgrid-shelf/api.html#resolving-ko-locations-ko-resolution-api" class="sidebar-link">Resolving KO Locations (KO Resolution API)</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#get-kos-ark-naan-name-version" class="sidebar-link">GET /kos/ark:/{naan}/{name}/{version}</a></li><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#get-kos-ark-naan-name" class="sidebar-link">GET /kos/ark:/{naan}/{name}</a></li></ul></li><li><a href="/kgrid-shelf/api.html#finding-info-about-kos-ko-resource-api" class="sidebar-link">Finding Info About KOs (KO Resource API)</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#get-kos" class="sidebar-link">GET /kos</a></li><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#get-kos-naan-name-v-version-2" class="sidebar-link">GET /kos/{naan}/{name}?v={version}</a></li><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#get-kos-naan-name-version-2" class="sidebar-link">GET /kos/{naan}/{name}/{version}</a></li><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#put-kos-naan-name-version" class="sidebar-link">PUT /kos/{naan}/{name}/{version}</a></li><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#delete-kos-naan-name-version" class="sidebar-link">DELETE /kos/{naan}/{name}/{version}</a></li></ul></li><li><a href="/kgrid-shelf/api.html#retrieving-parts-of-kos-ko-binary-api" class="sidebar-link">Retrieving Parts Of KOs (KO Binary API)</a><ul class="sidebar-sub-headers"><li class="sidebar-sub-header"><a href="/kgrid-shelf/api.html#get-kos-naan-name-version-path-to-file" class="sidebar-link">GET /kos/{naan}/{name}/{version}/{path to file}</a></li></ul></li></ul></div></li></ul> </div> <div class="page"> <div class="content"><h1 id="shelf-api"><a href="#shelf-api" class="header-anchor">#</a> Shelf API</h1> <h2 id="importing-kos-import-api"><a href="#importing-kos-import-api" class="header-anchor">#</a> Importing KOs (Import API)</h2> <p>The Kgrid's mechanism for importing Knowledge Objects at runtime</p> <h3 id="post-kos"><a href="#post-kos" class="header-anchor">#</a> <code>POST /kos</code></h3> <ul><li>POST a single Zipped KO File for ingestion by the shelf
+<ul><li>Body is multipart/form-data with the value being an absolute path to the zipped KO</li></ul></li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: */*
+Content-type: multipart/form-data
+</code></pre></div></li> <li>Request Body<div class="language-text extra-class"><pre class="language-text"><code>'ko=@&quot;ABSOLUTE_PATH_TO_ZIP/js-simple-v1.0.zip&quot;'
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request POST <span class="token string">'http://localhost:8080/kos'</span> <span class="token punctuation">\</span>
+--header <span class="token string">'Content-Type: multipart/form-data'</span> <span class="token punctuation">\</span>
+--form <span class="token string">'ko=@&quot;ABSOLUTE_PATH_TO_ZIP/js-simple-v1.0.zip&quot;'</span>
+</code></pre></div></li> <li>Responses
+200:<div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;Added&quot;</span><span class="token operator">:</span> <span class="token string">&quot;js/simple/v1.0/&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li> <li>Errors
+<ul><li>400:<div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;Status&quot;</span> <span class="token operator">:</span> <span class="token string">&quot;400 BAD_REQUEST&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;Request&quot;</span> <span class="token operator">:</span> <span class="token string">&quot;uri=/kos&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;Error&quot;</span> <span class="token operator">:</span> <span class="token string">&quot;Error importing: MultipartFile resource [ko]&quot;</span><span class="token punctuation">,</span>
+  <span class="token property">&quot;Time&quot;</span> <span class="token operator">:</span> <span class="token string">&quot;Fri Feb 19 15:58:51 EST 2021&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li></ul></li></ul> <h3 id="post-kos-manifest"><a href="#post-kos-manifest" class="header-anchor">#</a> <code>POST /kos/manifest</code></h3> <ul><li>POST a mixed list of absolute paths and/or URLs to any number of KOs for ingestion by the shelf</li> <li>A remote resource described in a manifest can also come from a <code>GET</code> endpoint that isn't a file
+<ul><li>Example: <code>http://activator.kgrid.org/kos/js/simple/v1.0</code></li></ul></li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: */*
+Content-type: application/json
+</code></pre></div></li> <li>Request Body<div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+  <span class="token property">&quot;manifest&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+    <span class="token string">&quot;file://ABSOLUTE_PATH_TO_KO/js-simple-v1.0.zip&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;https://github.com/kgrid-objects/example-collection/releases/download/4.1.1/js-bundled-v1.0.zip&quot;</span>
+  <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request POST <span class="token string">'http://localhost:8080/kos/manifest'</span> <span class="token punctuation">\</span>
+--header <span class="token string">'Content-Type: application/json'</span> <span class="token punctuation">\</span>
+--data-raw <span class="token string">'{
+  &quot;manifest&quot;: [
+    &quot;file://ABSOLUTE_PATH_TO_KO/js-simple-v1.0.zip&quot;,
+    &quot;https://github.com/kgrid-objects/example-collection/releases/download/4.1.1/js-bundled-v1.0.zip&quot;
+  ]
+}'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200:<div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">[</span>
+  <span class="token string">&quot;js/simple/v1.0/&quot;</span><span class="token punctuation">,</span>
+  <span class="token string">&quot;js/bundled/v1.0/&quot;</span>
+<span class="token punctuation">]</span>
+</code></pre></div></li></ul></li> <li>Errors
+<ul><li>400 / 500: (Will just return an empty list if no KOs could be loaded, activator will log errors)<div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">[</span><span class="token punctuation">]</span>
+</code></pre></div></li></ul></li></ul> <h3 id="post-kos-manifest-list"><a href="#post-kos-manifest-list" class="header-anchor">#</a> <code>POST /kos/manifest-list</code></h3> <ul><li>POST a mixed list of absolute paths and/or URLs to any number of manifest.json files for ingestion by the shelf</li> <li>A remote resource described in a manifest can also come from a <code>GET</code> endpoint that isn't a file
+<ul><li>Example: <code>http://activator.kgrid.org/kos/js/simple/v1.0</code></li></ul></li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: */*
+Content-type: application/json
+</code></pre></div></li> <li>Request Body<div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">[</span>
+    <span class="token string">&quot;file://ABSOLUTE_PATH_TO_MANIFEST/manifest.json&quot;</span><span class="token punctuation">,</span>
+    <span class="token string">&quot;https://github.com/kgrid-objects/example-collection/releases/download/4.1.1/manifest.json&quot;</span>
+<span class="token punctuation">]</span>
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request POST <span class="token string">'http://localhost:8080/kos/manifest-list'</span> <span class="token punctuation">\</span>
+--header <span class="token string">'Content-Type: application/json'</span> <span class="token punctuation">\</span>
+--data-raw <span class="token string">'[
+&quot;file://ABSOLUTE_PATH_TO_MANIFEST/manifest.json&quot;,
+&quot;https://github.com/kgrid-objects/example-collection/releases/download/4.1.1/manifest.json&quot;
+]'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200: Will display a list of every successfully imported KO<div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">[</span>
+  <span class="token string">&quot;js/simple/v1.0/&quot;</span><span class="token punctuation">,</span>
+  <span class="token string">&quot;node/simple/v1.0/&quot;</span><span class="token punctuation">,</span>
+  <span class="token string">&quot;python/simple/v1.0/&quot;</span><span class="token punctuation">,</span>
+  <span class="token string">&quot;resource/simple/v1.0/&quot;</span>
+<span class="token punctuation">]</span>
+</code></pre></div></li></ul></li> <li>Errors
+<ul><li>400 / 500: (Will just return an empty list if no KOs could be loaded, activator will display errors)<div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">[</span><span class="token punctuation">]</span>
+</code></pre></div></li></ul></li></ul> <h2 id="exporting-kos-export-api"><a href="#exporting-kos-export-api" class="header-anchor">#</a> Exporting KOs (Export API)</h2> <p>The Kgrid's mechanism for exporting Knowledge Objects at runtime as zip files</p> <h3 id="get-kos-naan-name-version"><a href="#get-kos-naan-name-version" class="header-anchor">#</a> <code>GET /kos/{naan}/{name}/{version}</code></h3> <ul><li>Get a particular version of a KO as a zip file</li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: application/zip
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request GET <span class="token string">'http://localhost:8080/kos/js/simple/v1.0'</span> <span class="token punctuation">\</span>
+--header <span class="token string">'Accept: application/zip'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200: Will start a download of the zipped KO</li></ul></li> <li>Errors
+<ul><li>404: if the KO is not found.</li></ul></li></ul> <h3 id="get-kos-naan-name-v-version"><a href="#get-kos-naan-name-v-version" class="header-anchor">#</a> <code>GET /kos/{naan}/{name}?v={version}</code></h3> <ul><li>Get a particular version of a KO as a zip file
+<ul><li>(Proposed) If no version is supplied, will find default version (first available)</li></ul></li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: application/zip
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request GET <span class="token string">'http://localhost:8080/kos/js/simple?v=v1.0'</span> <span class="token punctuation">\</span>
+--header <span class="token string">'Accept: application/zip'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200: Will start a download of the zipped KO</li></ul></li> <li>Errors
+<ul><li>500: will currently cause a server error if the KO is not found.</li></ul></li></ul> <h2 id="resolving-ko-locations-ko-resolution-api"><a href="#resolving-ko-locations-ko-resolution-api" class="header-anchor">#</a> Resolving KO Locations (KO Resolution API)</h2> <p>For finding the metadata of KOs using the ARK universal identifier.</p> <h3 id="get-kos-ark-naan-name-version"><a href="#get-kos-ark-naan-name-version" class="header-anchor">#</a> <code>GET /kos/ark:/{naan}/{name}/{version}</code></h3> <ul><li>Find the metadata for a particular version of a KO</li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: application/zip
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request GET <span class="token string">'http://localhost:8080/kos/ark:/js/simple/v1.0'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200: Will redirect to the metadata for the found KO</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;@id&quot;</span><span class="token operator">:</span> <span class="token string">&quot;js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;@type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;koio:KnowledgeObject&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;identifier&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ark:/js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;version&quot;</span><span class="token operator">:</span> <span class="token string">&quot;v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;title&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Hello world&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;An example of simple Knowledge Object&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;keywords&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;Hello&quot;</span><span class="token punctuation">,</span>
+        <span class="token string">&quot;example&quot;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;hasServiceSpecification&quot;</span><span class="token operator">:</span> <span class="token string">&quot;service.yaml&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;hasDeploymentSpecification&quot;</span><span class="token operator">:</span> <span class="token string">&quot;deployment.yaml&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;hasPayload&quot;</span><span class="token operator">:</span> <span class="token string">&quot;src/index.js&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;@context&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;http://kgrid.org/koio/contexts/knowledgeobject.jsonld&quot;</span>
+    <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li> <li>Errors
+<ul><li>404:</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;Status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;404 NOT_FOUND&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Request&quot;</span><span class="token operator">:</span> <span class="token string">&quot;uri=/kos/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Error&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Object location not found for ark id ark:/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Time&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Fri Feb 19 16:51:53 EST 2021&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li></ul> <h3 id="get-kos-ark-naan-name"><a href="#get-kos-ark-naan-name" class="header-anchor">#</a> <code>GET /kos/ark:/{naan}/{name}</code></h3> <ul><li>Find the metadata for all versions of a KO</li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: application/zip
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request GET <span class="token string">'http://localhost:8080/kos/ark:/js/simple'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200: Will return an array of all metadata found for each version of the KO</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+  	      <span class="token property">&quot;@id&quot;</span><span class="token operator">:</span> <span class="token string">&quot;js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+  	      <span class="token property">&quot;@type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;koio:KnowledgeObject&quot;</span><span class="token punctuation">,</span>
+  	      <span class="token property">&quot;identifier&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ark:/js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+  	      <span class="token property">&quot;version&quot;</span><span class="token operator">:</span> <span class="token string">&quot;v1.0&quot;</span><span class="token punctuation">,</span>
+  	      <span class="token property">&quot;title&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Hello world&quot;</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    <span class="token punctuation">{</span>
+  	      <span class="token property">&quot;@id&quot;</span><span class="token operator">:</span> <span class="token string">&quot;js/simple/v2.0&quot;</span><span class="token punctuation">,</span>
+  	      <span class="token property">&quot;@type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;koio:KnowledgeObject&quot;</span><span class="token punctuation">,</span>
+  	      <span class="token property">&quot;identifier&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ark:/js/simple/v2.0&quot;</span><span class="token punctuation">,</span>
+  	      <span class="token property">&quot;version&quot;</span><span class="token operator">:</span> <span class="token string">&quot;v1.0&quot;</span><span class="token punctuation">,</span>
+  	      <span class="token property">&quot;title&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Hello world&quot;</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">]</span>
+</code></pre></div></li> <li>Errors
+<ul><li>404:</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;Status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;404 NOT_FOUND&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Request&quot;</span><span class="token operator">:</span> <span class="token string">&quot;uri=/kos/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Error&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Object location not found for ark id ark:/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Time&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Fri Feb 19 16:51:53 EST 2021&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li></ul> <h2 id="finding-info-about-kos-ko-resource-api"><a href="#finding-info-about-kos-ko-resource-api" class="header-anchor">#</a> Finding Info About KOs (KO Resource API)</h2> <p>Mainly used for retrieving metadata for particular KOs, but also for editing metadata, and deleting KOs from the shelf.</p> <h3 id="get-kos"><a href="#get-kos" class="header-anchor">#</a> <code>GET /kos</code></h3> <ul><li>Will return an array of metadata files for all KOs on the shelf</li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: application/json
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request GET <span class="token string">'http://localhost:8080/kos/'</span>
+</code></pre></div></li> <li>Responses
+200:<div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">[</span>
+    <span class="token punctuation">{</span>
+        <span class="token property">&quot;@id&quot;</span><span class="token operator">:</span> <span class="token string">&quot;js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;@type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;koio:KnowledgeObject&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;title&quot;</span><span class="token operator">:</span> <span class="token string">&quot;the best hello world ever&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;identifier&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ark:/js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;version&quot;</span><span class="token operator">:</span> <span class="token string">&quot;v1.0&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;An example of simple Knowledge Object&quot;</span>
+        <span class="token property">&quot;contributors&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Kgrid Team&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;keywords&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+            <span class="token string">&quot;Hello&quot;</span><span class="token punctuation">,</span>
+            <span class="token string">&quot;example&quot;</span>
+        <span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;hasServiceSpecification&quot;</span><span class="token operator">:</span> <span class="token string">&quot;service.yaml&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;hasDeploymentSpecification&quot;</span><span class="token operator">:</span> <span class="token string">&quot;deployment.yaml&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;hasPayload&quot;</span><span class="token operator">:</span> <span class="token string">&quot;src/welcome.js&quot;</span><span class="token punctuation">,</span>
+        <span class="token property">&quot;@context&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+            <span class="token string">&quot;http://kgrid.org/koio/contexts/knowledgeobject.jsonld&quot;</span>
+        <span class="token punctuation">]</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">]</span>
+</code></pre></div></li></ul> <h3 id="get-kos-naan-name-v-version-2"><a href="#get-kos-naan-name-v-version-2" class="header-anchor">#</a> <code>GET /kos/{naan}/{name}?v={version}</code></h3> <ul><li>Find the metadata for a KO (of a particular version, or the default version if none supplied)</li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: application/json
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request GET <span class="token string">'http://localhost:8080/kos/js/simple?v=v1.0'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200: Will return the metadata for the found KO</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;@id&quot;</span><span class="token operator">:</span> <span class="token string">&quot;js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;@type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;koio:KnowledgeObject&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;identifier&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ark:/js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;version&quot;</span><span class="token operator">:</span> <span class="token string">&quot;v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;title&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Hello world&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;An example of simple Knowledge Object&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;keywords&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;Hello&quot;</span><span class="token punctuation">,</span>
+        <span class="token string">&quot;example&quot;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;hasServiceSpecification&quot;</span><span class="token operator">:</span> <span class="token string">&quot;service.yaml&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;hasDeploymentSpecification&quot;</span><span class="token operator">:</span> <span class="token string">&quot;deployment.yaml&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;hasPayload&quot;</span><span class="token operator">:</span> <span class="token string">&quot;src/index.js&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;@context&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;http://kgrid.org/koio/contexts/knowledgeobject.jsonld&quot;</span>
+    <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li> <li>Errors
+<ul><li>404:</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;Status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;404 NOT_FOUND&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Request&quot;</span><span class="token operator">:</span> <span class="token string">&quot;uri=/kos/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Error&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Object location not found for ark id ark:/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Time&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Fri Feb 19 16:51:53 EST 2021&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li></ul> <h3 id="get-kos-naan-name-version-2"><a href="#get-kos-naan-name-version-2" class="header-anchor">#</a> <code>GET /kos/{naan}/{name}/{version}</code></h3> <ul><li>Find the metadata for a KO</li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: application/json
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request GET <span class="token string">'http://localhost:8080/kos/js/simple/v1.0'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200: Will return the metadata for the found KO</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;@id&quot;</span><span class="token operator">:</span> <span class="token string">&quot;js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;@type&quot;</span><span class="token operator">:</span> <span class="token string">&quot;koio:KnowledgeObject&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;identifier&quot;</span><span class="token operator">:</span> <span class="token string">&quot;ark:/js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;version&quot;</span><span class="token operator">:</span> <span class="token string">&quot;v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;title&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Hello world&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;description&quot;</span><span class="token operator">:</span> <span class="token string">&quot;An example of simple Knowledge Object&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;keywords&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;Hello&quot;</span><span class="token punctuation">,</span>
+        <span class="token string">&quot;example&quot;</span>
+    <span class="token punctuation">]</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;hasServiceSpecification&quot;</span><span class="token operator">:</span> <span class="token string">&quot;service.yaml&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;hasDeploymentSpecification&quot;</span><span class="token operator">:</span> <span class="token string">&quot;deployment.yaml&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;hasPayload&quot;</span><span class="token operator">:</span> <span class="token string">&quot;src/index.js&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;@context&quot;</span><span class="token operator">:</span> <span class="token punctuation">[</span>
+        <span class="token string">&quot;http://kgrid.org/koio/contexts/knowledgeobject.jsonld&quot;</span>
+    <span class="token punctuation">]</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li> <li>Errors
+<ul><li>404:</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;Status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;404 NOT_FOUND&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Request&quot;</span><span class="token operator">:</span> <span class="token string">&quot;uri=/kos/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Error&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Object location not found for ark id ark:/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Time&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Fri Feb 19 16:51:53 EST 2021&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li></ul> <h3 id="put-kos-naan-name-version"><a href="#put-kos-naan-name-version" class="header-anchor">#</a> <code>PUT /kos/{naan}/{name}/{version}</code></h3> <ul><li>Replace the metadata for a particular version of a KO with the given json node.</li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: application/json
+Content-Type: application/json
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request PUT <span class="token string">'http://localhost:8080/kos/js/simple/v1.0'</span> <span class="token punctuation">\</span>
+  --header <span class="token string">'Content-Type: application/json'</span> <span class="token punctuation">\</span>
+  --data-raw <span class="token string">'{&quot;@id&quot;:&quot;new metadata as json&quot;}'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200: Will return the new metadata for the found KO</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;@id&quot;</span><span class="token operator">:</span><span class="token string">&quot;new metadata as json&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li> <li>Errors
+<ul><li>404:</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;Status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;404 NOT_FOUND&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Request&quot;</span><span class="token operator">:</span> <span class="token string">&quot;uri=/kos/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Error&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Object location not found for ark id ark:/missing/ko/1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Time&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Fri Feb 19 16:51:53 EST 2021&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div><ul><li>400 (given bad json):</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+      <span class="token property">&quot;Status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;400 BAD_REQUEST&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;Request&quot;</span><span class="token operator">:</span> <span class="token string">&quot;uri=/kos/js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;Error&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Cannot parse new metadata&quot;</span><span class="token punctuation">,</span>
+      <span class="token property">&quot;Time&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Mon Feb 22 15:56:56 EST 2021&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li></ul> <h3 id="delete-kos-naan-name-version"><a href="#delete-kos-naan-name-version" class="header-anchor">#</a> <code>DELETE /kos/{naan}/{name}/{version}</code></h3> <ul><li>Delete a KO from the shelf.</li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: application/json
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request DELETE <span class="token string">'http://localhost:8080/kos/js/simple/v1.0'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>204: No Content</li></ul></li> <li>Errors
+<ul><li>404:</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;Status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;404 NOT_FOUND&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Request&quot;</span><span class="token operator">:</span> <span class="token string">&quot;uri=/kos/js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Error&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Object location not found for ark id ark:/js/simple/v1.0&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Time&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Tue Feb 23 11:37:32 EST 2021&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li></ul> <h2 id="retrieving-parts-of-kos-ko-binary-api"><a href="#retrieving-parts-of-kos-ko-binary-api" class="header-anchor">#</a> Retrieving Parts Of KOs (KO Binary API)</h2> <p>For retrieving artifacts out of particular KOs</p> <h3 id="get-kos-naan-name-version-path-to-file"><a href="#get-kos-naan-name-version-path-to-file" class="header-anchor">#</a> <code>GET /kos/{naan}/{name}/{version}/{path to file}</code></h3> <ul><li>Retrieve a binary file that is part of a KO
+<ul><li>Note: can be a filename, or a path to a file within the KO.</li></ul></li> <li>Headers<div class="language- extra-class"><pre class="language-text"><code>Accept: */*
+</code></pre></div></li> <li>Curl Command<div class="language-bash extra-class"><pre class="language-bash"><code><span class="token function">curl</span> --location --request GET <span class="token string">'http://localhost:8080/kos/js/simple/v1.0/src/index.js'</span>
+</code></pre></div></li> <li>Responses
+<ul><li>200: Will return the file for the found KO, in this case, index.js.</li></ul> <div class="language-js extra-class"><pre class="language-js"><code><span class="token keyword">function</span> <span class="token function">welcome</span><span class="token punctuation">(</span><span class="token parameter">inputs</span><span class="token punctuation">)</span><span class="token punctuation">{</span>
+<span class="token keyword">var</span> name <span class="token operator">=</span> inputs<span class="token punctuation">.</span>name<span class="token punctuation">;</span>
+<span class="token keyword">return</span> <span class="token string">&quot;Welcome to Knowledge Grid, &quot;</span> <span class="token operator">+</span> name<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li> <li>Errors
+<ul><li>404:</li></ul> <div class="language-json extra-class"><pre class="language-json"><code><span class="token punctuation">{</span>
+    <span class="token property">&quot;Status&quot;</span><span class="token operator">:</span> <span class="token string">&quot;404 NOT_FOUND&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Request&quot;</span><span class="token operator">:</span> <span class="token string">&quot;uri=/kos/js/simple/v1.0/notThere.txt&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Error&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Binary resource not found shelf/js/simple/v1.0/notThere.txt&quot;</span><span class="token punctuation">,</span>
+    <span class="token property">&quot;Time&quot;</span><span class="token operator">:</span> <span class="token string">&quot;Tue Feb 23 11:29:20 EST 2021&quot;</span>
+<span class="token punctuation">}</span>
+</code></pre></div></li></ul></div> <div class="page-edit"><!----> <div class="last-updated"><span class="prefix">Last Updated: </span> <span class="time">11/10/2021, 7:13:05 PM</span></div></div> <!----> </div> <!----></div></div>
+    <script src="/kgrid-shelf/assets/js/app.c614ad44.js" defer></script><script src="/kgrid-shelf/assets/js/3.dd021b86.js" defer></script>
+  </body>
+</html>
