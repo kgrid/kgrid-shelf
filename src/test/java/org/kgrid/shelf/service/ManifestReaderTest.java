@@ -22,6 +22,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
 import java.net.URI;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -67,7 +68,7 @@ public class ManifestReaderTest {
 
   @Test
   @DisplayName("Loads JsonLd Manifest")
-  public void loadManifest_LoadsJsonLdManifests(){
+  public void loadManifest_LoadsJsonLdManifests() throws MalformedURLException {
     when(importService.importZip(URI.create(RELATIVE_RESOURCE_URI)))
             .thenReturn(URI.create(RELATIVE_RESOURCE_URI));
     when(importService.importZip(URI.create(ABSOLUTE_RESOURCE_URI)))
@@ -100,7 +101,7 @@ public class ManifestReaderTest {
 
   @Test
   @DisplayName("Skips ko when import fails")
-  public void loadManifest_SkipsKoWhenImportFails() {
+  public void loadManifest_SkipsKoWhenImportFails() throws MalformedURLException {
 
     ReflectionTestUtils.setField(
         manifestReader, "startupManifestLocations", new String[] {GOOD_MANIFEST_PATH});

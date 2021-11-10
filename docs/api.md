@@ -39,6 +39,8 @@ The Kgrid's mechanism for importing Knowledge Objects at runtime
     ```
 ### `POST /kos/manifest`
 - POST a mixed list of absolute paths and/or URLs to any number of KOs for ingestion by the shelf
+- A remote resource described in a manifest can also come from a `GET` endpoint that isn't a file
+  - Example: `http://activator.kgrid.org/kos/js/simple/v1.0`
 - Headers
   ```
   Accept: */*
@@ -79,6 +81,8 @@ The Kgrid's mechanism for importing Knowledge Objects at runtime
     ```
 ### `POST /kos/manifest-list`
 - POST a mixed list of absolute paths and/or URLs to any number of manifest.json files for ingestion by the shelf
+- A remote resource described in a manifest can also come from a `GET` endpoint that isn't a file
+  - Example: `http://activator.kgrid.org/kos/js/simple/v1.0`
 - Headers
     ```
     Accept: */*

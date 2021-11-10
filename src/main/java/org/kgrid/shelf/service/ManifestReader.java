@@ -4,7 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
-import org.apache.commons.lang3.StringUtils;
+import org.apache.commons.io.FilenameUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.InitializingBean;
@@ -17,7 +17,7 @@ import org.springframework.stereotype.Component;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
-import java.util.ArrayList;
+import java.net.URL;
 
 @Component
 public class ManifestReader implements InitializingBean {
@@ -112,7 +112,8 @@ public class ManifestReader implements InitializingBean {
     }
 
     private URI getBaseUri(Resource manifestResource) throws IOException {
-        return URI.create(
-                StringUtils.substringBeforeLast(manifestResource.getURI().toString(), "/") + "/");
+        String fullUriWithFile = manifestResource.getURI().toString();
+        String fullPathWithoutFile = FilenameUtils.getFullPath(fullUriWithFile);
+        return URI.create(fullPathWithoutFile);
     }
 }

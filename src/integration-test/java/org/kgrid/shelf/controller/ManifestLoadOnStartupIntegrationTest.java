@@ -24,6 +24,7 @@ import org.springframework.boot.web.server.LocalServerPort;
 import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.web.client.RestTemplate;
 
 
 @SpringBootTest(
@@ -70,6 +71,11 @@ public class ManifestLoadOnStartupIntegrationTest {
     @Primary
     CompoundDigitalObjectStore getCdoStore() {
       return CompoundDigitalObjectStoreFactory.create("filesystem:" + folder.toURI());
+    }
+
+    @Bean
+    RestTemplate getRestTemplate() {
+      return new RestTemplate();
     }
   }
 }

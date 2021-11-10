@@ -42,7 +42,7 @@ public class ImportController extends ShelfExceptionHandler {
     URI id = importService.importZip(zippedKo);
 
     Map<String, String> response = new HashMap<>();
-    HttpHeaders headers = addKOHeaderLocation(id);
+    HttpHeaders headers = addKoHeaderLocation(id);
     response.put("Added", id.toString());
 
     return new ResponseEntity<>(response, headers, HttpStatus.CREATED);
@@ -66,7 +66,7 @@ public class ImportController extends ShelfExceptionHandler {
     return new ResponseEntity<>(manifestReader.loadManifests(manifestList), HttpStatus.CREATED);
   }
 
-  private HttpHeaders addKOHeaderLocation(URI id) {
+  private HttpHeaders addKoHeaderLocation(URI id) {
     URI loc = ServletUriComponentsBuilder.fromCurrentRequestUri().build().toUri();
 
     HttpHeaders headers = new HttpHeaders();
